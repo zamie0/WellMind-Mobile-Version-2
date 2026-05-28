@@ -58,7 +58,7 @@ export const CounselorChat = ({ chatId, onClose, onBack }: CounselorChatProps) =
       setSessionTimer((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(interval);
-  }, [session]);
+  }, [chatId, session]);
 
   // Scroll to bottom
   useEffect(() => {

@@ -3,8 +3,8 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from 'recharts';
 import { useWellMindStore } from '@/stores/wellmindStore';
-import { BottomNav } from '@/components/wellmind/BottomNav';
-import { MoodChart } from '@/components/wellmind/MoodChart';
+import { BottomNav } from '@/components/WellMind-User/BottomNav';
+import { MoodChart } from '@/components/WellMind-User/Home-Page/MoodChart';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { Emotion } from '@/types/wellmind';
 import {
@@ -67,7 +67,7 @@ const HealthBridge = registerPlugin<{ getHealthSnapshot: () => Promise<HealthSna
 
 export const Insights = () => {
     const [selectedRange, setSelectedRange] = useState<(typeof ranges)[number]>(7);
-    const [samsungData, setSamsungData] = useState<any>(null);
+    const [samsungData, setSamsungData] = useState<HealthSnapshot | null>(null);
     const [healthFetchError, setHealthFetchError] = useState<string | null>(null);
     const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
     const hasLoggedFetchErrorRef = useRef(false);

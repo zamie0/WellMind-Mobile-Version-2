@@ -3,10 +3,10 @@ import { motion } from 'framer-motion';
 import { Sparkles, Gift, Trophy, TrendingUp } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWellMindStore } from '@/stores/wellmindStore';
-import { BottomNav } from '@/components/wellmind/BottomNav';
-import { VirtualPet } from '@/components/wellmind/VirtualPet';
-import { BadgeCard, getAllBadgeIds } from '@/components/wellmind/BadgeCard';
-import { RelaxGames } from '@/components/wellmind/RelaxGames';
+import { BottomNav } from '@/components/WellMind-User/BottomNav';
+import { VirtualPet } from '@/components/WellMind-User/MindBuddy-Page/MindBuddy/VirtualPet';
+import { BadgeCard, getAllBadgeIds } from '@/components/WellMind-User/MindBuddy-Page/BadgeCard';
+import { RelaxGames } from '@/components/WellMind-User/MindBuddy-Page/RelaxGames';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 

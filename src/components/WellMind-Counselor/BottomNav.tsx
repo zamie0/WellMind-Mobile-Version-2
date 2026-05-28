@@ -1,30 +1,32 @@
 import { motion } from 'framer-motion';
-import { Home, BarChart2, Wind, User, Sparkles, Users } from 'lucide-react';
-import { NavLink as RouterNavLink, useLocation } from 'react-router-dom';
+import { BarChart3, CalendarDays, FileText, Home, User, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { icon: Home, label: 'Home', path: '/' },
-  { icon: BarChart2, label: 'Insights', path: '/insights' },
-  { icon: Wind, label: 'Mindful', path: '/mindfulness' },
-  { icon: Sparkles, label: 'Rewards', path: '/rewards' },
-  { icon: Users, label: 'Peer', path: '/counselor' },
-  { icon: User, label: 'Profile', path: '/profile' },
+  { icon: Home, label: 'Home', path: 'home' },
+  { icon: CalendarDays, label: 'Appts', path: 'appointments' },
+  { icon: Users, label: 'Clients', path: 'clients' },
+  { icon: FileText, label: 'Notes', path: 'notes' },
+  { icon: BarChart3, label: 'Reports', path: 'reports' },
+  { icon: User, label: 'Profile', path: 'profile' },
 ];
 
-export const BottomNav = () => {
-  const location = useLocation();
+interface BottomNavProps {
+  activeView?: string;
+  onViewChange?: (view: string) => void;
+}
 
+export const BottomNav = ({ activeView, onViewChange }: BottomNavProps) => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card/80 backdrop-blur-lg border-t border-border safe-area-bottom">
       <div className="flex items-center justify-around h-16 max-w-md mx-auto px-4">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = activeView === item.path;
           
           return (
-            <RouterNavLink
+            <button
               key={item.path}
-              to={item.path}
+              onClick={() => onViewChange && onViewChange(item.path)}
               className={cn(
                 'flex flex-col items-center justify-center w-16 py-2 rounded-xl transition-all',
                 'text-muted-foreground hover:text-primary',
@@ -48,7 +50,7 @@ export const BottomNav = () => {
                 )}
               </motion.div>
               <span className="text-[10px] font-medium mt-1">{item.label}</span>
-            </RouterNavLink>
+            </button>
           );
         })}
       </div>

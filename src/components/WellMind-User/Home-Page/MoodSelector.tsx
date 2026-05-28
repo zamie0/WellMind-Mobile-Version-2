@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { EmotionButton } from './EmotionButton';
+import { EmotionButton } from '../EmotionButton';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import type { Emotion } from '@/types/wellmind';

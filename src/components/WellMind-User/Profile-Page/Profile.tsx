@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { BottomNav } from '@/components/wellmind/BottomNav';
+import { BottomNav } from '@/components/WellMind-User/BottomNav';
 import { useWellMindStore } from '@/stores/wellmindStore';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
@@ -19,11 +19,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
-import PinSetup from '@/components/wellmind/PinSetup';
-import NotificationsSettings from '@/components/wellmind/NotificationsSettings';
-import PrivacySettings from '@/components/wellmind/PrivacySettings';
-import CrisisSupport from '@/components/wellmind/CrisisSupport';
-import HelpFAQ from '@/components/wellmind/HelpFAQ';
+import PinSetup from '@/components/WellMind-User/Profile-Page/PinSetup';
+import NotificationsSettings from '@/components/WellMind-User/Profile-Page/NotificationsSettings';
+import PrivacySettings from '@/components/WellMind-User/Profile-Page/PrivacySettings';
+import CrisisSupport from '@/components/WellMind-User/Profile-Page/CrisisSupport';
+import HelpFAQ from '@/components/WellMind-User/Profile-Page/HelpFAQ';
 
 type ActiveScreen = 'main' | 'pin' | 'notifications' | 'privacy' | 'crisis' | 'help';
 

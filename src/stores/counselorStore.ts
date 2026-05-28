@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { PeerChat, PeerMessage } from '@/types/wellmind';
 import type { CounsellorAppointment } from './peerChatStore';
 
 export interface CounselorClient {
@@ -42,6 +41,7 @@ interface CounselorStore {
   updateClient: (clientId: string, updates: Partial<CounselorClient>) => void;
   removeClient: (clientId: string) => void;
   getClients: () => CounselorClient[];
+  getAllClients: () => CounselorClient[];
   getClientById: (clientId: string) => CounselorClient | undefined;
 
   // Session Management
@@ -65,14 +65,98 @@ interface CounselorStore {
   getUpcomingAppointments: () => CounsellorAppointment[];
 }
 
+const createInitialClients = (): CounselorClient[] => [
+  {
+    id: 'client-sarah',
+    displayName: 'Sarah Johnson',
+    isAnonymous: false,
+    recentMood: 'Anxious',
+    lastInteraction: new Date(),
+    appointmentCount: 4,
+    notes: 'Academic pressure and comparison with classmates. Responds well to small daily goals.',
+  },
+  {
+    id: 'client-amir',
+    displayName: 'Amir Rahman',
+    isAnonymous: false,
+    recentMood: 'Stressed',
+    lastInteraction: new Date(Date.now() - 1000 * 60 * 60 * 18),
+    appointmentCount: 2,
+    notes: 'Workload concerns. Explore sleep routine and boundaries.',
+  },
+  {
+    id: 'client-anon',
+    displayName: 'Anonymous Client',
+    isAnonymous: true,
+    recentMood: 'Low',
+    lastInteraction: new Date(Date.now() - 1000 * 60 * 60 * 42),
+    appointmentCount: 1,
+    notes: 'Prefers anonymous support. Keep questions gentle and concrete.',
+  },
+];
+
+const createInitialSessions = (): CounselorSession[] => [
+  {
+    id: 'session-sarah-chat',
+    clientId: 'client-sarah',
+    clientName: 'Sarah Johnson',
+    type: 'chat',
+    startTime: new Date(Date.now() - 1000 * 60 * 9),
+    status: 'in-progress',
+  },
+  {
+    id: 'session-amir-video',
+    clientId: 'client-amir',
+    clientName: 'Amir Rahman',
+    type: 'video',
+    startTime: new Date(Date.now() - 1000 * 60 * 28),
+    status: 'in-progress',
+  },
+];
+
+const createInitialAppointments = (): CounsellorAppointment[] => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const nextWeek = new Date();
+  nextWeek.setDate(nextWeek.getDate() + 7);
+
+  return [
+    {
+      id: 'counselor-appt-1',
+      peerId: 'client-sarah',
+      appointmentDate: tomorrow.toISOString().split('T')[0],
+      slot: '10:30 AM',
+      consultationType: 'chat',
+      reminders: { push: true, email: false, local: true },
+      status: 'requested',
+      notes: 'Follow-up on study stress.',
+      persistence: 'local-mock',
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 'counselor-appt-2',
+      peerId: 'client-amir',
+      appointmentDate: nextWeek.toISOString().split('T')[0],
+      slot: '02:00 PM',
+      consultationType: 'video',
+      reminders: { push: true, email: true, local: true },
+      status: 'confirmed',
+      notes: 'Review coping plan.',
+      persistence: 'local-mock',
+      createdAt: new Date().toISOString(),
+    },
+  ];
+};
+
 export const useCounselorStore = create<CounselorStore>()(
   persist(
     (set, get) => ({
-      clients: [],
-      sessions: [],
+      clients: createInitialClients(),
+      sessions: createInitialSessions(),
       activeChatId: null,
       availability: [],
-      appointments: [],
+      appointments: createInitialAppointments(),
 
       addClient: (client) => {
         set((state) => ({
@@ -104,6 +188,10 @@ export const useCounselorStore = create<CounselorStore>()(
       },
 
       getClients: () => {
+        return get().clients;
+      },
+
+      getAllClients: () => {
         return get().clients;
       },
 
@@ -212,6 +300,20 @@ export const useCounselorStore = create<CounselorStore>()(
             a.id === appointmentId ? { ...a, status } : a
           ),
         }));
+
+        if (status === 'confirmed') {
+          const appointment = get().appointments.find((a) => a.id === appointmentId);
+          const client = appointment ? get().getClientById(appointment.peerId) : undefined;
+          if (appointment && client) {
+            const alreadyActive = get()
+              .getActiveSessions()
+              .some((session) => session.clientId === client.id && session.type === appointment.consultationType);
+
+            if (!alreadyActive) {
+              get().startSession(client.id, client.displayName, appointment.consultationType);
+            }
+          }
+        }
       },
 
       getUpcomingAppointments: () => {

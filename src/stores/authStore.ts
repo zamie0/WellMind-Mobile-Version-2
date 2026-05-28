@@ -53,9 +53,14 @@ interface AuthStore {
   currentSession: AuthState;
   
   // Actions
-  register: (email: string, password: string, role: UserRole) => { success: boolean; error?: string };
+  register: (
+    email: string,
+    password: string,
+    role?: UserRole,
+    counselorData?: { displayName?: string; specialty?: string }
+  ) => { success: boolean; error?: string };
   registerCounselor: (email: string, password: string, counselorName: string, specialization: string[], bio: string) => { success: boolean; error?: string };
-  login: (email: string, password: string) => { success: boolean; error?: string };
+  login: (email: string, password: string, expectedRole?: UserRole) => { success: boolean; error?: string };
   quickRegister: () => void;
   quickLogin: () => void;
   logout: () => void;
@@ -78,7 +83,7 @@ export const useAuthStore = create<AuthStore>()(
         userRole: null,
       },
 
-      register: (email, password, role = 'user') => {
+      register: (email, password, role = 'user', counselorData?: { displayName?: string; specialty?: string }) => {
         const { users } = get();
         const normalizedEmail = email.toLowerCase().trim();
 
@@ -90,21 +95,32 @@ export const useAuthStore = create<AuthStore>()(
           return { success: false, error: 'Password must be at least 6 characters' };
         }
 
+        if (role === 'counselor' && !counselorData?.displayName) {
+          return { success: false, error: 'Counselor name is required' };
+        }
+
         const newUser: LocalUser = {
           id: crypto.randomUUID(),
           email: normalizedEmail,
           passwordHash: simpleHash(password),
           role: role,
           createdAt: new Date(),
+          ...(role === 'counselor' && {
+            counselorName: counselorData?.displayName,
+            specialization: counselorData?.specialty ? [counselorData.specialty] : [],
+            bio: '',
+            availability: [],
+            isVerified: true,
+          }),
         };
 
         set((state) => ({
           users: [...state.users, newUser],
           currentSession: {
-            isAuthenticated: false,
-            isPinVerified: false,
-            currentUserId: null,
-            userRole: null,
+            isAuthenticated: true,
+            isPinVerified: true,
+            currentUserId: newUser.id,
+            userRole: newUser.role,
           },
         }));
 
@@ -143,17 +159,17 @@ export const useAuthStore = create<AuthStore>()(
         set((state) => ({
           users: [...state.users, newCounselor],
           currentSession: {
-            isAuthenticated: false,
-            isPinVerified: false,
-            currentUserId: null,
-            userRole: null,
+            isAuthenticated: true,
+            isPinVerified: true,
+            currentUserId: newCounselor.id,
+            userRole: 'counselor',
           },
         }));
 
         return { success: true };
       },
 
-      login: (email, password) => {
+      login: (email, password, expectedRole?: UserRole) => {
         const { users } = get();
         const normalizedEmail = email.toLowerCase().trim();
         const user = users.find(u => u.email === normalizedEmail);
@@ -164,6 +180,10 @@ export const useAuthStore = create<AuthStore>()(
         
         if (user.passwordHash !== simpleHash(password)) {
           return { success: false, error: 'Incorrect password' };
+        }
+
+        if (expectedRole && user.role !== expectedRole) {
+          return { success: false, error: `This account is registered as a ${user.role}` };
         }
         
         set({

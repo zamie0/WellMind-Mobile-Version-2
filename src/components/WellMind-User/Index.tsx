@@ -1,26 +1,16 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useWellMindStore } from '@/stores/wellmindStore';
 import { useAuthStore } from '@/stores/authStore';
-import Home from './Home';
-import Onboarding from './Onboarding';
-import Auth from './Auth';
-import PinSetup from '@/components/wellmind/PinSetup';
-import PinVerify from '@/components/wellmind/PinVerify';
+import Home from './Home-Page/Home';
+import Onboarding from '../../pages/Onboarding';
+import Auth from '../../pages/Auth';
+import PinSetup from '@/components/WellMind-User/Profile-Page/PinSetup';
+import PinVerify from '@/components/WellMind-User/Profile-Page/PinVerify';
 
 const Index = () => {
   const user = useWellMindStore((state) => state.user);
   const { currentSession, hasPin } = useAuthStore();
-  const navigate = useNavigate();
   const [showPinSetup, setShowPinSetup] = useState(false);
-
-  // Redirect counselors to counselor dashboard after onboarding is confirmed
-  useEffect(() => {
-    // Only redirect if onboarding is EXPLICITLY completed (not undefined/null)
-    if (user?.onboardingCompleted === true && currentSession.isAuthenticated && currentSession.userRole === 'counselor') {
-      navigate('/counselor');
-    }
-  }, [user?.onboardingCompleted, currentSession.isAuthenticated, currentSession.userRole, navigate]);
 
   // Not authenticated - show login/register
   if (!currentSession.isAuthenticated) {
