@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import ConnectSmartwatchCard from './ConnectSmartwatchCard';
 import SmartwatchMetricsDashboard from './SmartwatchMetricsDashboard';
@@ -7,11 +7,19 @@ import { useSmartwatchHealth } from './useSmartwatchHealth';
 
 interface SmartwatchInsightsProps {
   stressIndex: number;
+  onUnlinked?: () => void;
+  onLinked?: () => void;
 }
 
-export const SmartwatchInsights = ({ stressIndex }: SmartwatchInsightsProps) => {
+export const SmartwatchInsights = ({ stressIndex, onUnlinked, onLinked }: SmartwatchInsightsProps) => {
   const [showTutorial, setShowTutorial] = useState(false);
   const { state, snapshot, message, connect, disconnect, refreshSnapshot } = useSmartwatchHealth();
+
+  useEffect(() => {
+    if (state === 'connected' && snapshot) {
+      onLinked?.();
+    }
+  }, [state, snapshot, onLinked]);
 
   if (state === 'connected' && snapshot) {
     return (
@@ -19,7 +27,10 @@ export const SmartwatchInsights = ({ stressIndex }: SmartwatchInsightsProps) => 
         snapshot={snapshot}
         stressIndex={stressIndex}
         onRefresh={refreshSnapshot}
-        onDisconnect={disconnect}
+        onDisconnect={() => {
+          disconnect();
+          onUnlinked?.();
+        }}
       />
     );
   }
