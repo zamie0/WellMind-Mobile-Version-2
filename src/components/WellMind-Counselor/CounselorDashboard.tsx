@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { LogOut, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/stores/authStore';
 import { BottomNav } from './BottomNav';
@@ -72,15 +72,6 @@ export const CounselorDashboard = ({ onLogout }: CounselorDashboardProps) => {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onLogout}
-              className="h-9 w-9 text-muted-foreground hover:text-foreground sm:h-10 sm:w-10"
-              title="Logout"
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
             <Button
               variant="ghost"
               size="icon"

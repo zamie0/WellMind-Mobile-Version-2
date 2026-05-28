@@ -43,19 +43,22 @@ class HealthBridgePlugin : Plugin() {
         ) { grantedPermissions ->
             val call = pendingCall ?: return@registerForActivityResult
             pendingCall = null
-            if (grantedPermissions.containsAll(requiredReadPermissions)) {
-                fetchHealthSnapshot(call)
-            } else {
-                call.reject("Health Connect permissions denied. Please allow Steps, Heart Rate, and Sleep for WellMind.")
-            }
+            resolveStatus(call, grantedPermissions.containsAll(requiredReadPermissions), "Health Connect permission flow completed.")
         }
     }
 
     @PluginMethod
-    fun getHealthSnapshot(call: PluginCall) {
+    fun getHealthStatus(call: PluginCall) {
         val status = HealthConnectClient.getSdkStatus(context)
         if (status != HealthConnectClient.SDK_AVAILABLE) {
-            call.reject("Health Connect unavailable on this device (status=$status).")
+            val payload = JSObject().apply {
+                put("isNative", true)
+                put("isAvailable", false)
+                put("permissionsGranted", false)
+                put("sdkStatus", status)
+                put("message", "Health Connect is not available on this device.")
+            }
+            call.resolve(payload)
             return
         }
 
@@ -63,24 +66,51 @@ class HealthBridgePlugin : Plugin() {
             try {
                 val client = HealthConnectClient.getOrCreate(context)
                 val grantedPermissions = client.permissionController.getGrantedPermissions()
-                if (grantedPermissions.containsAll(requiredReadPermissions)) {
-                    fetchHealthSnapshot(call)
-                } else {
-                    activity.runOnUiThread {
-                        pendingCall = call
-                        permissionLauncher.launch(requestedReadPermissions)
-                    }
+                activity.runOnUiThread {
+                    resolveStatus(
+                        call,
+                        grantedPermissions.containsAll(requiredReadPermissions),
+                        "Health Connect is available."
+                    )
                 }
             } catch (e: Exception) {
-                activity.runOnUiThread { call.reject("Health snapshot failed: ${e.message}") }
+                activity.runOnUiThread { call.reject("Health status check failed: ${e.message}") }
             }
         }
     }
 
-    private fun fetchHealthSnapshot(call: PluginCall) {
+    @PluginMethod
+    fun requestHealthPermissions(call: PluginCall) {
+        val status = HealthConnectClient.getSdkStatus(context)
+        if (status != HealthConnectClient.SDK_AVAILABLE) {
+            val payload = JSObject().apply {
+                put("isNative", true)
+                put("isAvailable", false)
+                put("permissionsGranted", false)
+                put("sdkStatus", status)
+                put("message", "Install or enable Health Connect to continue.")
+            }
+            call.resolve(payload)
+            return
+        }
+
+        pendingCall = call
+        permissionLauncher.launch(requestedReadPermissions)
+    }
+
+    @PluginMethod
+    fun getHealthSnapshot(call: PluginCall) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val client = HealthConnectClient.getOrCreate(context)
+                val grantedPermissions = client.permissionController.getGrantedPermissions()
+                if (!grantedPermissions.containsAll(requiredReadPermissions)) {
+                    activity.runOnUiThread {
+                        call.reject("Health Connect permissions are required before syncing data.")
+                    }
+                    return@launch
+                }
+
                 val end = Instant.now()
                 val start = end.minus(1, ChronoUnit.DAYS)
 
@@ -119,7 +149,6 @@ class HealthBridgePlugin : Plugin() {
                     0.0
                 }
 
-                val grantedPermissions = client.permissionController.getGrantedPermissions()
                 val spo2 = if (grantedPermissions.contains(spo2Permission)) {
                     try {
                         val oxygenResponse = client.readRecords(
@@ -128,7 +157,7 @@ class HealthBridgePlugin : Plugin() {
                                 TimeRangeFilter.between(start, end)
                             )
                         )
-                        val oxygenValues = oxygenResponse.records.map { (it.percentage.value * 100).toInt() }
+                        val oxygenValues = oxygenResponse.records.map { it.percentage.value.toInt() }
                         if (oxygenValues.isNotEmpty()) oxygenValues.average().toInt() else 0
                     } catch (_: SecurityException) {
                         0
@@ -173,5 +202,16 @@ class HealthBridgePlugin : Plugin() {
                 activity.runOnUiThread { call.reject("Health snapshot failed: ${e.message}") }
             }
         }
+    }
+
+    private fun resolveStatus(call: PluginCall, permissionsGranted: Boolean, message: String) {
+        val payload = JSObject().apply {
+            put("isNative", true)
+            put("isAvailable", true)
+            put("permissionsGranted", permissionsGranted)
+            put("sdkStatus", HealthConnectClient.SDK_AVAILABLE)
+            put("message", message)
+        }
+        call.resolve(payload)
     }
 }

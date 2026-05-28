@@ -1,36 +1,23 @@
 import { motion } from 'framer-motion';
-import { Capacitor, registerPlugin } from '@capacitor/core';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from 'recharts';
 import { useWellMindStore } from '@/stores/wellmindStore';
 import { BottomNav } from '@/components/WellMind-User/BottomNav';
 import { MoodChart } from '@/components/WellMind-User/Home-Page/MoodChart';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import SmartwatchInsights from './Smartwatch/SmartwatchInsights';
 import type { Emotion } from '@/types/wellmind';
 import {
     Activity,
-    BedDouble,
     Clock3,
     Brain,
-    CalendarDays,
     Flame,
-    Heart,
     MoonStar,
     Sparkles,
     ShieldAlert,
     Target,
     TrendingUp,
 } from 'lucide-react';
-
-const dataCoverage = [
-    'Heart health: current/resting/min/max HR, HRV, zones, sleep HR, recovery HR.',
-    'Sleep: duration, stages, efficiency, score, consistency, bed/wake times.',
-    'Activity: steps, distance, calories, active/sedentary time, floors climbed.',
-    'Exercise: workout type, duration, calories, pace/speed, HR, route, elevation.',
-    'Stress & recovery: stress score/trend, recovery periods, HR-based estimations.',
-    'Oxygen & respiration: SpO2, breathing rate, respiratory stability (supported devices).',
-    'Body & environment: skin temperature variation, body composition, hydration logs.',
-];
 
 const emotionLabels: Record<Emotion, string> = {
     happy: 'Happy',
@@ -54,23 +41,8 @@ const emotionScore: Record<Emotion, number> = {
 
 const ranges = [7, 30, 90] as const;
 
-type HealthSnapshot = {
-    steps: number;
-    sleepScore: number;
-    restingHr: number;
-    stressLevel: string;
-    spo2: number;
-    recovery: number;
-};
-
-const HealthBridge = registerPlugin<{ getHealthSnapshot: () => Promise<HealthSnapshot> }>('HealthBridge');
-
 export const Insights = () => {
     const [selectedRange, setSelectedRange] = useState<(typeof ranges)[number]>(7);
-    const [samsungData, setSamsungData] = useState<HealthSnapshot | null>(null);
-    const [healthFetchError, setHealthFetchError] = useState<string | null>(null);
-    const [lastSyncAt, setLastSyncAt] = useState<string | null>(null);
-    const hasLoggedFetchErrorRef = useRef(false);
     const moodEntries = useWellMindStore((state) => state.moodEntries);
     const currentStreak = useWellMindStore((state) => state.currentStreak);
     const weeklyPlan = useWellMindStore((state) => state.weeklyPlan);
@@ -132,60 +104,33 @@ export const Insights = () => {
         return Math.round((stressSignals / rangedEntries.length) * 100);
     }, [rangedEntries]);
 
-    useEffect(() => {
-        const applyFakeData = () => {
-            setSamsungData({
-                steps: 7421,
-                sleepScore: 78,
-                restingHr: 64,
-                stressLevel: 'Medium',
-                spo2: 97,
-                recovery: 74,
-            });
-            setLastSyncAt(new Date().toLocaleTimeString());
-            setHealthFetchError(null);
-            hasLoggedFetchErrorRef.current = false;
-        };
-
-        applyFakeData();
-        const interval = setInterval(applyFakeData, 30000);
-        return () => clearInterval(interval);
-    }, []);
-
-    const steps = samsungData?.steps ?? 0;
-    const sleepScore = samsungData?.sleepScore ?? 0;
-    const restingHr = samsungData?.restingHr ?? 0;
-    const stressLevel = samsungData?.stressLevel ?? 'Unknown';
-    const spo2 = samsungData?.spo2 ?? 0;
-    const recovery = samsungData?.recovery ?? 0;
-
     const topSummaryCards = [
         {
             icon: <Activity className="h-5 w-5" />,
-            label: 'Steps Today',
-            value: steps.toLocaleString(),
-            subtext: 'Live Health Connect sync',
+            label: 'Check-ins',
+            value: String(rangedEntries.length),
+            subtext: `${selectedRange}-day mood entries`,
             color: 'bg-sky-light text-sky',
         },
         {
-            icon: <BedDouble className="h-5 w-5" />,
-            label: 'Sleep Score',
-            value: String(sleepScore),
-            subtext: 'Latest from health bridge',
+            icon: <Brain className="h-5 w-5" />,
+            label: 'Dominant Mood',
+            value: dominantMood ? emotionLabels[dominantMood] : 'Building',
+            subtext: dominantMood ? 'Most frequent mood signal' : 'Log moods to unlock',
             color: 'bg-lavender-light text-lavender',
         },
         {
-            icon: <Heart className="h-5 w-5" />,
-            label: 'Resting HR',
-            value: `${restingHr} BPM`,
-            subtext: 'Current wearable estimate',
+            icon: <TrendingUp className="h-5 w-5" />,
+            label: 'Stress Index',
+            value: `${stressIndex}%`,
+            subtext: 'Mood-based pressure estimate',
             color: 'bg-coral-light text-coral',
         },
         {
-            icon: <Brain className="h-5 w-5" />,
-            label: 'Stress Level',
-            value: stressLevel,
-            subtext: 'Reported from health bridge',
+            icon: <Target className="h-5 w-5" />,
+            label: 'Plan Progress',
+            value: `${planCompletion}%`,
+            subtext: 'Weekly wellness plan',
             color: 'bg-sage-light text-sage',
         },
     ];
@@ -200,8 +145,8 @@ export const Insights = () => {
         dominantMood
             ? `Your dominant mood in the last ${selectedRange} days is ${emotionLabels[dominantMood]}, which is shaping your resilience trend.`
             : `Start logging moods to unlock advanced pattern analysis for the last ${selectedRange} days.`,
-        `Weekly plan adherence is ${planCompletion}%, and your recovery score is ${recovery}/100.`,
-        `Estimated SpO2 stability is ${spo2}%. Breathing trend is healthier when stress index stays under 40%.`,
+        `Weekly plan adherence is ${planCompletion}%, which helps anchor your daily wellness rhythm.`,
+        `Stress index is ${stressIndex}%. Breathing trend is healthier when this stays under 40%.`,
         moodPrediction
             ? `Predicted tomorrow mood: ${emotionLabels[moodPrediction.predictedMood]} (${moodPrediction.confidence}% confidence).`
             : 'Add at least 3 mood check-ins to unlock prediction-driven recommendations.',
@@ -228,15 +173,11 @@ export const Insights = () => {
                         Your Insights
                     </motion.h1>
                     <p className="text-muted-foreground">
-                        Samsung Health powered wellness intelligence dashboard
+                        Mental wellness intelligence dashboard
                     </p>
-                    {healthFetchError ? (
-                        <p className="text-xs text-coral mt-2">{healthFetchError}</p>
-                    ) : (
-                        <p className="text-xs text-muted-foreground mt-2">
-                            {lastSyncAt ? `Health bridge connected. Last sync at ${lastSyncAt}.` : 'Connecting to health bridge...'}
-                        </p>
-                    )}
+                    <p className="text-xs text-muted-foreground mt-2">
+                        Smartwatch tracking is optional and appears after Health Connect permission.
+                    </p>
                 </div>
             </header>
 
@@ -291,6 +232,8 @@ export const Insights = () => {
 
                 <MoodChart />
 
+                <SmartwatchInsights stressIndex={stressIndex} />
+
                 <section className="bg-card rounded-2xl p-5 shadow-soft">
                     <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                         <Sparkles className="h-5 w-5 text-sky" />
@@ -328,25 +271,25 @@ export const Insights = () => {
                 <section className="bg-card rounded-2xl p-5 shadow-soft">
                     <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                         <MoonStar className="h-5 w-5 text-lavender" />
-                        Recovery and Stress Breakdown
+                        Plan and Stress Breakdown
                     </h2>
                     <ChartContainer
                         className="h-[220px] w-full"
                         config={{
-                            recovery: { label: 'Recovery', color: 'hsl(var(--sage))' },
+                            plan: { label: 'Plan Progress', color: 'hsl(var(--sage))' },
                             stress: { label: 'Stress Load', color: 'hsl(var(--coral))' },
                         }}
                     >
                         <BarChart
                             data={[
-                                { label: 'Recovery', recovery },
+                                { label: 'Plan', plan: planCompletion },
                                 { label: 'Stress', stress: stressIndex },
                             ]}
                         >
                             <CartesianGrid vertical={false} />
                             <XAxis dataKey="label" tickLine={false} axisLine={false} />
                             <ChartTooltip content={<ChartTooltipContent />} />
-                            <Bar dataKey="recovery" fill="var(--color-recovery)" radius={[8, 8, 0, 0]} />
+                            <Bar dataKey="plan" fill="var(--color-plan)" radius={[8, 8, 0, 0]} />
                             <Bar dataKey="stress" fill="var(--color-stress)" radius={[8, 8, 0, 0]} />
                         </BarChart>
                     </ChartContainer>
@@ -420,28 +363,14 @@ export const Insights = () => {
 
                 <section className="bg-card rounded-2xl p-5 shadow-soft">
                     <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                        <CalendarDays className="h-5 w-5 text-sky" />
-                        Data Coverage
-                    </h2>
-                    <div className="space-y-2">
-                        {dataCoverage.map((item) => (
-                            <p key={item} className="text-sm text-muted-foreground">
-                                {item}
-                            </p>
-                        ))}
-                    </div>
-                </section>
-
-                <section className="bg-card rounded-2xl p-5 shadow-soft">
-                    <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                         <ShieldAlert className="h-5 w-5 text-coral" />
                         Important Limitations
                     </h2>
                     <div className="space-y-2 text-sm text-muted-foreground">
-                        <p>Samsung Health requires explicit user consent for each data type.</p>
-                        <p>Sleep score and stress are Samsung-calculated metrics, not raw sensor streams.</p>
-                        <p>ECG and advanced cardiac signals are restricted in public SDK access.</p>
-                        <p>Background syncing and available metrics vary by watch model and user settings.</p>
+                        <p>Health Connect requires explicit user consent for each data type.</p>
+                        <p>Sleep, oxygen, and heart metrics depend on your watch model and source app settings.</p>
+                        <p>ECG and advanced cardiac signals may be restricted by device, region, or platform policy.</p>
+                        <p>Background syncing and available metrics vary by wearable, phone, and user settings.</p>
                         <p>
                             Best wellness signal blend: sleep quality + HRV + activity + stress for mood, burnout,
                             and recommendation engines.
