@@ -1,0 +1,289 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* WellMind Design System - Calming & Nurturing */
+    --background: 45 30% 98%;
+    --foreground: 200 15% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 200 15% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 200 15% 20%;
+
+    /* Primary - Sage Green (calming, growth) */
+    --primary: 160 35% 45%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 160 40% 92%;
+    --primary-glow: 160 50% 70%;
+
+    /* Secondary - Warm Cream */
+    --secondary: 40 35% 95%;
+    --secondary-foreground: 200 15% 25%;
+
+    /* Muted - Soft warm gray */
+    --muted: 40 20% 94%;
+    --muted-foreground: 200 10% 50%;
+
+    /* Accent - Soft Coral/Peach (warmth) */
+    --accent: 20 85% 75%;
+    --accent-foreground: 20 60% 25%;
+    --accent-light: 20 80% 95%;
+
+    /* Destructive */
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 20% 90%;
+    --input: 40 20% 90%;
+    --ring: 160 35% 45%;
+
+    --radius: 1rem;
+
+    /* Custom WellMind tokens */
+    --sage: 160 35% 45%;
+    --sage-light: 160 40% 92%;
+    --sage-dark: 160 35% 35%;
+    
+    --coral: 20 85% 75%;
+    --coral-light: 20 80% 95%;
+    
+    --sky: 200 70% 75%;
+    --sky-light: 200 60% 95%;
+    
+    --lavender: 270 50% 80%;
+    --lavender-light: 270 40% 95%;
+    
+    --honey: 40 90% 70%;
+    --honey-light: 40 80% 95%;
+
+    /* Emotion colors */
+    --emotion-happy: 50 90% 60%;
+    --emotion-neutral: 200 20% 70%;
+    --emotion-sad: 220 50% 60%;
+    --emotion-anxious: 30 80% 60%;
+    --emotion-stressed: 0 70% 60%;
+    --emotion-exhausted: 270 40% 60%;
+    --emotion-numb: 200 10% 60%;
+
+    /* Gradients */
+    --gradient-sage: linear-gradient(135deg, hsl(160 40% 92%) 0%, hsl(160 35% 85%) 100%);
+    --gradient-calm: linear-gradient(180deg, hsl(45 30% 98%) 0%, hsl(160 30% 95%) 100%);
+    --gradient-sunrise: linear-gradient(135deg, hsl(40 80% 95%) 0%, hsl(20 80% 92%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(160 35% 45%) 0%, hsl(180 40% 50%) 100%);
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -4px hsl(200 15% 20% / 0.08);
+    --shadow-card: 0 8px 30px -8px hsl(200 15% 20% / 0.1);
+    --shadow-glow: 0 0 40px hsl(160 50% 70% / 0.3);
+
+    /* Sidebar (keeping for compatibility) */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 200 15% 25%;
+    --sidebar-primary: 160 35% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 40 35% 95%;
+    --sidebar-accent-foreground: 200 15% 25%;
+    --sidebar-border: 40 20% 90%;
+    --sidebar-ring: 160 35% 45%;
+  }
+
+  .dark {
+    --background: 200 20% 10%;
+    --foreground: 45 20% 95%;
+
+    --card: 200 20% 14%;
+    --card-foreground: 45 20% 95%;
+
+    --popover: 200 20% 14%;
+    --popover-foreground: 45 20% 95%;
+
+    --primary: 160 40% 55%;
+    --primary-foreground: 200 20% 10%;
+    --primary-light: 160 30% 20%;
+    --primary-glow: 160 50% 40%;
+
+    --secondary: 200 15% 18%;
+    --secondary-foreground: 45 20% 95%;
+
+    --muted: 200 15% 18%;
+    --muted-foreground: 200 10% 60%;
+
+    --accent: 20 70% 60%;
+    --accent-foreground: 20 80% 95%;
+    --accent-light: 20 50% 20%;
+
+    --destructive: 0 60% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 15% 20%;
+    --input: 200 15% 20%;
+    --ring: 160 40% 55%;
+
+    --sage: 160 40% 55%;
+    --sage-light: 160 30% 20%;
+    --sage-dark: 160 40% 65%;
+    
+    --gradient-sage: linear-gradient(135deg, hsl(160 30% 20%) 0%, hsl(160 25% 15%) 100%);
+    --gradient-calm: linear-gradient(180deg, hsl(200 20% 10%) 0%, hsl(160 20% 12%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(160 40% 55%) 0%, hsl(180 45% 45%) 100%);
+
+    --shadow-soft: 0 4px 20px -4px hsl(0 0% 0% / 0.3);
+    --shadow-card: 0 8px 30px -8px hsl(0 0% 0% / 0.4);
+
+    --sidebar-background: 200 20% 10%;
+    --sidebar-foreground: 45 20% 95%;
+    --sidebar-primary: 160 40% 55%;
+    --sidebar-primary-foreground: 200 20% 10%;
+    --sidebar-accent: 200 15% 18%;
+    --sidebar-accent-foreground: 45 20% 95%;
+    --sidebar-border: 200 15% 20%;
+    --sidebar-ring: 160 40% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Hide scrollbars globally */
+  * {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+  
+  *::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+}
+
+@layer utilities {
+  .gradient-sage {
+    background: var(--gradient-sage);
+  }
+  
+  .gradient-calm {
+    background: var(--gradient-calm);
+  }
+  
+  .gradient-sunrise {
+    background: var(--gradient-sunrise);
+  }
+  
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Mobile app safe area */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Smooth scrolling */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Custom animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 2s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.1), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
