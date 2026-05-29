@@ -1,10 +1,11 @@
 import { WebPlugin } from '@capacitor/core';
-import type { HealthConnectStatus, HealthSnapshot } from './types';
+import type {
+  HealthConnectStatus,
+  HealthHistory,
+  HealthInsightPeriod,
+  HealthSnapshot,
+} from './types';
 
-/**
- * Browser fallback when HealthBridge native code is not present.
- * Health Connect only runs inside the Android APK (see android/.../HealthBridgePlugin.kt).
- */
 export class HealthBridgeWeb extends WebPlugin {
   async getHealthStatus(): Promise<HealthConnectStatus> {
     return {
@@ -19,8 +20,12 @@ export class HealthBridgeWeb extends WebPlugin {
     return this.getHealthStatus();
   }
 
-  async getHealthSnapshot(): Promise<HealthSnapshot> {
+  async getHealthSnapshot(_options: { period: HealthInsightPeriod }): Promise<HealthSnapshot> {
     throw new Error('Build and run the Android APK to sync Health Connect data.');
+  }
+
+  async getHealthHistory(): Promise<HealthHistory> {
+    throw new Error('Build and run the Android APK to load Health Connect history.');
   }
 
   async openHealthConnect(): Promise<{ opened: boolean; message?: string }> {

@@ -1,10 +1,13 @@
 import { motion } from 'framer-motion';
 import { Activity, BedDouble, Brain, Heart, RefreshCw, ShieldCheck, Wind } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { HealthSnapshot } from './types';
+import { HealthMetricsCalendar } from './HealthMetricsCalendar';
+import type { HealthHistory, HealthSnapshot } from './types';
 
 interface SmartwatchMetricsDashboardProps {
   snapshot: HealthSnapshot;
+  history: HealthHistory | null;
+  historyLoading?: boolean;
   stressIndex: number;
   onRefresh: () => void;
   onDisconnect: () => void;
@@ -12,37 +15,44 @@ interface SmartwatchMetricsDashboardProps {
 
 export const SmartwatchMetricsDashboard = ({
   snapshot,
+  history,
+  historyLoading,
   stressIndex,
   onRefresh,
   onDisconnect,
 }: SmartwatchMetricsDashboardProps) => {
+  const isToday = (snapshot.period ?? 'day') === 'day' && (snapshot.periodDays ?? 1) === 1;
+
   const metrics = [
     {
       icon: Activity,
       label: 'Steps Today',
       value: snapshot.steps.toLocaleString(),
-      subtext: 'Health Connect daily total',
+      subtext: isToday ? 'Calendar day total' : `Total over ${snapshot.periodDays ?? 1} days`,
       color: 'bg-sky-light text-sky',
     },
     {
       icon: BedDouble,
-      label: 'Sleep Score',
-      value: snapshot.sleepScore ? String(snapshot.sleepScore) : 'No data',
-      subtext: snapshot.sleepHours ? `${snapshot.sleepHours.toFixed(1)} hours recorded` : 'Waiting for sleep sessions',
+      label: 'Sleep',
+      value: snapshot.sleepHours > 0 ? `${snapshot.sleepHours.toFixed(1)}h` : 'No data',
+      subtext:
+        snapshot.sleepHours > 0
+          ? `Score ${snapshot.sleepScore}${isToday ? ' · last night' : ' · daily avg'}`
+          : 'Allow sleep access in Health Connect',
       color: 'bg-lavender-light text-lavender',
     },
     {
       icon: Heart,
-      label: 'Avg Heart Rate',
-      value: snapshot.restingHr ? `${snapshot.restingHr} BPM` : 'No data',
-      subtext: 'Average from recent samples',
+      label: 'Heart Rate',
+      value: snapshot.restingHr > 0 ? `${snapshot.restingHr} BPM` : 'No data',
+      subtext: snapshot.restingHr > 0 ? 'Average for this period' : 'Sync from watch or ring',
       color: 'bg-coral-light text-coral',
     },
     {
       icon: Wind,
-      label: 'Oxygen',
-      value: snapshot.spo2 ? `${snapshot.spo2}%` : 'No data',
-      subtext: 'Optional permission and device support',
+      label: 'Blood Oxygen',
+      value: snapshot.spo2 > 0 ? `${snapshot.spo2}%` : 'No data',
+      subtext: snapshot.spo2 > 0 ? 'Average SpO₂' : 'Grant oxygen permission if supported',
       color: 'bg-sage-light text-sage',
     },
   ];
@@ -64,10 +74,11 @@ export const SmartwatchMetricsDashboard = ({
             </p>
             <h2 className="mt-1 text-lg font-semibold text-foreground">Smartwatch Metrics</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Last sync {snapshot.lastSyncAt || 'just now'} · Stress level {snapshot.stressLevel}
+              {isToday && snapshot.date ? `Today (${snapshot.date})` : 'Summary'} · Last sync{' '}
+              {snapshot.lastSyncAt || 'just now'} · Stress {snapshot.stressLevel}
             </p>
           </div>
-          <Button variant="ghost" size="icon-sm" onClick={onRefresh} title="Refresh Health Connect data">
+          <Button variant="ghost" size="icon-sm" onClick={onRefresh} title="Refresh today's data">
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
@@ -92,6 +103,8 @@ export const SmartwatchMetricsDashboard = ({
         </div>
       </div>
 
+      <HealthMetricsCalendar history={history} loading={historyLoading} />
+
       <div className="rounded-2xl bg-card p-5 shadow-soft">
         <div className="mb-4 flex items-center gap-2">
           <Brain className="h-5 w-5 text-primary" />
@@ -101,7 +114,8 @@ export const SmartwatchMetricsDashboard = ({
           <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(readiness, 100)}%` }} />
         </div>
         <p className="mt-3 text-sm text-muted-foreground">
-          Readiness blends recovery score with your WellMind stress trend. Use it as a gentle wellness cue, not a diagnosis.
+          Readiness blends recovery score with your WellMind stress trend. Use it as a gentle wellness cue, not a
+          diagnosis.
         </p>
         <Button variant="outline" className="mt-4 w-full border-coral/30 text-coral hover:bg-coral/10" onClick={onDisconnect}>
           Hide Smartwatch Dashboard

@@ -3,7 +3,10 @@ import { useMemo, useState } from 'react';
 import { useWellMindStore } from '@/stores/wellmindStore';
 import { BottomNav } from '@/components/WellMind-User/BottomNav';
 import { MoodChart } from '@/components/WellMind-User/Home-Page/MoodChart';
-import SmartwatchInsights from './Smartwatch/SmartwatchInsights';
+import { InsightsHealthPanels } from './insights/InsightsHealthPanels';
+import { filterMoodEntriesByPeriod, computeMoodStressIndex } from './insights/periodUtils';
+import SmartwatchInsights, { type SmartwatchHealthController } from './Smartwatch/SmartwatchInsights';
+import { useSmartwatchHealth } from './Smartwatch/useSmartwatchHealth';
 import type { Emotion } from '@/types/wellmind';
 import { Activity, Brain, Target, TrendingUp } from 'lucide-react';
 
@@ -22,19 +25,17 @@ const CONNECTED_KEY = 'wellmind-health-connect-enabled';
 export const Insights = () => {
     const [isSmartwatchLinked, setIsSmartwatchLinked] = useState(() => localStorage.getItem(CONNECTED_KEY) === 'true');
     const [showSmartwatchSetup, setShowSmartwatchSetup] = useState(false);
+    const smartwatchHealth: SmartwatchHealthController = useSmartwatchHealth();
+
     const moodEntries = useWellMindStore((state) => state.moodEntries);
     const currentStreak = useWellMindStore((state) => state.currentStreak);
     const weeklyPlan = useWellMindStore((state) => state.weeklyPlan);
-    const moodPrediction = useWellMindStore((state) => state.moodPrediction);
-    const calmCoins = useWellMindStore((state) => state.calmCoins);
-    const badges = useWellMindStore((state) => state.badges);
-
     const sortedEntries = useMemo(
         () => [...moodEntries].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
         [moodEntries]
     );
 
-    const rangedEntries = sortedEntries;
+    const monthEntries = useMemo(() => filterMoodEntriesByPeriod(sortedEntries, 'month'), [sortedEntries]);
 
     const planCompletion = useMemo(() => {
         if (!weeklyPlan?.tasks.length) return 0;
@@ -44,11 +45,11 @@ export const Insights = () => {
 
     const moodCounts = useMemo(
         () =>
-            rangedEntries.reduce((acc, entry) => {
+            monthEntries.reduce((acc, entry) => {
                 acc[entry.emotion] = (acc[entry.emotion] || 0) + 1;
                 return acc;
             }, {} as Record<Emotion, number>),
-        [rangedEntries]
+        [monthEntries]
     );
 
     const dominantMood = useMemo(() => {
@@ -56,26 +57,20 @@ export const Insights = () => {
         return top ? (top[0] as Emotion) : null;
     }, [moodCounts]);
 
-    const stressIndex = useMemo(() => {
-        if (!rangedEntries.length) return 0;
-        const stressSignals = rangedEntries.filter((entry) =>
-            ['anxious', 'stressed', 'exhausted', 'sad'].includes(entry.emotion)
-        ).length;
-        return Math.round((stressSignals / rangedEntries.length) * 100);
-    }, [rangedEntries]);
+    const stressIndex = useMemo(() => computeMoodStressIndex(monthEntries), [monthEntries]);
 
     const positiveDays = useMemo(() => {
-        if (!rangedEntries.length) return 0;
-        const positive = rangedEntries.filter((entry) => entry.emotion === 'happy').length;
-        return Math.round((positive / rangedEntries.length) * 100);
-    }, [rangedEntries]);
+        if (!monthEntries.length) return 0;
+        const positive = monthEntries.filter((entry) => entry.emotion === 'happy').length;
+        return Math.round((positive / monthEntries.length) * 100);
+    }, [monthEntries]);
 
     const topSummaryCards = [
         {
             icon: <Activity className="h-5 w-5" />,
             label: 'Total Check-ins',
-            value: String(rangedEntries.length),
-            subtext: 'Mood logs recorded',
+            value: String(monthEntries.length),
+            subtext: 'Last 30 days',
             color: 'bg-sky-light text-sky',
         },
         {
@@ -96,30 +91,12 @@ export const Insights = () => {
             icon: <Brain className="h-5 w-5" />,
             label: 'Most Frequent',
             value: dominantMood ? emotionLabels[dominantMood] : 'N/A',
-            subtext: 'Top mood pattern',
+            subtext: 'Top mood (30 days)',
             color: 'bg-lavender-light text-lavender',
         },
     ];
 
-    const deepInsights = [
-        dominantMood
-            ? `Your dominant mood recently is ${emotionLabels[dominantMood]}, which is shaping your resilience trend.`
-            : 'Start logging moods to unlock advanced pattern analysis.',
-        `Weekly plan adherence is ${planCompletion}%, which helps anchor your daily wellness rhythm.`,
-        `Stress index is ${stressIndex}%. Breathing trend is healthier when this stays under 40%.`,
-        moodPrediction
-            ? `Predicted tomorrow mood: ${emotionLabels[moodPrediction.predictedMood]} (${moodPrediction.confidence}% confidence).`
-            : 'Add at least 3 mood check-ins to unlock prediction-driven recommendations.',
-    ];
-
-    const trendHighlights = [
-        `Mood consistency trend is ${rangedEntries.length >= 5 ? 'stable' : 'building'} across recent entries.`,
-        `Current streak: ${currentStreak} day(s), with ${calmCoins} Calm Coins earned momentum.`,
-        `${badges.length} badge(s) unlocked. Gamification engagement is boosting routine adherence.`,
-        stressIndex > 60
-            ? 'Stress burden is elevated. Prioritize sleep quality + short midday recovery blocks.'
-            : 'Stress burden is in a healthy range. Keep stacking routines for long-term resilience.',
-    ];
+    const showSmartwatchFlow = showSmartwatchSetup || isSmartwatchLinked;
 
     return (
         <div className="min-h-screen bg-background pb-24">
@@ -184,8 +161,9 @@ export const Insights = () => {
                     </section>
                 )}
 
-                {!isSmartwatchLinked && showSmartwatchSetup && (
+                {showSmartwatchFlow && (
                     <SmartwatchInsights
+                        health={smartwatchHealth}
                         stressIndex={stressIndex}
                         onLinked={() => {
                             setIsSmartwatchLinked(true);
@@ -198,48 +176,8 @@ export const Insights = () => {
                     />
                 )}
 
-                {isSmartwatchLinked && (
-                    <>
-                        <SmartwatchInsights
-                            stressIndex={stressIndex}
-                            onLinked={() => {
-                                setIsSmartwatchLinked(true);
-                                setShowSmartwatchSetup(false);
-                            }}
-                            onUnlinked={() => {
-                                setIsSmartwatchLinked(false);
-                                setShowSmartwatchSetup(false);
-                            }}
-                        />
-
-                        <section className="bg-card rounded-2xl p-5 shadow-soft">
-                            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                                <TrendingUp className="h-5 w-5 text-coral" />
-                                Trend Highlights
-                            </h2>
-                            <div className="space-y-2">
-                                {trendHighlights.map((item) => (
-                                    <p key={item} className="text-sm text-muted-foreground">
-                                        {item}
-                                    </p>
-                                ))}
-                            </div>
-                        </section>
-
-                        <section className="bg-card rounded-2xl p-5 shadow-soft">
-                            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                                <Target className="h-5 w-5 text-sage" />
-                                Deep Insights
-                            </h2>
-                            <div className="space-y-3">
-                                {deepInsights.map((item) => (
-                                    <p key={item} className="text-sm text-muted-foreground">
-                                        {item}
-                                    </p>
-                                ))}
-                            </div>
-                        </section>
-                    </>
+                {smartwatchHealth.state === 'connected' && smartwatchHealth.snapshot && (
+                    <InsightsHealthPanels healthLinked />
                 )}
             </main>
 

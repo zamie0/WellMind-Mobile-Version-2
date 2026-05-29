@@ -179,19 +179,53 @@ class HealthBridgePlugin : Plugin() {
             return
         }
 
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                if (!repository.hasPermissions(repository.readPermissions)) {
-                    withContext(Dispatchers.Main) {
-                        call.reject("Health Connect permissions are required before syncing data.")
+        val period = call.getString("period", "day")
+        val periodDays = HealthSnapshotReader.periodToDays(period)
+
+        activity.runOnUiThread {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    if (!repository.hasPermissions(repository.readPermissions)) {
+                        withContext(Dispatchers.Main) {
+                            call.reject("Health Connect permissions are required before syncing data.")
+                        }
+                        return@launch
                     }
-                    return@launch
+                    val payload = HealthSnapshotReader.readSnapshot(repository, periodDays)
+                    withContext(Dispatchers.Main) { call.resolve(payload) }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        call.reject("Health snapshot failed: ${e.message}")
+                    }
                 }
-                val payload = HealthSnapshotReader.readSnapshot(repository)
-                withContext(Dispatchers.Main) { call.resolve(payload) }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    call.reject("Health snapshot failed: ${e.message}")
+            }
+        }
+    }
+
+    @PluginMethod
+    fun getHealthHistory(call: PluginCall) {
+        if (!repository.isAvailable()) {
+            call.reject("Health Connect is not available on this device.")
+            return
+        }
+
+        val historyDays = (call.getInt("days") ?: 14).coerceIn(1, 30)
+
+        activity.runOnUiThread {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    if (!repository.hasPermissions(repository.readPermissions)) {
+                        withContext(Dispatchers.Main) {
+                            call.reject("Health Connect permissions are required before loading history.")
+                        }
+                        return@launch
+                    }
+                    val payload = HealthSnapshotReader.readHistory(repository, historyDays)
+                    withContext(Dispatchers.Main) { call.resolve(payload) }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        call.reject("Health history failed: ${e.message}")
+                    }
                 }
             }
         }

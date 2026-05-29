@@ -1,90 +1,138 @@
 package com.zami.wellmind.health
 
-import androidx.health.connect.client.records.OxygenSaturationRecord
-import androidx.health.connect.client.records.RestingHeartRateRecord
-import androidx.health.connect.client.records.SleepSessionRecord
-import androidx.health.connect.client.records.StepsRecord
+import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
-import java.time.Duration
-import java.time.Instant
-import java.time.temporal.ChronoUnit
+import java.time.LocalDate
+import java.time.ZoneId
 
 object HealthSnapshotReader {
-    suspend fun readSnapshot(repository: HealthConnectRepository): JSObject {
-        val end = Instant.now()
-        val start = end.minus(1, ChronoUnit.DAYS)
 
-        val stepsAggregate = repository.readAggregatedData(StepsRecord.COUNT_TOTAL, start, end)
-        val steps = (stepsAggregate[StepsRecord.COUNT_TOTAL] as? Long) ?: 0L
+    fun periodToDays(period: String?): Int = HealthMetricsCalculator.periodToDays(period)
 
-        val sleepAggregate =
-            repository.readAggregatedData(SleepSessionRecord.SLEEP_DURATION_TOTAL, start, end)
-        val sleepDuration = sleepAggregate[SleepSessionRecord.SLEEP_DURATION_TOTAL] as? Duration
-        val sleepHours = (sleepDuration?.seconds ?: 0L) / 3600.0
+    suspend fun readSnapshot(repository: HealthConnectRepository, periodDays: Int): JSObject {
+        val zone = ZoneId.systemDefault()
+        val today = LocalDate.now(zone)
+        val (rangeStart, rangeEnd) = HealthMetricsCalculator.dayRange(periodDays)
 
-        var restingHr = 0
-        runCatching {
-            val restingAggregate =
-                repository.readAggregatedData(RestingHeartRateRecord.BPM_AVG, start, end)
-            restingHr = (restingAggregate[RestingHeartRateRecord.BPM_AVG] as? Double)?.toInt() ?: 0
-        }
+        val stepsRecords = repository.readData(
+            androidx.health.connect.client.records.StepsRecord::class,
+            rangeStart,
+            rangeEnd,
+        ).records
 
-        if (restingHr == 0) {
-            runCatching {
-                val hrResponse = repository.readData(
+        val sleepRecords = repository.readData(
+            androidx.health.connect.client.records.SleepSessionRecord::class,
+            rangeStart,
+            rangeEnd,
+        ).records
+
+        val heartRecords = buildList {
+            addAll(
+                repository.readData(
+                    androidx.health.connect.client.records.RestingHeartRateRecord::class,
+                    rangeStart,
+                    rangeEnd,
+                ).records
+            )
+            addAll(
+                repository.readData(
                     androidx.health.connect.client.records.HeartRateRecord::class,
-                    start,
-                    end,
-                )
-                val samples = hrResponse.records.flatMap { record ->
-                    (record as androidx.health.connect.client.records.HeartRateRecord).samples
-                }
-                if (samples.isNotEmpty()) {
-                    restingHr = samples.map { it.beatsPerMinute }.average().toInt()
-                }
-            }
+                    rangeStart,
+                    rangeEnd,
+                ).records
+            )
         }
 
-        var spo2 = 0
-        runCatching {
-            val oxygenResponse = repository.readData(OxygenSaturationRecord::class, start, end)
-            val values = oxygenResponse.records.map { record ->
-                (record as OxygenSaturationRecord).percentage.value
-            }
-            if (values.isNotEmpty()) {
-                spo2 = values.average().toInt()
-            }
+        val oxygenRecords = repository.readData(
+            androidx.health.connect.client.records.OxygenSaturationRecord::class,
+            rangeStart,
+            rangeEnd,
+        ).records
+
+        if (periodDays == 1) {
+            val todayMetrics = HealthMetricsCalculator.buildDayMetrics(
+                today,
+                stepsRecords,
+                sleepRecords,
+                heartRecords,
+                oxygenRecords,
+            )
+            return HealthMetricsCalculator.snapshotFromDayMetrics(todayMetrics, periodDays)
         }
 
-        val sleepScore = when {
-            sleepHours >= 8.0 -> 92
-            sleepHours >= 7.0 -> 84
-            sleepHours >= 6.0 -> 74
-            sleepHours >= 5.0 -> 62
-            sleepHours > 0.0 -> 50
-            else -> 0
+        val days = (0 until periodDays).map { offset ->
+            val date = today.minusDays((periodDays - 1 - offset).toLong())
+            HealthMetricsCalculator.buildDayMetrics(
+                date,
+                stepsRecords,
+                sleepRecords,
+                heartRecords,
+                oxygenRecords,
+            )
         }
 
-        val stressLevel = when {
-            restingHr == 0 -> "Unknown"
-            restingHr >= 82 -> "High"
-            restingHr >= 68 -> "Medium"
-            else -> "Low"
+        return HealthMetricsCalculator.aggregatePeriodMetrics(days, periodDays)
+    }
+
+    suspend fun readHistory(repository: HealthConnectRepository, historyDays: Int): JSObject {
+        val zone = ZoneId.systemDefault()
+        val today = LocalDate.now(zone)
+        val days = historyDays.coerceIn(1, 30)
+        val startDate = today.minusDays((days - 1).toLong())
+        val rangeStart = startDate.atStartOfDay(zone).toInstant()
+        val rangeEnd = java.time.Instant.now()
+
+        val stepsRecords = repository.readData(
+            androidx.health.connect.client.records.StepsRecord::class,
+            rangeStart,
+            rangeEnd,
+        ).records
+
+        val sleepRecords = repository.readData(
+            androidx.health.connect.client.records.SleepSessionRecord::class,
+            rangeStart,
+            rangeEnd,
+        ).records
+
+        val heartRecords = buildList {
+            addAll(
+                repository.readData(
+                    androidx.health.connect.client.records.RestingHeartRateRecord::class,
+                    rangeStart,
+                    rangeEnd,
+                ).records
+            )
+            addAll(
+                repository.readData(
+                    androidx.health.connect.client.records.HeartRateRecord::class,
+                    rangeStart,
+                    rangeEnd,
+                ).records
+            )
         }
 
-        val recovery = when {
-            restingHr == 0 && sleepScore == 0 -> 0
-            else -> (sleepScore * 0.6 + (100 - restingHr.coerceIn(45, 100)) * 0.4).toInt().coerceIn(0, 100)
+        val oxygenRecords = repository.readData(
+            androidx.health.connect.client.records.OxygenSaturationRecord::class,
+            rangeStart,
+            rangeEnd,
+        ).records
+
+        val dayList = JSArray()
+        for (offset in 0 until days) {
+            val date = today.minusDays((days - 1 - offset).toLong())
+            val metrics = HealthMetricsCalculator.buildDayMetrics(
+                date,
+                stepsRecords,
+                sleepRecords,
+                heartRecords,
+                oxygenRecords,
+            )
+            dayList.put(HealthMetricsCalculator.dayMetricsToJson(metrics))
         }
 
         return JSObject().apply {
-            put("steps", steps)
-            put("sleepScore", sleepScore)
-            put("restingHr", restingHr)
-            put("stressLevel", stressLevel)
-            put("spo2", spo2)
-            put("recovery", recovery)
-            put("sleepHours", sleepHours)
+            put("days", dayList)
+            put("historyDays", days)
         }
     }
 }
