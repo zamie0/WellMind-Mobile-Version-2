@@ -175,6 +175,38 @@ export interface WeeklyPlan {
   generatedAt: Date;
 }
 
+export interface HealingGoal {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  completed: boolean;
+  optional?: boolean;
+}
+
+// In-App Categories
+export type InAppCategory = 'community' | 'volunteering' | 'programs' | 'selfcare' | 'resources' | 'events' | 'mentorship';
+
+export interface InAppItem {
+  id: string;
+  title: string;
+  description: string;
+  category: InAppCategory;
+  link?: string;
+  tags?: string[];
+  isPremium?: boolean;
+}
+
+export interface InAppContent {
+  community: InAppItem[];
+  volunteering: InAppItem[];
+  programs: InAppItem[];
+  selfcare: InAppItem[];
+  resources: InAppItem[];
+  events: InAppItem[];
+  mentorship: InAppItem[];
+}
+
 // Mood Prediction
 export interface MoodPrediction {
   predictedMood: Emotion;

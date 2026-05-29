@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { 
   Emotion, MoodEntry, UserProfile, VirtualPet, PetMood, BadgeId, 
-  PetSkin, PetAccessory, WeeklyPlan, DailyTask, MoodPrediction, JournalEntry 
+  PetSkin, PetAccessory, WeeklyPlan, DailyTask, MoodPrediction, JournalEntry, HealingGoal 
 } from '@/types/wellmind';
 
 interface WellMindState {
@@ -25,6 +25,9 @@ interface WellMindState {
   
   // Weekly Plan
   weeklyPlan: WeeklyPlan | null;
+
+  // Healing Goals
+  healingGoals: HealingGoal[];
   
   // Mood Prediction
   moodPrediction: MoodPrediction | null;
@@ -69,6 +72,7 @@ interface WellMindState {
   // Weekly Plan Actions
   generateWeeklyPlan: () => void;
   completeTask: (taskId: string) => void;
+  toggleHealingGoal: (id: string) => void;
   
   // Mood Prediction Actions
   generateMoodPrediction: () => void;
@@ -177,6 +181,32 @@ export const useWellMindStore = create<WellMindState>()(
       unlockedSkins: ['default'] as PetSkin[],
       unlockedAccessories: ['none'] as PetAccessory[],
       weeklyPlan: null,
+      healingGoals: [
+        {
+          id: 'breathe-slowly',
+          title: 'Breathe Slowly',
+          description: '2 minutes of calm breathing',
+          icon: '🌬️',
+          completed: false,
+          optional: false,
+        },
+        {
+          id: 'express-one-thought',
+          title: 'Express One Thought',
+          description: 'Write or note how you feel',
+          icon: '✍️',
+          completed: false,
+          optional: true,
+        },
+        {
+          id: 'reach-out',
+          title: 'Reach Out',
+          description: 'Message someone you trust',
+          icon: '💬',
+          completed: false,
+          optional: true,
+        },
+      ] as HealingGoal[],
       moodPrediction: null,
 
       setUser: (user) => set({ user }),
@@ -539,6 +569,24 @@ export const useWellMindStore = create<WellMindState>()(
         }
         if (journalEntries.length >= 10 && !badges.includes('journal_master')) {
           get().unlockBadge('journal_master');
+        }
+      },
+
+      toggleHealingGoal: (id) => {
+        const goal = get().healingGoals.find((item) => item.id === id);
+        if (!goal) return;
+
+        const wasCompleted = goal.completed;
+        set((state) => ({
+          healingGoals: state.healingGoals.map((item) =>
+            item.id === id ? { ...item, completed: !item.completed } : item
+          ),
+        }));
+
+        if (!wasCompleted) {
+          get().addCoins(10);
+          get().addPetExperience(5);
+          get().checkAndUnlockBadges();
         }
       },
 

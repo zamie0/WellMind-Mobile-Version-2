@@ -14,6 +14,8 @@ import EmotionDashboard from "./pages/EmotionDashboard";
 import Auth from "./pages/Auth";
 import PeerSupportChat from "./components/WellMind-User/Peers-Page/PeerSupportChat";
 import { useAuthStore } from "./stores/authStore";
+import InAppCategoryPage from "./pages/InAppCategory";
+import InAppItemPage from "./pages/InAppItem";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +52,8 @@ const RootNavigator = () => {
       <Route path="/mindfulness" element={<Mindfulness />} />
       <Route path="/rewards" element={<Rewards />} />
       <Route path="/peer" element={<UserPeerSupportRoute />} />
+      <Route path="/inapp/:category" element={<InAppCategoryPage />} />
+      <Route path="/inapp/:category/items/:itemId" element={<InAppItemPage />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/counselor" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
