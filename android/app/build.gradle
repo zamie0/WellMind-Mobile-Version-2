@@ -1,6 +1,10 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
+kotlin {
+    jvmToolchain(25)
+}
+
 android {
     namespace = "com.zami.wellmind"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -45,7 +49,7 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
-    implementation "androidx.health.connect:connect-client:1.1.0-rc03"
+    implementation "androidx.health.connect:connect-client:1.2.0-alpha02"
 }
 
 apply from: 'capacitor.build.gradle'

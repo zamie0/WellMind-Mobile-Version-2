@@ -25,6 +25,16 @@ allprojects {
     }
 }
 
+subprojects { subproject ->
+    subproject.tasks.withType(JavaCompile).configureEach {
+        javaCompiler.set(
+            javaToolchains.compilerFor {
+                languageVersion.set(JavaLanguageVersion.of(25))
+            }
+        )
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }

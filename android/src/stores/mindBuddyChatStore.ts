@@ -8,6 +8,7 @@ export interface MindBuddyMessage {
   sender: 'user' | 'buddy';
   timestamp: Date;
   emotion?: EmotionLabel;
+  emotionConfidence?: number;
 }
 
 interface MindBuddyChatState {

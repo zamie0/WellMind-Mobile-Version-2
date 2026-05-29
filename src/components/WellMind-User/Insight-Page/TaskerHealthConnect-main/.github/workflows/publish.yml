@@ -1,0 +1,59 @@
+# This workflow will build and publish an APK to the latest release
+# See https://github.com/docker/build-push-action
+
+name: Publish APK
+
+on:
+  release:
+    types: [ "published" ]
+
+jobs:
+  publish_to_release:
+    name: Publish APK
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Set version variable
+      id: vars
+      run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+    
+    - name: Checkout
+      uses: actions/checkout@v6
+    
+    - name: Set up JDK
+      uses: actions/setup-java@v5
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'gradle'
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v6
+
+    - name: Update build.gradle version info
+      run: |
+        file=app/build.gradle
+        versionCode=$(grep -oP 'versionCode\s+\K\d+' $file)
+        newCode=$((versionCode + 1))
+        sed -i "s/versionCode\s\+$versionCode/versionCode $newCode/" $file
+        sed -i "s/versionName\s\+\".*\"/versionName \"${{ steps.vars.outputs.tag }}\"/" $file
+
+    - name: Commit version changes
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git add app/build.gradle
+        git commit -m "Bump version to ${{ steps.vars.outputs.tag }}"
+        git push origin HEAD:main
+
+    - name: Build APK with Gradle
+      env:
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      run: ./gradlew assembleRelease
+        
+    - name: Upload APK
+      uses: shogo82148/actions-upload-release-asset@v1
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: app/build/outputs/apk/release/app-release.apk
+        asset_name: TaskerHealthConnect-${{ steps.vars.outputs.tag }}.apk

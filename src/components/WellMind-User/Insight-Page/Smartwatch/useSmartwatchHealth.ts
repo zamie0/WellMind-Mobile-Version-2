@@ -32,7 +32,9 @@ export const useSmartwatchHealth = () => {
 
       if (!status.isAvailable) {
         setState('unavailable');
-        localStorage.removeItem(CONNECTED_KEY);
+        if (localStorage.getItem(CONNECTED_KEY) === 'true' && !status.permissionsGranted) {
+          localStorage.removeItem(CONNECTED_KEY);
+        }
         return;
       }
 
@@ -41,10 +43,14 @@ export const useSmartwatchHealth = () => {
         return;
       }
 
-      setState(status.permissionsGranted ? 'connected' : 'disconnected');
       if (status.permissionsGranted) {
-        await refreshSnapshot();
+        setState('disconnected');
+        return;
       }
+
+      setState('disconnected');
+      setSnapshot(null);
+      localStorage.removeItem(CONNECTED_KEY);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unable to check Health Connect status.';
       setMessage(errorMessage);
@@ -55,29 +61,36 @@ export const useSmartwatchHealth = () => {
   const connect = useCallback(async () => {
     setState('connecting');
     try {
-      const status = await healthConnectClient.requestPermissions();
+      let status = await healthConnectClient.getStatus();
       setMessage(status.message ?? null);
 
       if (!status.isAvailable) {
-        // If Health Connect isn't available, open the Health Connect app/settings to install/enable it.
         try {
-          await healthConnectClient.openHealthConnect();
+          await healthConnectClient.installHealthConnect();
+          setMessage('Install or update Health Connect, then tap Continue again.');
         } catch {
-          // ignore errors here, user can install via Play Store
-          try {
-            await healthConnectClient.installHealthConnect();
-          } catch {
-            // no-op
-          }
+          setMessage('Health Connect is not available. Install it from the Play Store.');
         }
-
         setState('unavailable');
         return;
       }
 
       if (!status.permissionsGranted) {
+        status = await healthConnectClient.requestPermissions();
+        setMessage(status.message ?? null);
+      }
+
+      if (!status.permissionsGranted) {
+        try {
+          await healthConnectClient.openHealthConnect();
+        } catch {
+          // no-op
+        }
         setState('disconnected');
-        toast.error('Health Connect permissions were not granted.');
+        setMessage(
+          'Grant WellMind access to Steps, Heart rate, and Sleep in Health Connect, then return here and tap Continue again.'
+        );
+        toast.message('Finish permission setup in Health Connect, then tap Continue again.');
         return;
       }
 
@@ -102,6 +115,17 @@ export const useSmartwatchHealth = () => {
 
   useEffect(() => {
     void checkStatus();
+  }, [checkStatus]);
+
+  useEffect(() => {
+    if (!healthConnectClient.isNative()) return;
+
+    const onResume = () => {
+      void checkStatus();
+    };
+
+    window.addEventListener('resume', onResume);
+    return () => window.removeEventListener('resume', onResume);
   }, [checkStatus]);
 
   useEffect(() => {

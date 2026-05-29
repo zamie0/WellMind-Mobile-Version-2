@@ -9,9 +9,15 @@ interface HealthBridgePlugin {
   installHealthConnect: () => Promise<{ opened: boolean; message?: string }>;
 }
 
-const HealthBridge = registerPlugin<HealthBridgePlugin>('HealthBridge');
+const HealthBridge = registerPlugin<HealthBridgePlugin>('HealthBridge', {
+  web: () => import('./healthBridgeWeb').then((m) => new m.HealthBridgeWeb()),
+});
 
 export const healthConnectClient = {
+  isNative(): boolean {
+    return Capacitor.isNativePlatform();
+  },
+
   async getStatus(): Promise<HealthConnectStatus> {
     if (!Capacitor.isNativePlatform()) {
       return {
@@ -39,6 +45,10 @@ export const healthConnectClient = {
   },
 
   async getSnapshot(): Promise<HealthSnapshot> {
+    if (!Capacitor.isNativePlatform()) {
+      throw new Error('Health Connect data is only available in the Android app.');
+    }
+
     const snapshot = await HealthBridge.getHealthSnapshot();
     return {
       ...snapshot,

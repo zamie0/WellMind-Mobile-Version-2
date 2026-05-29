@@ -8,6 +8,48 @@ export interface MoodEntry {
   timestamp: Date;
 }
 
+// Journal Types
+export interface JournalEntry {
+  id: string;
+  content: string;
+  linkedMoodId?: string; // Links to mood entry if written during mood check-in
+  linkedEmotion?: Emotion;
+  timestamp: Date;
+}
+
+// Peer Support Chat Types
+export interface PeerUser {
+  id: string;
+  displayName: string;
+  isAnonymous: boolean;
+  status: 'online' | 'away' | 'busy';
+  bio?: string;
+  supportTopics: string[];
+  specialization?: string;
+  rating?: number;
+  experienceYears?: number;
+  consultationMethods?: ('chat' | 'video')[];
+  joinedAt: Date;
+}
+
+export interface PeerMessage {
+  id: string;
+  chatId: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  timestamp: Date;
+}
+
+export interface PeerChat {
+  id: string;
+  participants: string[];
+  participantNames: string[];
+  messages: PeerMessage[];
+  createdAt: Date;
+  lastMessageAt: Date;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -15,6 +57,23 @@ export interface UserProfile {
   notificationsEnabled: boolean;
   onboardingCompleted: boolean;
   streak: number;
+}
+
+// User Settings Types
+export interface NotificationSettings {
+  dailyReminder: boolean;
+  reminderTime: string;
+  moodCheckReminder: boolean;
+  streakReminder: boolean;
+  weeklyReport: boolean;
+  motivationalMessages: boolean;
+}
+
+export interface PrivacySettings {
+  shareAnonymousData: boolean;
+  showProfileInPeerChat: boolean;
+  allowDirectMessages: boolean;
+  dataRetentionDays: number;
 }
 
 export interface Affirmation {
@@ -65,6 +124,7 @@ export type BadgeId =
   | 'streak_30'
   | 'breathing_master'
   | 'journal_starter'
+  | 'journal_master'
   | 'mood_tracker'
   | 'calm_explorer'
   | 'pet_lover'

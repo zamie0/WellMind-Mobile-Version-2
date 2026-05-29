@@ -2,12 +2,13 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { 
   Emotion, MoodEntry, UserProfile, VirtualPet, PetMood, BadgeId, 
-  PetSkin, PetAccessory, WeeklyPlan, DailyTask, MoodPrediction 
+  PetSkin, PetAccessory, WeeklyPlan, DailyTask, MoodPrediction, JournalEntry 
 } from '@/types/wellmind';
 
 interface WellMindState {
   user: UserProfile | null;
   moodEntries: MoodEntry[];
+  journalEntries: JournalEntry[];
   currentStreak: number;
   lastCheckIn: Date | null;
   
@@ -35,6 +36,11 @@ interface WellMindState {
   getMoodHistory: (days?: number) => MoodEntry[];
   getTodaysMood: () => MoodEntry | undefined;
   updateStreak: () => void;
+  
+  // Journal Actions
+  addJournalEntry: (content: string, linkedMoodId?: string, linkedEmotion?: Emotion) => void;
+  deleteJournalEntry: (id: string) => void;
+  getJournalHistory: (days?: number) => JournalEntry[];
   
   // Pet Actions
   setPetName: (name: string) => void;
@@ -160,6 +166,7 @@ export const useWellMindStore = create<WellMindState>()(
     (set, get) => ({
       user: null,
       moodEntries: [],
+      journalEntries: [],
       currentStreak: 0,
       lastCheckIn: null,
       pet: getDefaultPet(),
@@ -225,6 +232,38 @@ export const useWellMindStore = create<WellMindState>()(
           entryDate.setHours(0, 0, 0, 0);
           return entryDate.getTime() === today.getTime();
         });
+      },
+
+      // Journal Actions
+      addJournalEntry: (content, linkedMoodId, linkedEmotion) => {
+        const entry: JournalEntry = {
+          id: crypto.randomUUID(),
+          content,
+          linkedMoodId,
+          linkedEmotion,
+          timestamp: new Date(),
+        };
+        
+        set((state) => ({
+          journalEntries: [entry, ...state.journalEntries],
+        }));
+        
+        get().addCoins(5);
+        get().checkAndUnlockBadges();
+      },
+
+      deleteJournalEntry: (id) => {
+        set((state) => ({
+          journalEntries: state.journalEntries.filter((entry) => entry.id !== id),
+        }));
+      },
+
+      getJournalHistory: (days = 30) => {
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        return get().journalEntries.filter(
+          (entry) => new Date(entry.timestamp) >= cutoff
+        );
       },
 
       updateStreak: () => {
@@ -465,7 +504,7 @@ export const useWellMindStore = create<WellMindState>()(
       },
 
       checkAndUnlockBadges: () => {
-        const { moodEntries, currentStreak, totalCoinsEarned, badges, pet } = get();
+        const { moodEntries, journalEntries, currentStreak, totalCoinsEarned, badges, pet } = get();
         
         if (moodEntries.length >= 1 && !badges.includes('first_checkin')) {
           get().unlockBadge('first_checkin');
@@ -493,6 +532,13 @@ export const useWellMindStore = create<WellMindState>()(
         }
         if (pet.level >= 10 && !badges.includes('pet_level_10')) {
           get().unlockBadge('pet_level_10');
+        }
+        // Journal badges
+        if (journalEntries.length >= 1 && !badges.includes('journal_starter')) {
+          get().unlockBadge('journal_starter');
+        }
+        if (journalEntries.length >= 10 && !badges.includes('journal_master')) {
+          get().unlockBadge('journal_master');
         }
       },
 
@@ -641,6 +687,7 @@ export const useWellMindStore = create<WellMindState>()(
     }),
     {
       name: 'wellmind-storage',
+      version: 1,
     }
   )
 );
