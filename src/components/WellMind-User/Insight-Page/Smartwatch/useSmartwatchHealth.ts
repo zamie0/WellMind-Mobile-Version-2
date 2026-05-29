@@ -59,6 +59,18 @@ export const useSmartwatchHealth = () => {
       setMessage(status.message ?? null);
 
       if (!status.isAvailable) {
+        // If Health Connect isn't available, open the Health Connect app/settings to install/enable it.
+        try {
+          await healthConnectClient.openHealthConnect();
+        } catch {
+          // ignore errors here, user can install via Play Store
+          try {
+            await healthConnectClient.installHealthConnect();
+          } catch {
+            // no-op
+          }
+        }
+
         setState('unavailable');
         return;
       }

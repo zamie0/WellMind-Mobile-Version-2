@@ -18,6 +18,7 @@ import com.getcapacitor.annotation.CapacitorPlugin
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import kotlinx.coroutines.CoroutineScope
+import android.content.Intent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -96,6 +97,58 @@ class HealthBridgePlugin : Plugin() {
 
         pendingCall = call
         permissionLauncher.launch(requestedReadPermissions)
+    }
+
+    @PluginMethod
+    fun openHealthConnect(call: PluginCall) {
+        try {
+            val action =
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+                    "android.health.connect.action.HEALTH_HOME_SETTINGS"
+                else "androidx.health.ACTION_HEALTH_CONNECT_SETTINGS"
+
+            activity.runOnUiThread {
+                try {
+                    activity.startActivity(Intent(action))
+                    val payload = com.getcapacitor.JSObject().apply {
+                        put("opened", true)
+                        put("message", "Opened Health Connect settings.")
+                    }
+                    call.resolve(payload)
+                } catch (e: Exception) {
+                    call.reject("Failed to open Health Connect: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            call.reject("Failed to open Health Connect: ${e.message}")
+        }
+    }
+
+    @PluginMethod
+    fun installHealthConnect(call: PluginCall) {
+        try {
+            val providerPackageName = "com.google.android.apps.healthdata"
+            val uriString = "market://details?id=$providerPackageName&url=healthconnect%3A%2F%2Fonboarding"
+            activity.runOnUiThread {
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        setPackage("com.android.vending")
+                        data = android.net.Uri.parse(uriString)
+                        putExtra("overlay", true)
+                    }
+                    activity.startActivity(intent)
+                    val payload = com.getcapacitor.JSObject().apply {
+                        put("opened", true)
+                        put("message", "Opened Play Store for Health Connect.")
+                    }
+                    call.resolve(payload)
+                } catch (e: Exception) {
+                    call.reject("Failed to open Play Store: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            call.reject("Failed to install Health Connect: ${e.message}")
+        }
     }
 
     @PluginMethod

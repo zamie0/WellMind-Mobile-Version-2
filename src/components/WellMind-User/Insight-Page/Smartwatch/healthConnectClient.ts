@@ -5,6 +5,8 @@ interface HealthBridgePlugin {
   getHealthStatus: () => Promise<HealthConnectStatus>;
   requestHealthPermissions: () => Promise<HealthConnectStatus>;
   getHealthSnapshot: () => Promise<HealthSnapshot>;
+  openHealthConnect: () => Promise<{ opened: boolean; message?: string }>;
+  installHealthConnect: () => Promise<{ opened: boolean; message?: string }>;
 }
 
 const HealthBridge = registerPlugin<HealthBridgePlugin>('HealthBridge');
@@ -42,5 +44,21 @@ export const healthConnectClient = {
       ...snapshot,
       lastSyncAt: new Date().toLocaleTimeString(),
     };
+  },
+
+  async openHealthConnect(): Promise<{ opened: boolean; message?: string }> {
+    if (!Capacitor.isNativePlatform()) {
+      return { opened: false, message: 'Open Health Connect from the Android device.' };
+    }
+
+    return HealthBridge.openHealthConnect();
+  },
+
+  async installHealthConnect(): Promise<{ opened: boolean; message?: string }> {
+    if (!Capacitor.isNativePlatform()) {
+      return { opened: false, message: 'Install Health Connect on the Android device.' };
+    }
+
+    return HealthBridge.installHealthConnect();
   },
 };
