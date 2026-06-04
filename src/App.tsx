@@ -2,7 +2,16 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import Community from "./components/WellMind-User/Home-Page/Community";
+import Volunteering from "./components/WellMind-User/Home-Page/Volunteering";
+import Programs from "./components/WellMind-User/Home-Page/Programs";
+import Resources from "./components/WellMind-User/Home-Page/Resources";
+import Events from "./components/WellMind-User/Home-Page/Events";
+import Mentorship from "./components/WellMind-User/Home-Page/Mentorship";
+import SelfAssessment from "./components/WellMind-User/Home-Page/SelfAssessment";
+import WellnessPlan from "./components/WellMind-User/Home-Page/WellnessPlan";
 import Index from "./components/WellMind-User/Index";
 import Insights from "./components/WellMind-User/Insight-Page/Insights";
 import Mindfulness from "./components/WellMind-User/Mindful-Page/Mindfulness";
@@ -14,8 +23,7 @@ import EmotionDashboard from "./pages/EmotionDashboard";
 import Auth from "./pages/Auth";
 import PeerSupportChat from "./components/WellMind-User/Peers-Page/PeerSupportChat";
 import { useAuthStore } from "./stores/authStore";
-import InAppCategoryPage from "./pages/InAppCategory";
-import InAppItemPage from "./pages/InAppItem";
+import { startNotificationScheduler } from "./lib/notificationScheduler";
 
 const queryClient = new QueryClient();
 
@@ -52,8 +60,14 @@ const RootNavigator = () => {
       <Route path="/mindfulness" element={<Mindfulness />} />
       <Route path="/rewards" element={<Rewards />} />
       <Route path="/peer" element={<UserPeerSupportRoute />} />
-      <Route path="/inapp/:category" element={<InAppCategoryPage />} />
-      <Route path="/inapp/:category/items/:itemId" element={<InAppItemPage />} />
+      <Route path="/community" element={<Community />} />
+      <Route path="/volunteering" element={<Volunteering />} />
+      <Route path="/programs" element={<Programs />} />
+      <Route path="/resources" element={<Resources />} />
+      <Route path="/events" element={<Events />} />
+      <Route path="/mentorship" element={<Mentorship />} />
+      <Route path="/self-assessment" element={<SelfAssessment />} />
+      <Route path="/wellness-plan" element={<WellnessPlan />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/counselor" element={<Navigate to="/" replace />} />
       <Route path="*" element={<NotFound />} />
@@ -61,16 +75,22 @@ const RootNavigator = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner position="top-center" />
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <RootNavigator />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  useEffect(() => {
+    startNotificationScheduler();
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner position="top-center" />
+        <BrowserRouter>
+          <RootNavigator />
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

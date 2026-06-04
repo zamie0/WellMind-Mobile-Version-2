@@ -28,8 +28,13 @@ export interface PeerUser {
   specialization?: string;
   rating?: number;
   experienceYears?: number;
-  consultationMethods?: ('chat' | 'video')[];
+  consultationMethods?: ConsultationType[];
   joinedAt: Date;
+}
+
+export interface EncryptedPayload {
+  iv: string;
+  data: string;
 }
 
 export interface PeerMessage {
@@ -37,7 +42,8 @@ export interface PeerMessage {
   chatId: string;
   senderId: string;
   senderName: string;
-  content: string;
+  /** Plaintext is never persisted. `content` holds the AES-GCM ciphertext. */
+  content: EncryptedPayload | string;
   timestamp: Date;
 }
 
@@ -48,6 +54,22 @@ export interface PeerChat {
   messages: PeerMessage[];
   createdAt: Date;
   lastMessageAt: Date;
+}
+
+export type ConsultationType = 'chat' | 'video';
+export type ReminderChannel = 'push' | 'email' | 'local';
+export type SessionStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+
+export interface SessionBooking {
+  id: string;
+  peerId: string;
+  peerName: string;
+  preferredDate: Date;
+  consultationType: ConsultationType;
+  reminders: ReminderChannel[];
+  notes?: string;
+  status: SessionStatus;
+  createdAt: Date;
 }
 
 export interface UserProfile {
@@ -168,13 +190,6 @@ export interface DailyTask {
   completed: boolean;
 }
 
-export interface WeeklyPlan {
-  id: string;
-  weekStart: Date;
-  tasks: DailyTask[];
-  generatedAt: Date;
-}
-
 export interface HealingGoal {
   id: string;
   title: string;
@@ -184,27 +199,11 @@ export interface HealingGoal {
   optional?: boolean;
 }
 
-// In-App Categories
-export type InAppCategory = 'community' | 'volunteering' | 'programs' | 'selfcare' | 'resources' | 'events' | 'mentorship';
-
-export interface InAppItem {
+export interface WeeklyPlan {
   id: string;
-  title: string;
-  description: string;
-  category: InAppCategory;
-  link?: string;
-  tags?: string[];
-  isPremium?: boolean;
-}
-
-export interface InAppContent {
-  community: InAppItem[];
-  volunteering: InAppItem[];
-  programs: InAppItem[];
-  selfcare: InAppItem[];
-  resources: InAppItem[];
-  events: InAppItem[];
-  mentorship: InAppItem[];
+  weekStart: Date;
+  tasks: DailyTask[];
+  generatedAt: Date;
 }
 
 // Mood Prediction

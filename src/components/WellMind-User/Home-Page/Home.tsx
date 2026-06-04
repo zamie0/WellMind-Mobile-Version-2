@@ -13,16 +13,18 @@ import { MoodPrediction } from '@/components/WellMind-User/Insight-Page/MoodPred
 import { ActivitySuggestion } from '@/components/WellMind-User/Home-Page/ActivitySuggestion';
 import { HealingGoals } from '@/components/WellMind-User/Home-Page/Goals/HealingGoals';
 import { YourGoals } from '@/components/WellMind-User/Home-Page/Goals/YourGoals';
-import { InAppSection } from '@/components/WellMind-User/Home-Page/InApp/InAppSection';
+import { RelaxGamesSheet } from '@/components/WellMind-User/Home-Page/RelaxGames';
+import { AmbientSoundsSheet } from '@/components/WellMind-User/Home-Page/AmbientSounds/AmbientSoundsSheet';
 import { useWellMindStore } from '@/stores/wellmindStore';
 import { Flame, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-
 
 export const Home = () => {
   const [showMoodSelector, setShowMoodSelector] = useState(false);
   const [showBreathing, setShowBreathing] = useState(false);
   const [showJournal, setShowJournal] = useState(false);
+  const [showGames, setShowGames] = useState(false);
+  const [showSounds, setShowSounds] = useState(false);
   
   const user = useWellMindStore((state) => state.user);
   const currentStreak = useWellMindStore((state) => state.currentStreak);
@@ -146,10 +148,9 @@ export const Home = () => {
         <section>
           <h2 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h2>
           <QuickActions
-            onBreathingClick={() => setShowBreathing(true)}
             onJournalClick={handleJournalClick}
-            onChatClick={handleChatClick}
-            onAffirmationClick={handleAffirmationClick}
+            onGamesClick={() => setShowGames(true)}
+            onSoundsClick={() => setShowSounds(true)}
           />
         </section>
 
@@ -172,12 +173,6 @@ export const Home = () => {
         <section>
           <MoodChart />
         </section>
-
-        <HealingGoals />
-
-        <YourGoals />
-
-        <InAppSection />
       </main>
 
       {/* Panic Button FAB */}
@@ -226,6 +221,9 @@ export const Home = () => {
           <JournalEntry onClose={() => setShowJournal(false)} />
         )}
       </AnimatePresence>
+
+      <RelaxGamesSheet open={showGames} onClose={() => setShowGames(false)} />
+      <AmbientSoundsSheet open={showSounds} onClose={() => setShowSounds(false)} />
     </div>
   );
 };

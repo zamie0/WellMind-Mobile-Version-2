@@ -26,7 +26,7 @@ import {
 import { usePeerChatStore, type ConsultationType, type CounsellorAppointment } from '@/stores/peerChatStore';
 import { useWellMindStore } from '@/stores/wellmindStore';
 import { toast } from 'sonner';
-import type { PeerUser } from '@/types/wellmind';
+import type { PeerMessage, PeerUser } from '@/types/wellmind';
 import { BottomNav } from '@/components/WellMind-User/BottomNav';
 
 interface PeerSupportChatProps {
@@ -57,6 +57,9 @@ const formatTime = (date: Date) =>
     minute: '2-digit',
     hour12: true,
   });
+
+const formatMessageContent = (content: PeerMessage['content']) =>
+  typeof content === 'string' ? content : 'Encrypted message';
 
 const getStatusColor = (status: PeerUser['status']) => {
   switch (status) {
@@ -523,7 +526,7 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
                   className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                 >
                   <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${isOwn ? 'bg-coral text-white rounded-br-md' : 'bg-sage-light text-foreground rounded-bl-md'}`}>
-                    <p className="text-sm">{message.content}</p>
+                    <p className="text-sm">{formatMessageContent(message.content)}</p>
                     <p className={`text-xs mt-1 ${isOwn ? 'text-white/70' : 'text-muted-foreground'}`}>{formatTime(message.timestamp)}</p>
                   </div>
                 </motion.div>
@@ -626,7 +629,7 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-foreground">{peer.displayName}</p>
-                      {lastMessage && <p className="text-sm text-muted-foreground truncate">{lastMessage.content}</p>}
+                      {lastMessage && <p className="text-sm text-muted-foreground truncate">{formatMessageContent(lastMessage.content)}</p>}
                     </div>
                     <div className="flex items-center text-xs text-muted-foreground">
                       <Clock className="h-3 w-3 mr-1" />

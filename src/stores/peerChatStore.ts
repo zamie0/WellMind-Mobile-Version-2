@@ -153,6 +153,9 @@ const getPeerSupportSystemPrompt = (peerName: string): string => {
   return `You are ${peerName}, a compassionate peer supporter in a private support chat. Keep replies conversational, empathetic, and practical in 2-4 short sentences. Do not use bullet points or structured lists.`;
 };
 
+const messageContentToText = (content: PeerMessage['content']): string =>
+  typeof content === 'string' ? content : '[encrypted message]';
+
 export const usePeerChatStore = create<PeerChatState>()(
   persist(
     (set, get) => ({
@@ -440,7 +443,7 @@ export const usePeerChatStore = create<PeerChatState>()(
 
         const conversation = chat.messages.slice(-8).map((message) => ({
           role: message.senderId === peer.id ? 'assistant' as const : 'user' as const,
-          content: message.content,
+          content: messageContentToText(message.content),
         }));
 
         let content = PEER_RESPONSE_FALLBACKS[Math.floor(Math.random() * PEER_RESPONSE_FALLBACKS.length)];
