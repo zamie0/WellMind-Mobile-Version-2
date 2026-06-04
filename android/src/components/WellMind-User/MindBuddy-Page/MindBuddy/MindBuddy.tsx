@@ -6,7 +6,6 @@ import { useWellMindStore } from '@/stores/wellmindStore';
 import { BottomNav } from '@/components/WellMind-User/BottomNav';
 import { VirtualPet } from '@/components/WellMind-User/MindBuddy-Page/MindBuddy/VirtualPet';
 import { BadgeCard, getAllBadgeIds } from '@/components/WellMind-User/MindBuddy-Page/BadgeCard';
-import { RelaxGames } from '@/components/WellMind-User/MindBuddy-Page/RelaxGames';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -130,9 +129,6 @@ const Rewards = () => {
             ))}
           </div>
         </motion.div>
-
-        {/* Relaxation Games */}
-        <RelaxGames />
 
         {/* How to Earn */}
         <motion.div

@@ -2,6 +2,7 @@ import { create } from 'zustand/react';
 import { persist } from 'zustand/middleware';
 import type { PeerUser, PeerChat, PeerMessage } from '@/types/wellmind';
 import { getAzureChatCompletion } from '@/lib/azureOpenAI';
+import { apiRequest } from '@/lib/apiClient';
 
 export type AppointmentStatus = 'requested' | 'confirmed' | 'completed' | 'cancelled' | 'missed';
 export type ConsultationType = 'chat' | 'video';
@@ -153,6 +154,9 @@ const getPeerSupportSystemPrompt = (peerName: string): string => {
   return `You are ${peerName}, a compassionate peer supporter in a private support chat. Keep replies conversational, empathetic, and practical in 2-4 short sentences. Do not use bullet points or structured lists.`;
 };
 
+const messageContentToText = (content: PeerMessage['content']): string =>
+  typeof content === 'string' ? content : '[encrypted message]';
+
 export const usePeerChatStore = create<PeerChatState>()(
   persist(
     (set, get) => ({
@@ -207,8 +211,37 @@ export const usePeerChatStore = create<PeerChatState>()(
         }));
       },
 
-      loadAvailablePeers: () => {
-        set({ availablePeers: SIMULATED_PEERS });
+      loadAvailablePeers: async () => {
+        try {
+          const response = await apiRequest<{ counselors: Array<{
+            id: string;
+            displayName: string;
+            bio: string;
+            specialization: string[];
+            rating: number;
+            status: string;
+            createdAt: string;
+          }> }>('/api/counselor');
+
+          set({
+            availablePeers: response.counselors.map((counselor) => ({
+              id: counselor.id,
+              displayName: counselor.displayName,
+              isAnonymous: false,
+              status: counselor.status === 'approved' ? 'online' : 'away',
+              bio: counselor.bio,
+              supportTopics: counselor.specialization || [],
+              specialization: counselor.specialization?.join(', ') || 'Counseling',
+              rating: counselor.rating,
+              experienceYears: 0,
+              consultationMethods: ['chat', 'video'],
+              joinedAt: new Date(counselor.createdAt),
+            })),
+          });
+        } catch (error) {
+          console.error('Failed to load counselors from API:', error);
+          set({ availablePeers: [] });
+        }
       },
 
       startChat: (peerId) => {
@@ -440,7 +473,7 @@ export const usePeerChatStore = create<PeerChatState>()(
 
         const conversation = chat.messages.slice(-8).map((message) => ({
           role: message.senderId === peer.id ? 'assistant' as const : 'user' as const,
-          content: message.content,
+          content: messageContentToText(message.content),
         }));
 
         let content = PEER_RESPONSE_FALLBACKS[Math.floor(Math.random() * PEER_RESPONSE_FALLBACKS.length)];

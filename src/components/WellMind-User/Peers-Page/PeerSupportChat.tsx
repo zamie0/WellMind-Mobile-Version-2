@@ -310,7 +310,7 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
       });
     }
 
-    toast.success('Profile saved. You can now connect with peer supporters.');
+    toast.success('Profile saved. You can now connect with counselors.');
     setView('peers');
   };
 
@@ -357,7 +357,7 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
               </div>
               <div>
                 <h1 className="text-2xl font-bold leading-tight">Set Up Your Profile</h1>
-                <p className="text-sm opacity-90">Join the peer support community</p>
+                <p className="text-sm opacity-90">Join the counselor support community</p>
               </div>
             </motion.div>
           </div>
@@ -376,7 +376,7 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
               </motion.div>
               <div className="flex-1">
                 <h2 className="font-semibold text-foreground">Choose Your Identity</h2>
-                <p className="text-sm text-muted-foreground">Choose how your profile appears in peer support chats.</p>
+                <p className="text-sm text-muted-foreground">Choose how your profile appears when chatting with counselors.</p>
               </div>
             </div>
 
@@ -465,16 +465,16 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
             transition={{ delay: 0.1 }}
             className="bg-honey-light/60 rounded-2xl p-5 border border-honey-light"
           >
-            <h3 className="font-medium text-foreground mb-1 flex items-center gap-2">💡 About Peer Support</h3>
+            <h3 className="font-medium text-foreground mb-1 flex items-center gap-2">💡 About Counselor Support</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Connect with trained peer supporters who understand what you are going through. All conversations are private and
+              Connect with trained counselors who understand what you are going through. All conversations are private and
               confidential.
             </p>
           </motion.div>
 
           <Button onClick={handleSetupComplete} className="w-full py-6 rounded-2xl bg-coral hover:bg-coral/90 text-white shadow-card">
             <Users className="h-5 w-5 mr-2" />
-            Find Peer Supporters
+            Find Counselors
           </Button>
         </main>
 
@@ -569,7 +569,7 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
               <Users className="h-7 w-7" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-2xl leading-tight font-bold text-[#1f2d3d]">Peer Support</h1>
+              <h1 className="text-2xl leading-tight font-bold text-[#1f2d3d]">Counselor Support</h1>
               <p className="text-[15px] text-[#4f6271] leading-snug mt-1">
                 You are not alone - connect with someone who gets it
               </p>
@@ -688,7 +688,7 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
         )}
 
         <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <h2 className="text-3xl font-semibold text-[#1f2d3d] mb-3 px-1">Available Supporters</h2>
+          <h2 className="text-3xl font-semibold text-[#1f2d3d] mb-3 px-1">Available Counselors</h2>
           <div className="space-y-3">
             {availablePeers.map((peer, index) => (
               <motion.div

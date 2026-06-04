@@ -2,6 +2,7 @@ import { create } from 'zustand/react';
 import { persist } from 'zustand/middleware';
 import type { PeerUser, PeerChat, PeerMessage } from '@/types/wellmind';
 import { getAzureChatCompletion } from '@/lib/azureOpenAI';
+import { apiRequest } from '@/lib/apiClient';
 
 export type AppointmentStatus = 'requested' | 'confirmed' | 'completed' | 'cancelled' | 'missed';
 export type ConsultationType = 'chat' | 'video';
@@ -210,8 +211,37 @@ export const usePeerChatStore = create<PeerChatState>()(
         }));
       },
 
-      loadAvailablePeers: () => {
-        set({ availablePeers: SIMULATED_PEERS });
+      loadAvailablePeers: async () => {
+        try {
+          const response = await apiRequest<{ counselors: Array<{
+            id: string;
+            displayName: string;
+            bio: string;
+            specialization: string[];
+            rating: number;
+            status: string;
+            createdAt: string;
+          }> }>('/api/counselor');
+
+          set({
+            availablePeers: response.counselors.map((counselor) => ({
+              id: counselor.id,
+              displayName: counselor.displayName,
+              isAnonymous: false,
+              status: counselor.status === 'approved' ? 'online' : 'away',
+              bio: counselor.bio,
+              supportTopics: counselor.specialization || [],
+              specialization: counselor.specialization?.join(', ') || 'Counseling',
+              rating: counselor.rating,
+              experienceYears: 0,
+              consultationMethods: ['chat', 'video'],
+              joinedAt: new Date(counselor.createdAt),
+            })),
+          });
+        } catch (error) {
+          console.error('Failed to load counselors from API:', error);
+          set({ availablePeers: [] });
+        }
       },
 
       startChat: (peerId) => {

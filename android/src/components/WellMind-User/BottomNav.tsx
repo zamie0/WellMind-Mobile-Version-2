@@ -7,7 +7,7 @@ const navItems = [
   { icon: Home, label: 'Home', path: '/' },
   { icon: BarChart2, label: 'Insights', path: '/insights' },
   { icon: Wind, label: 'Mindful', path: '/mindfulness' },
-  { icon: Sparkles, label: 'Rewards', path: '/rewards' },
+  { icon: Sparkles, label: 'MindBuddy', path: '/rewards' },
   { icon: Users, label: 'Peer', path: '/peer' },
   { icon: User, label: 'Profile', path: '/profile' },
 ];
@@ -43,7 +43,7 @@ export const BottomNav = () => {
                 {isActive && (
                   <motion.div
                     layoutId="navIndicator"
-                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary"
+                    className=""
                   />
                 )}
               </motion.div>

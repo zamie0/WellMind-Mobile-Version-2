@@ -24,6 +24,7 @@ import NotificationsSettings from '@/components/WellMind-User/Profile-Page/Notif
 import PrivacySettings from '@/components/WellMind-User/Profile-Page/PrivacySettings';
 import CrisisSupport from '@/components/WellMind-User/Profile-Page/CrisisSupport';
 import HelpFAQ from '@/components/WellMind-User/Profile-Page/HelpFAQ';
+import AchievementsSheet from '@/components/WellMind-User/Profile-Page/AchievementsSheet';
 
 type ActiveScreen = 'main' | 'pin' | 'notifications' | 'privacy' | 'crisis' | 'help';
 
@@ -31,8 +32,10 @@ export const Profile = () => {
   const user = useWellMindStore((state) => state.user);
   const currentStreak = useWellMindStore((state) => state.currentStreak);
   const moodEntries = useWellMindStore((state) => state.moodEntries);
+  const badges = useWellMindStore((state) => state.badges);
   const { logout, hasPin } = useAuthStore();
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>('main');
+  const [showAchievements, setShowAchievements] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -151,7 +154,7 @@ export const Profile = () => {
           <div className="bg-card rounded-2xl p-4 shadow-soft text-center">
             <Sparkles className="h-6 w-6 text-honey mx-auto mb-2" />
             <p className="text-2xl font-bold text-foreground">
-              {Math.min(moodEntries.length, 5)}
+              {badges.length}
             </p>
             <p className="text-xs text-muted-foreground">Badges</p>
           </div>
@@ -164,8 +167,31 @@ export const Profile = () => {
           transition={{ delay: 0.1 }}
           className="bg-card rounded-2xl p-5 shadow-soft"
         >
-          <h2 className="font-semibold text-foreground mb-4">Recent Achievements</h2>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          <button
+            type="button"
+            onClick={() => setShowAchievements(true)}
+            className="w-full text-left"
+          >
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="font-semibold text-foreground">Recent Achievements</h2>
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                View all
+                <ChevronRight className="h-4 w-4" />
+              </span>
+            </div>
+          </button>
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setShowAchievements(true)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                setShowAchievements(true);
+              }
+            }}
+            className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide cursor-pointer"
+          >
             {currentStreak >= 1 && (
               <div className="flex flex-col items-center">
                 <div className="w-14 h-14 rounded-full bg-coral-light flex items-center justify-center text-2xl mb-1">
@@ -262,6 +288,7 @@ export const Profile = () => {
         </motion.div>
       </main>
 
+      <AchievementsSheet open={showAchievements} onClose={() => setShowAchievements(false)} />
       <BottomNav />
     </div>
   );

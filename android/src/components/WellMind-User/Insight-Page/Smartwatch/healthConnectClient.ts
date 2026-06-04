@@ -1,10 +1,18 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
-import type { HealthConnectStatus, HealthSnapshot } from './types';
+import type {
+  HealthConnectStatus,
+  HealthHistory,
+  HealthHistoryOptions,
+  HealthInsightPeriod,
+  HealthSnapshot,
+  HealthSnapshotOptions,
+} from './types';
 
 interface HealthBridgePlugin {
   getHealthStatus: () => Promise<HealthConnectStatus>;
   requestHealthPermissions: () => Promise<HealthConnectStatus>;
-  getHealthSnapshot: () => Promise<HealthSnapshot>;
+  getHealthSnapshot: (options: { period: HealthInsightPeriod }) => Promise<HealthSnapshot>;
+  getHealthHistory: (options: { days: number }) => Promise<HealthHistory>;
   openHealthConnect: () => Promise<{ opened: boolean; message?: string }>;
   installHealthConnect: () => Promise<{ opened: boolean; message?: string }>;
 }
@@ -44,16 +52,27 @@ export const healthConnectClient = {
     return HealthBridge.requestHealthPermissions();
   },
 
-  async getSnapshot(): Promise<HealthSnapshot> {
+  async getSnapshot(options: HealthSnapshotOptions = {}): Promise<HealthSnapshot> {
     if (!Capacitor.isNativePlatform()) {
       throw new Error('Health Connect data is only available in the Android app.');
     }
 
-    const snapshot = await HealthBridge.getHealthSnapshot();
+    const period = options.period ?? 'day';
+    const snapshot = await HealthBridge.getHealthSnapshot({ period });
     return {
       ...snapshot,
+      period,
       lastSyncAt: new Date().toLocaleTimeString(),
     };
+  },
+
+  async getHistory(options: HealthHistoryOptions = {}): Promise<HealthHistory> {
+    if (!Capacitor.isNativePlatform()) {
+      throw new Error('Health Connect history is only available in the Android app.');
+    }
+
+    const days = options.days ?? 14;
+    return HealthBridge.getHealthHistory({ days });
   },
 
   async openHealthConnect(): Promise<{ opened: boolean; message?: string }> {

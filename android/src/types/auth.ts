@@ -7,6 +7,7 @@ export interface LocalUser {
   pin?: string;
   role: UserRole; // 'user' or 'counselor'
   createdAt: Date;
+  counselorProfile?: CounselorProfile;
   // Counselor specific fields
   counselorName?: string;
   specialization?: string[];
@@ -17,6 +18,16 @@ export interface LocalUser {
     endTime: string; // HH:mm
   }[];
   isVerified?: boolean; // Counselor verification status
+}
+
+export interface CounselorProfile {
+  displayName: string;
+  counselorName?: string;
+  specialty?: string;
+  specialization?: string[];
+  bio?: string;
+  availability?: LocalUser['availability'];
+  isVerified?: boolean;
 }
 
 export interface AuthState {

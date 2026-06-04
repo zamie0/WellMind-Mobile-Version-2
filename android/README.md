@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🌿 WellMind – Preventive Mental Health Mobile Application
 
 ## Project Overview
@@ -113,8 +114,11 @@ Users experiencing severe distress are encouraged to seek professional help.
 
 ## License
 
-This project is developed by the project team, led by Hazami, for **academic and educational purposes** under  
+This project is developed by Hazami, for **academic and educational purposes** under  
 **SSE3200 – Entrepreneurship in Computing (Semester I 2025/26)**.
 
 
 
+=======
+# WellMind
+>>>>>>> 3298c7d185fbc53e69c95af82b8bbd3e6bbdb06b

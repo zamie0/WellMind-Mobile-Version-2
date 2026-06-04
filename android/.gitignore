@@ -22,3 +22,30 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# =========================
+# Android / Capacitor / Gradle
+# =========================
+android/app/build/
+android/.gradle/
+android/capacitor-cordova-android-plugins/build/
+**/intermediates/
+**/outputs/
+*.apk
+
+# =========================
+# Build outputs
+# =========================
+build/
+out/
+
+# =========================
+# Capacitor generated assets
+# =========================
+android/app/src/main/assets/public/
+android/app/src/main/assets/public/assets/
+
+# =========================
+# VS / Copilot / IDE noise
+# =========================
+.vs/

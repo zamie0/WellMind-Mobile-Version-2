@@ -168,11 +168,6 @@ export const Home = () => {
         <section>
           <MoodPrediction />
         </section>
-
-        {/* Mood Chart */}
-        <section>
-          <MoodChart />
-        </section>
       </main>
 
       {/* Panic Button FAB */}

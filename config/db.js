@@ -6,10 +6,17 @@ let cached = global.mongoose || { conn: null, promise: null, bucket: null, db: n
 export default async function connectDB() {
   if (cached.conn) return cached;
 
+  const uri = process.env.MONGODB_URI || process.env.DATABASE_URL || process.env.MONGO_URI;
+  if (!uri) {
+    throw new Error("MongoDB connection URI is not configured. Set MONGODB_URI in your .env.");
+  }
+
+  mongoose.set("strictQuery", true);
+
   if (!cached.promise) {
-    cached.promise = mongoose.connect(process.env.MONGODB_URI, {
-      dbName: process.env.MONGODB_DB || "WellMind",
-    }).then((mongooseInstance) => mongooseInstance);
+    cached.promise = mongoose.connect(uri, {
+      dbName: process.env.MONGODB_DB || "wellmind",
+    }).then(() => mongoose);
   }
 
   try {
@@ -27,6 +34,8 @@ export default async function connectDB() {
 
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
+    cached.promise = null;
+    throw error;
   }
 
   global.mongoose = cached; // cache globally

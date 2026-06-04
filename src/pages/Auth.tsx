@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Mail, Lock, User, Eye, EyeOff, Sparkles, Stethoscope, Users } from 'lucide-react';
+import { Heart, Mail, Lock, Eye, EyeOff, Sparkles, Stethoscope, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/stores/authStore';
@@ -13,8 +13,6 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  const [specialty, setSpecialty] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -45,30 +43,17 @@ const Auth = () => {
       return;
     }
 
-    if (!isLogin && isCounselor && !displayName.trim()) {
-      toast.error('Please enter your display name');
-      setIsLoading(false);
-      return;
-    }
-
     await new Promise(resolve => setTimeout(resolve, 500));
 
     if (isLogin) {
-      const result = login(email, password, role);
+      const result = await login(email, password, role);
       if (result.success) {
         toast.success(isCounselor ? 'Welcome back, Counselor 💚' : 'Welcome back! 🌿');
       } else {
         toast.error(result.error || 'Login failed');
       }
     } else {
-      const result = register(
-        email,
-        password,
-        role,
-        isCounselor
-          ? { displayName: displayName.trim(), specialty: specialty.trim() || undefined }
-          : undefined
-      );
+      const result = await register(email, password, role);
       if (result.success) {
         toast.success(
           isCounselor
@@ -143,7 +128,10 @@ const Auth = () => {
             </button>
             <button
               type="button"
-              onClick={() => setRole('counselor')}
+              onClick={() => {
+                setRole('counselor');
+                setIsLogin(true);
+              }}
               className={`p-4 rounded-2xl border-2 transition-all text-left ${
                 role === 'counselor'
                   ? 'border-coral-400 bg-coral-50 shadow-sm'
@@ -167,15 +155,17 @@ const Auth = () => {
             >
               Login
             </button>
-            <button
-              type="button"
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                !isLogin ? 'bg-white text-sage-800 shadow-sm' : 'text-sage-500 hover:text-sage-700'
-              }`}
-            >
-              Register
-            </button>
+            {!isCounselor && (
+              <button
+                type="button"
+                onClick={() => setIsLogin(false)}
+                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+                  !isLogin ? 'bg-white text-sage-800 shadow-sm' : 'text-sage-500 hover:text-sage-700'
+                }`}
+              >
+                Register
+              </button>
+            )}
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -234,33 +224,6 @@ const Auth = () => {
                   </motion.div>
                 )}
 
-                {!isLogin && isCounselor && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="space-y-4"
-                  >
-                    <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-sage-400" />
-                      <Input
-                        placeholder="Display name (e.g. Dr. Alex)"
-                        value={displayName}
-                        onChange={(e) => setDisplayName(e.target.value)}
-                        className="pl-12 py-6 rounded-xl border-sage-200 focus:border-sage-400 bg-white"
-                      />
-                    </div>
-                    <div className="relative">
-                      <Stethoscope className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-sage-400" />
-                      <Input
-                        placeholder="Specialty (optional)"
-                        value={specialty}
-                        onChange={(e) => setSpecialty(e.target.value)}
-                        className="pl-12 py-6 rounded-xl border-sage-200 focus:border-sage-400 bg-white"
-                      />
-                    </div>
-                  </motion.div>
-                )}
               </motion.div>
             </AnimatePresence>
 
@@ -283,7 +246,7 @@ const Auth = () => {
               ) : isLogin ? (
                 isCounselor ? 'Sign in as Counselor' : 'Welcome Back'
               ) : isCounselor ? (
-                'Create Counselor Account'
+                'Counselor Registration Disabled'
               ) : (
                 'Start Your Journey'
               )}
@@ -293,7 +256,9 @@ const Auth = () => {
           <p className="text-center text-sage-500 text-sm mt-6">
             {isLogin
               ? "Don't have an account? Switch to Register"
-              : 'Already have an account? Switch to Login'}
+              : isCounselor
+                ? 'Counselor accounts are created in the Portal'
+                : 'Already have an account? Switch to Login'}
           </p>
         </motion.div>
 
@@ -303,7 +268,7 @@ const Auth = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          Your data is stored locally on your device 🔒
+          Your account is connected to WellMind MongoDB
         </motion.p>
       </motion.div>
     </div>

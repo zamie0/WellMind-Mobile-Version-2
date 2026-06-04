@@ -98,12 +98,6 @@ const exercises = [
   },
 ];
 
-const sounds = [
-  { id: 'rain', emoji: '🌧️', label: 'Rain' },
-  { id: 'ocean', emoji: '🌊', label: 'Ocean' },
-  { id: 'forest', emoji: '🌲', label: 'Forest' },
-  { id: 'fire', emoji: '🔥', label: 'Fire' },
-];
 
 export const Mindfulness = () => {
   const [showBreathing, setShowBreathing] = useState(false);
@@ -115,7 +109,7 @@ export const Mindfulness = () => {
   const [showLovingKindness, setShowLovingKindness] = useState(false);
   const [showVisualization, setShowVisualization] = useState(false);
   const [showGratitude, setShowGratitude] = useState(false);
-  const [activeSound, setActiveSound] = useState<string | null>(null);
+  
   const [showAIChat, setShowAIChat] = useState(false);
 
   const handleExerciseClick = (exercise: typeof exercises[0]) => {
@@ -175,38 +169,6 @@ export const Mindfulness = () => {
       </header>
 
       <main className="px-5 py-4 space-y-8">
-        {/* Ambient Sounds */}
-        <section>
-          <h2 className="text-lg font-semibold text-foreground mb-4">Ambient Sounds</h2>
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {sounds.map((sound) => (
-              <motion.button
-                key={sound.id}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setActiveSound(activeSound === sound.id ? null : sound.id)}
-                className={`flex flex-col items-center justify-center w-20 h-20 rounded-2xl transition-all ${
-                  activeSound === sound.id
-                    ? 'bg-primary text-primary-foreground shadow-glow'
-                    : 'bg-card shadow-soft'
-                }`}
-              >
-                <span className="text-2xl mb-1">{sound.emoji}</span>
-                <span className="text-xs font-medium">{sound.label}</span>
-              </motion.button>
-            ))}
-          </div>
-          {activeSound && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-sm text-muted-foreground text-center mt-3"
-            >
-              🎵 Sound feature coming soon...
-            </motion.p>
-          )}
-        </section>
-
         {/* Exercises */}
         <section>
           <h2 className="text-lg font-semibold text-foreground mb-4">Guided Exercises</h2>
@@ -258,20 +220,6 @@ export const Mindfulness = () => {
             ))}
           </div>
         </section>
-
-        {/* Tips */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-sage-light rounded-2xl p-5"
-        >
-          <h3 className="font-semibold text-foreground mb-2">💡 Quick Tip</h3>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Even just 1 minute of mindful breathing can help reduce stress hormones. 
-            Try to practice at the same time each day to build a habit.
-          </p>
-        </motion.section>
       </main>
 
       <BottomNav />
