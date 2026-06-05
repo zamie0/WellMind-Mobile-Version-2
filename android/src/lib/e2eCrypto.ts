@@ -1,4 +1,4 @@
-// Real end-to-end encryption for peer chat.
+// Real end-to-end encryption for counselor chat.
 // - Per-identity ECDH P-256 keypair (stored locally, private key never leaves device).
 // - Per-chat AES-GCM symmetric key derived via ECDH between the two participants.
 // - Each message has its own random 12-byte IV.
@@ -61,12 +61,12 @@ export async function ensureIdentity(id: string): Promise<JsonWebKey> {
   return publicKeyJwk;
 }
 
-/** Register a remote peer's public key (or auto-generate one for simulated peers). */
+/** Register a remote counselor's public key (or auto-generate one for simulated peers). */
 export async function ensurePeerPublicKey(peerId: string): Promise<JsonWebKey> {
   const book = loadBook();
   if (book.publicKeys[peerId]) return book.publicKeys[peerId];
 
-  // Simulated peer: generate a keypair so derivation works. In a real server-backed flow
+  // Simulated counselor: generate a keypair so derivation works. In a real server-backed flow
   // this would be fetched from a key directory instead.
   const pair = await subtle().generateKey(
     { name: 'ECDH', namedCurve: 'P-256' },

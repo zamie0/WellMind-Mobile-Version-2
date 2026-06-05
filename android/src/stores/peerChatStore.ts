@@ -74,7 +74,7 @@ interface PeerChatState {
 
 const SIMULATED_PEERS: PeerUser[] = [
   {
-    id: 'peer-1',
+    id: 'counselor-1',
     displayName: 'Khoo Weng Yen',
     isAnonymous: false,
     status: 'online',
@@ -86,7 +86,7 @@ const SIMULATED_PEERS: PeerUser[] = [
     joinedAt: new Date('2024-01-15'),
   },
   {
-    id: 'peer-2',
+    id: 'counselor-2',
     displayName: 'Aina Yusuf',
     isAnonymous: false,
     status: 'online',
@@ -98,7 +98,7 @@ const SIMULATED_PEERS: PeerUser[] = [
     joinedAt: new Date('2024-02-20'),
   },
   {
-    id: 'peer-3',
+    id: 'counselor-3',
     displayName: 'Daniel Tan',
     isAnonymous: false,
     status: 'away',
@@ -110,7 +110,7 @@ const SIMULATED_PEERS: PeerUser[] = [
     joinedAt: new Date('2024-03-10'),
   },
   {
-    id: 'peer-4',
+    id: 'counselor-4',
     displayName: 'Mei Lin',
     isAnonymous: false,
     status: 'online',
@@ -122,7 +122,7 @@ const SIMULATED_PEERS: PeerUser[] = [
     joinedAt: new Date('2024-04-05'),
   },
   {
-    id: 'peer-5',
+    id: 'counselor-5',
     displayName: 'Ravi Nair',
     isAnonymous: false,
     status: 'busy',
@@ -151,7 +151,7 @@ const PEER_RESPONSE_FALLBACKS = [
 ];
 
 const getPeerSupportSystemPrompt = (peerName: string): string => {
-  return `You are ${peerName}, a compassionate peer supporter in a private support chat. Keep replies conversational, empathetic, and practical in 2-4 short sentences. Do not use bullet points or structured lists.`;
+  return `You are ${peerName}, a compassionate counselor supporter in a private support chat. Keep replies conversational, empathetic, and practical in 2-4 short sentences. Do not use bullet points or structured lists.`;
 };
 
 const messageContentToText = (content: PeerMessage['content']): string =>
@@ -167,7 +167,7 @@ export const usePeerChatStore = create<PeerChatState>()(
       appointments: [
         {
           id: 'sample-appt-1',
-          peerId: 'peer-1',
+          peerId: 'counselor-1',
           appointmentDate: (() => { const d = new Date(); d.setDate(d.getDate() + 3); return d.toISOString().split('T')[0]; })(),
           slot: '10:00 AM',
           consultationType: 'chat',
@@ -179,7 +179,7 @@ export const usePeerChatStore = create<PeerChatState>()(
         },
         {
           id: 'sample-appt-2',
-          peerId: 'peer-2',
+          peerId: 'counselor-2',
           appointmentDate: (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0]; })(),
           slot: '2:00 PM',
           consultationType: 'video',
@@ -248,15 +248,15 @@ export const usePeerChatStore = create<PeerChatState>()(
         const existingChat = get().getChatWithPeer(peerId);
         if (existingChat) return existingChat.id;
 
-        const peer = get().availablePeers.find((p) => p.id === peerId);
+        const counselor = get().availablePeers.find((p) => p.id === peerId);
         const profile = get().peerProfile;
 
-        if (!peer || !profile) return '';
+        if (!counselor || !profile) return '';
 
         const chat: PeerChat = {
           id: `chat-${crypto.randomUUID()}`,
           participants: [profile.id, peerId],
-          participantNames: [profile.displayName, peer.displayName],
+          participantNames: [profile.displayName, counselor.displayName],
           messages: [],
           createdAt: new Date(),
           lastMessageAt: new Date(),
@@ -468,11 +468,11 @@ export const usePeerChatStore = create<PeerChatState>()(
         if (!chat || !profile) return;
 
         const peerId = chat.participants.find((p) => p !== profile.id);
-        const peer = get().availablePeers.find((p) => p.id === peerId);
-        if (!peer) return;
+        const counselor = get().availablePeers.find((p) => p.id === peerId);
+        if (!counselor) return;
 
         const conversation = chat.messages.slice(-8).map((message) => ({
-          role: message.senderId === peer.id ? 'assistant' as const : 'user' as const,
+          role: message.senderId === counselor.id ? 'assistant' as const : 'user' as const,
           content: messageContentToText(message.content),
         }));
 
@@ -483,7 +483,7 @@ export const usePeerChatStore = create<PeerChatState>()(
             [
               {
                 role: 'system',
-                content: getPeerSupportSystemPrompt(peer.displayName),
+                content: getPeerSupportSystemPrompt(counselor.displayName),
               },
               ...conversation,
             ],
@@ -500,8 +500,8 @@ export const usePeerChatStore = create<PeerChatState>()(
         const response: PeerMessage = {
           id: `msg-${crypto.randomUUID()}`,
           chatId,
-          senderId: peer.id,
-          senderName: `${peer.displayName} (AI)` ,
+          senderId: counselor.id,
+          senderName: `${counselor.displayName} (AI)` ,
           content,
           timestamp: new Date(),
         };
@@ -520,7 +520,7 @@ export const usePeerChatStore = create<PeerChatState>()(
       },
     }),
     {
-      name: 'wellmind-peer-chat',
+      name: 'wellmind-counselor-chat',
       version: 2,
     }
   )

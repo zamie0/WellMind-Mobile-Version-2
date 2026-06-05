@@ -43,14 +43,14 @@
 │  │ - Profile        │    │    │ - Appointments Tab     │        │
 │  │ - Insights       │    │    │ - Settings Tab         │        │
 │  │ - Rewards        │    │    │                        │        │
-│  │ - Peer Support   │    │    │ Features:              │        │
+│  │ - Counselor Support   │    │    │ Features:              │        │
 │  │ - Mindfulness    │    │    │ - Client Management    │        │
 │  │ - Appointments   │    │    │ - Live Chat            │        │
 │  └────────┬─────────┘    │    │ - Session Management   │        │
 │           │              │    │ - Notes & Tracking     │        │
 │           ↓              │    │ - Analytics            │        │
 │  ┌──────────────────┐    │    └────────┬───────────────┘        │
-│  │ Peer Support     │    │             │                        │
+│  │ Counselor Support     │    │             │                        │
 │  │ Chat Interface   │    │             ↓                        │
 │  │ - Message peers  │    │    ┌──────────────────────┐          │
 │  │ - Book sessions  │    │    │ Counselor Chat       │          │
@@ -78,7 +78,7 @@
 │         │    Browser LocalStorage     │                         │
 │         ├────────────────────────────┤                          │
 │         │ - wellmind-auth            │                          │
-│         │ - wellmind-peer-chat       │                          │
+│         │ - wellmind-counselor-chat       │                          │
 │         │ - wellmind-counselor       │                          │
 │         │ - wellmind-settings        │                          │
 │         │ - wellmind-wellmind        │                          │
@@ -165,7 +165,7 @@
 
 ```
 ┌──────────────────────┐
-│ User in Peer Support │
+│ User in Counselor Support │
 │  Chat Interface      │
 └──────────┬───────────┘
            │
@@ -230,7 +230,7 @@
              ↓
 ┌───────────────────────────────┐
 │ Persist to LocalStorage        │
-│ - wellmind-peer-chat           │
+│ - wellmind-counselor-chat           │
 │ - wellmind-counselor           │
 └───────────┬───────────────────┘
             │
@@ -443,7 +443,7 @@
        ├────────────────────────────────┤
        │ wellmind-auth                  │
        │ wellmind-counselor             │
-       │ wellmind-peer-chat             │
+       │ wellmind-counselor-chat             │
        │ wellmind-wellmind              │
        │ wellmind-settings              │
        └────────────────────────────────┘
@@ -566,7 +566,7 @@ User Interface
                 │  └─ Add to counselorStore.clients
                 │
                 └─ Persist to LocalStorage
-                   ├─ wellmind-peer-chat
+                   ├─ wellmind-counselor-chat
                    └─ wellmind-counselor
 
 T1: Counselor Checks Dashboard
@@ -682,7 +682,7 @@ All Changes Saved to LocalStorage:
       }]
     }
     
-    wellmind-peer-chat:
+    wellmind-counselor-chat:
     {
       appointments: [..., {
         status: 'completed',

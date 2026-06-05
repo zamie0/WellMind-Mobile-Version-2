@@ -34,4 +34,4 @@ const peerSchema = new mongoose.Schema(
 peerSchema.index({ displayName: 1 });
 peerSchema.index({ isActive: 1, status: 1 });
 
-export default mongoose.models.Peer || mongoose.model("Peer", peerSchema);
+export default mongoose.models.Counselor || mongoose.model("Counselor", peerSchema);

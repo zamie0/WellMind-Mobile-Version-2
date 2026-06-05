@@ -1,26 +1,26 @@
 import connectDB from "../../config/db.js";
-import Peer from "../models/Peer.js";
+import Counselor from "../models/Counselor.js";
 
-const formatPeer = (peer) => ({
-  id: peer._id.toString(),
-  displayName: peer.displayName,
-  isAnonymous: peer.isAnonymous,
-  status: peer.status,
-  bio: peer.bio,
-  supportTopics: peer.supportTopics,
-  specialization: peer.specialization,
-  rating: peer.rating,
-  experienceYears: peer.experienceYears,
-  consultationMethods: peer.consultationMethods,
-  joinedAt: peer.joinedAt,
-  isActive: peer.isActive,
+const formatPeer = (counselor) => ({
+  id: counselor._id.toString(),
+  displayName: counselor.displayName,
+  isAnonymous: counselor.isAnonymous,
+  status: counselor.status,
+  bio: counselor.bio,
+  supportTopics: counselor.supportTopics,
+  specialization: counselor.specialization,
+  rating: counselor.rating,
+  experienceYears: counselor.experienceYears,
+  consultationMethods: counselor.consultationMethods,
+  joinedAt: counselor.joinedAt,
+  isActive: counselor.isActive,
 });
 
 export async function listPeers(req, res) {
   try {
     await connectDB();
 
-    const peers = await Peer.find({ isActive: true }).sort({ rating: -1 });
+    const peers = await Counselor.find({ isActive: true }).sort({ rating: -1 });
 
     return res.status(200).json({
       peers: peers.map(formatPeer),
@@ -37,16 +37,16 @@ export async function getPeerById(req, res) {
     await connectDB();
     const { peerId } = req.params;
 
-    const peer = await Peer.findById(peerId);
+    const counselor = await Counselor.findById(peerId);
 
-    if (!peer) {
-      return res.status(404).json({ message: "Peer not found" });
+    if (!counselor) {
+      return res.status(404).json({ message: "Counselor not found" });
     }
 
-    return res.status(200).json({ peer: formatPeer(peer) });
+    return res.status(200).json({ counselor: formatPeer(counselor) });
   } catch (error) {
-    console.error("Error fetching peer:", error);
-    return res.status(500).json({ message: "Failed to fetch peer" });
+    console.error("Error fetching counselor:", error);
+    return res.status(500).json({ message: "Failed to fetch counselor" });
   }
 }
 
@@ -65,7 +65,7 @@ export async function searchPeers(req, res) {
       query.specialization = specialization;
     }
 
-    const peers = await Peer.find(query).sort({ rating: -1 });
+    const peers = await Counselor.find(query).sort({ rating: -1 });
 
     return res.status(200).json({
       peers: peers.map(formatPeer),

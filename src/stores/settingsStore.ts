@@ -23,7 +23,7 @@ const DEFAULT_NOTIFICATIONS: NotificationSettings = {
 
 const DEFAULT_PRIVACY: PrivacySettings = {
   shareAnonymousData: false,
-  showProfileInPeerChat: true,
+  showProfileInCounselorChat: true,
   allowDirectMessages: true,
   dataRetentionDays: 365,
 };

@@ -23,27 +23,27 @@ import {
   Mail,
   Smartphone,
 } from 'lucide-react';
-import { usePeerChatStore, type ConsultationType, type CounsellorAppointment } from '@/stores/peerChatStore';
+import { useCounselorChatStore, type ConsultationType, type CounsellorAppointment } from '@/stores/counselorChatStore';
 import { useWellMindStore } from '@/stores/wellmindStore';
 import { toast } from 'sonner';
-import type { PeerMessage, PeerUser } from '@/types/wellmind';
+import type { CounselorMessage, CounselorUser } from '@/types/wellmind';
 import { BottomNav } from '@/components/WellMind-User/BottomNav';
 
-interface PeerSupportChatProps {
+interface CounselorSupportChatProps {
   onClose?: () => void;
   embedded?: boolean;
 }
 
-type View = 'setup' | 'peers' | 'chat';
+type View = 'setup' | 'counselors' | 'chat';
 
 const DEFAULT_REMINDERS = { push: true, email: false, local: true };
 
-const PEER_AVATAR: Record<string, string> = {
-  'peer-1': '/khoo.jpeg',
-  'peer-2': 'https://api.dicebear.com/9.x/lorelei/svg?seed=AinaYusuf',
-  'peer-3': 'https://api.dicebear.com/9.x/lorelei/svg?seed=DanielTan',
-  'peer-4': 'https://api.dicebear.com/9.x/lorelei/svg?seed=MeiLin',
-  'peer-5': 'https://api.dicebear.com/9.x/lorelei/svg?seed=RaviNair',
+const COUNSELOR_AVATAR: Record<string, string> = {
+  'counselor-1': '/khoo.jpeg',
+  'counselor-2': 'https://api.dicebear.com/9.x/lorelei/svg?seed=AinaYusuf',
+  'counselor-3': 'https://api.dicebear.com/9.x/lorelei/svg?seed=DanielTan',
+  'counselor-4': 'https://api.dicebear.com/9.x/lorelei/svg?seed=MeiLin',
+  'counselor-5': 'https://api.dicebear.com/9.x/lorelei/svg?seed=RaviNair',
 };
 
 const formatDate = (iso: string) =>
@@ -58,10 +58,10 @@ const formatTime = (date: Date) =>
     hour12: true,
   });
 
-const formatMessageContent = (content: PeerMessage['content']) =>
+const formatMessageContent = (content: CounselorMessage['content']) =>
   typeof content === 'string' ? content : 'Encrypted message';
 
-const getStatusColor = (status: PeerUser['status']) => {
+const getStatusColor = (status: CounselorUser['status']) => {
   switch (status) {
     case 'online':
       return 'bg-green-500';
@@ -72,22 +72,22 @@ const getStatusColor = (status: PeerUser['status']) => {
   }
 };
 
-const getStatusPillClass = (status: PeerUser['status']) => {
+const getStatusPillClass = (status: CounselorUser['status']) => {
   if (status === 'online') return 'bg-green-100 text-green-700';
   if (status === 'away') return 'bg-amber-100 text-amber-700';
   return 'bg-red-100 text-red-700';
 };
 
-const PeerAvatar = ({ peer, size = 'md' }: { peer: PeerUser; size?: 'sm' | 'md' | 'lg' }) => {
+const CounselorAvatar = ({ counselor, size = 'md' }: { counselor: CounselorUser; size?: 'sm' | 'md' | 'lg' }) => {
   const sizeClass = size === 'sm' ? 'w-10 h-10' : size === 'lg' ? 'w-16 h-16' : 'w-12 h-12';
   const iconSize = size === 'sm' ? 'h-4 w-4' : size === 'lg' ? 'h-7 w-7' : 'h-5 w-5';
-  const src = PEER_AVATAR[peer.id];
+  const src = COUNSELOR_AVATAR[counselor.id];
 
   return (
     <div className={`${sizeClass} rounded-full bg-sage-light flex items-center justify-center overflow-hidden flex-shrink-0`}>
       {src ? (
-        <img src={src} alt={peer.displayName} className="w-full h-full object-cover" />
-      ) : peer.isAnonymous ? (
+        <img src={src} alt={counselor.displayName} className="w-full h-full object-cover" />
+      ) : counselor.isAnonymous ? (
         <EyeOff className={`${iconSize} text-sage`} />
       ) : (
         <User className={`${iconSize} text-sage`} />
@@ -97,13 +97,13 @@ const PeerAvatar = ({ peer, size = 'md' }: { peer: PeerUser; size?: 'sm' | 'md' 
 };
 
 interface BookingModalProps {
-  peer: PeerUser;
+  counselor: CounselorUser;
   onClose: () => void;
   onBooked: () => void;
 }
 
-const BookingModal = ({ peer, onClose, onBooked }: BookingModalProps) => {
-  const { getAvailableSlots, bookSession } = usePeerChatStore();
+const BookingModal = ({ counselor, onClose, onBooked }: BookingModalProps) => {
+  const { getAvailableSlots, bookSession } = useCounselorChatStore();
 
   const tomorrowDate = new Date();
   tomorrowDate.setDate(tomorrowDate.getDate() + 1);
@@ -115,7 +115,7 @@ const BookingModal = ({ peer, onClose, onBooked }: BookingModalProps) => {
   const [notes, setNotes] = useState('');
   const [reminders, setReminders] = useState(DEFAULT_REMINDERS);
 
-  const slots = date ? getAvailableSlots(peer.id, date) : [];
+  const slots = date ? getAvailableSlots(counselor.id, date) : [];
 
   const handleSubmit = () => {
     if (!date || !slot) {
@@ -123,13 +123,13 @@ const BookingModal = ({ peer, onClose, onBooked }: BookingModalProps) => {
       return;
     }
 
-    const id = bookSession(peer.id, date, slot, consultationType, reminders, notes);
+    const id = bookSession(counselor.id, date, slot, consultationType, reminders, notes);
     if (!id) {
       toast.error('That slot is no longer available.');
       return;
     }
 
-    toast.success(`Session requested with ${peer.displayName}`);
+    toast.success(`Session requested with ${counselor.displayName}`);
     onBooked();
     onClose();
   };
@@ -147,10 +147,10 @@ const BookingModal = ({ peer, onClose, onBooked }: BookingModalProps) => {
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-3">
-            <PeerAvatar peer={peer} size="sm" />
+            <CounselorAvatar counselor={counselor} size="sm" />
             <div>
-              <p className="font-semibold text-foreground text-sm">{peer.displayName}</p>
-              <p className="text-xs text-muted-foreground">{peer.specialization}</p>
+              <p className="font-semibold text-foreground text-sm">{counselor.displayName}</p>
+              <p className="text-xs text-muted-foreground">{counselor.specialization}</p>
             </div>
           </div>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
@@ -182,10 +182,10 @@ const BookingModal = ({ peer, onClose, onBooked }: BookingModalProps) => {
                 onChange={(e) => setConsultationType(e.target.value as ConsultationType)}
                 className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
               >
-                {(!peer.consultationMethods || peer.consultationMethods.includes('chat')) && (
+                {(!counselor.consultationMethods || counselor.consultationMethods.includes('chat')) && (
                   <option value="chat">Chat</option>
                 )}
-                {(!peer.consultationMethods || peer.consultationMethods.includes('video')) && (
+                {(!counselor.consultationMethods || counselor.consultationMethods.includes('video')) && (
                   <option value="video">Video</option>
                 )}
               </select>
@@ -259,35 +259,35 @@ const BookingModal = ({ peer, onClose, onBooked }: BookingModalProps) => {
   );
 };
 
-export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSupportChatProps) => {
+export const CounselorSupportChat = ({ onClose: _onClose, embedded = false }: CounselorSupportChatProps) => {
   const user = useWellMindStore((state) => state.user);
   const {
-    peerProfile,
-    availablePeers,
+    counselorProfile,
+    availableCounselors,
     chats,
     appointments,
     cancelAppointment,
-    createPeerProfile,
-    updatePeerProfile,
-    loadAvailablePeers,
+    createCounselorProfile,
+    updateCounselorProfile,
+    loadAvailableCounselors,
     startChat,
     sendMessage,
     getChat,
     requestCounsellorSession,
-  } = usePeerChatStore();
+  } = useCounselorChatStore();
 
-  const [view, setView] = useState<View>(peerProfile ? 'peers' : 'setup');
+  const [view, setView] = useState<View>(counselorProfile ? 'counselors' : 'setup');
   const [displayName, setDisplayName] = useState(user?.name || '');
-  const [isAnonymous, setIsAnonymous] = useState(peerProfile?.isAnonymous ?? true);
-  const [bio, setBio] = useState(peerProfile?.bio || '');
+  const [isAnonymous, setIsAnonymous] = useState(counselorProfile?.isAnonymous ?? true);
+  const [bio, setBio] = useState(counselorProfile?.bio || '');
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState('');
-  const [bookingPeer, setBookingPeer] = useState<PeerUser | null>(null);
+  const [bookingCounselor, setBookingCounselor] = useState<CounselorUser | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadAvailablePeers();
-  }, [loadAvailablePeers]);
+    loadAvailableCounselors();
+  }, [loadAvailableCounselors]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -300,10 +300,10 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
     }
 
     const preferredName = displayName.trim() || user?.name || 'Anonymous';
-    if (!peerProfile) {
-      createPeerProfile(preferredName, isAnonymous, bio);
+    if (!counselorProfile) {
+      createCounselorProfile(preferredName, isAnonymous, bio);
     } else {
-      updatePeerProfile({
+      updateCounselorProfile({
         isAnonymous,
         displayName: isAnonymous ? 'Anonymous' : preferredName,
         bio,
@@ -311,15 +311,15 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
     }
 
     toast.success('Profile saved. You can now connect with counselors.');
-    setView('peers');
+    setView('counselors');
   };
 
-  const handleStartChat = (peer: PeerUser) => {
-    if (!peerProfile) {
+  const handleStartChat = (counselor: CounselorUser) => {
+    if (!counselorProfile) {
       const fallbackName = user?.name || 'Anonymous';
-      createPeerProfile(fallbackName, true);
+      createCounselorProfile(fallbackName, true);
     }
-    const chatId = startChat(peer.id);
+    const chatId = startChat(counselor.id);
     if (chatId) {
       setActiveChatId(chatId);
       setView('chat');
@@ -333,9 +333,9 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
   };
 
   const activeChat = activeChatId ? getChat(activeChatId) : null;
-  const chatPeer = activeChat ? availablePeers.find((p) => activeChat.participants.includes(p.id)) : null;
+  const chatCounselor = activeChat ? availableCounselors.find((p) => activeChat.participants.includes(p.id)) : null;
   const visibleAppointments = appointments.filter((a) => a.status !== 'cancelled');
-  const onlineNow = availablePeers.filter((p) => p.status === 'online').length;
+  const onlineNow = availableCounselors.filter((p) => p.status === 'online').length;
 
   if (view === 'setup') {
     return (
@@ -345,8 +345,8 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
           <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-coral/20 rounded-full blur-2xl" />
 
           <div className="relative">
-            {!!peerProfile && (
-              <Button variant="ghost" size="icon" onClick={() => setView('peers')} className="text-white hover:bg-white/20 -ml-2 mb-3">
+            {!!counselorProfile && (
+              <Button variant="ghost" size="icon" onClick={() => setView('counselors')} className="text-white hover:bg-white/20 -ml-2 mb-3">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             )}
@@ -483,22 +483,22 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
     );
   }
 
-  if (view === 'chat' && activeChat && chatPeer) {
+  if (view === 'chat' && activeChat && chatCounselor) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <header className="sticky top-0 z-10 bg-background/95 backdrop-blur px-5 py-4 border-b border-border" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => setView('peers')}>
+            <Button variant="ghost" size="icon" onClick={() => setView('counselors')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-3 flex-1">
               <div className="relative">
-                <PeerAvatar peer={chatPeer} size="sm" />
-                <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(chatPeer.status)}`} />
+                <CounselorAvatar counselor={chatCounselor} size="sm" />
+                <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background ${getStatusColor(chatCounselor.status)}`} />
               </div>
               <div>
-                <h1 className="font-semibold text-foreground">{chatPeer.displayName}</h1>
-                <p className="text-xs text-muted-foreground capitalize">{chatPeer.status}</p>
+                <h1 className="font-semibold text-foreground">{chatCounselor.displayName}</h1>
+                <p className="text-xs text-muted-foreground capitalize">{chatCounselor.status}</p>
               </div>
             </div>
           </div>
@@ -516,7 +516,7 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
 
           <AnimatePresence>
             {activeChat.messages.map((message, index) => {
-              const isOwn = message.senderId === peerProfile?.id;
+              const isOwn = message.senderId === counselorProfile?.id;
               return (
                 <motion.div
                   key={message.id}
@@ -592,7 +592,7 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
 
         <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between px-1">
           <p className="text-sm text-muted-foreground">
-            {peerProfile?.isAnonymous ? 'Chatting as Anonymous' : `Chatting as ${peerProfile?.displayName || user?.name || 'User'}`}
+            {counselorProfile?.isAnonymous ? 'Chatting as Anonymous' : `Chatting as ${counselorProfile?.displayName || user?.name || 'User'}`}
           </p>
           <Button variant="ghost" size="sm" onClick={() => setView('setup')} className="text-sm font-medium text-foreground px-2">
             <Eye className="h-4 w-4 mr-1.5" />
@@ -609,8 +609,8 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
             <h2 className="text-lg font-semibold text-foreground mb-3 px-1">Your Conversations</h2>
             <div className="space-y-3">
               {chats.map((chat) => {
-                const peer = availablePeers.find((p) => chat.participants.includes(p.id));
-                if (!peer) return null;
+                const counselor = availableCounselors.find((p) => chat.participants.includes(p.id));
+                if (!counselor) return null;
                 const lastMessage = chat.messages[chat.messages.length - 1];
 
                 return (
@@ -624,11 +624,11 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
                     whileTap={{ scale: 0.98 }}
                   >
                     <div className="relative">
-                      <PeerAvatar peer={peer} size="md" />
-                      <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-card ${getStatusColor(peer.status)}`} />
+                      <CounselorAvatar counselor={counselor} size="md" />
+                      <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-card ${getStatusColor(counselor.status)}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground">{peer.displayName}</p>
+                      <p className="font-medium text-foreground">{counselor.displayName}</p>
                       {lastMessage && <p className="text-sm text-muted-foreground truncate">{formatMessageContent(lastMessage.content)}</p>}
                     </div>
                     <div className="flex items-center text-xs text-muted-foreground">
@@ -652,15 +652,15 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
               {visibleAppointments
                 .sort((a, b) => new Date(a.appointmentDate).getTime() - new Date(b.appointmentDate).getTime())
                 .map((appt) => {
-                  const peer = availablePeers.find((p) => p.id === appt.peerId);
-                  if (!peer) return null;
+                  const counselor = availableCounselors.find((p) => p.id === appt.counselorId);
+                  if (!counselor) return null;
                   return (
                     <div key={appt.id} className="bg-card rounded-2xl p-4 shadow-soft flex items-start gap-3 border border-border/40">
                       <div className="w-10 h-10 rounded-full bg-coral/15 flex items-center justify-center shrink-0">
                         {appt.consultationType === 'video' ? <Video className="h-5 w-5 text-coral" /> : <MessageCircle className="h-5 w-5 text-coral" />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground">{peer.displayName}</p>
+                        <p className="font-medium text-foreground">{counselor.displayName}</p>
                         <p className="text-xs text-muted-foreground">{formatDateTime(appt.appointmentDate, appt.slot)}</p>
                         <p className="text-xs text-muted-foreground mt-1">
                           {appt.consultationType === 'video' ? 'Video session' : 'Private chat'}
@@ -690,9 +690,9 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
         <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <h2 className="text-3xl font-semibold text-[#1f2d3d] mb-3 px-1">Available Counselors</h2>
           <div className="space-y-3">
-            {availablePeers.map((peer, index) => (
+            {availableCounselors.map((counselor, index) => (
               <motion.div
-                key={peer.id}
+                key={counselor.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.07 }}
@@ -700,41 +700,41 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
               >
                 <div className="flex items-start gap-4">
                   <div className="relative">
-                    <PeerAvatar peer={peer} size="lg" />
-                    <div className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-card ${getStatusColor(peer.status)}`} />
+                    <CounselorAvatar counselor={counselor} size="lg" />
+                    <div className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-card ${getStatusColor(counselor.status)}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h3 className="text-3xl font-semibold text-[#1f2d3d] leading-none">{peer.displayName}</h3>
-                      <span className={`text-sm capitalize px-3 py-1 rounded-full ${getStatusPillClass(peer.status)}`}>{peer.status}</span>
+                      <h3 className="text-3xl font-semibold text-[#1f2d3d] leading-none">{counselor.displayName}</h3>
+                      <span className={`text-sm capitalize px-3 py-1 rounded-full ${getStatusPillClass(counselor.status)}`}>{counselor.status}</span>
                     </div>
-                    {peer.specialization && (
+                    {counselor.specialization && (
                       <p className="text-sm text-muted-foreground mb-2">
-                        {peer.bio || peer.specialization}
+                        {counselor.bio || counselor.specialization}
                       </p>
                     )}
-                    {!peer.specialization && peer.bio && (
+                    {!counselor.specialization && counselor.bio && (
                       <p className="text-sm text-muted-foreground mb-2">
-                        {peer.bio}
+                        {counselor.bio}
                       </p>
                     )}
-                    {peer.specialization && (
+                    {counselor.specialization && (
                       <p className="text-xs text-coral mb-2 flex items-center gap-1">
                         <Briefcase className="h-3 w-3" />
-                        {peer.specialization}
+                        {counselor.specialization}
                       </p>
                     )}
                     <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
-                      {peer.rating !== undefined && (
+                      {counselor.rating !== undefined && (
                         <span className="flex items-center gap-1">
                           <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                          {peer.rating.toFixed(1)}
+                          {counselor.rating.toFixed(1)}
                         </span>
                       )}
-                      {peer.experienceYears !== undefined && <span>{peer.experienceYears} yrs exp.</span>}
+                      {counselor.experienceYears !== undefined && <span>{counselor.experienceYears} yrs exp.</span>}
                     </div>
                     <div className="flex flex-wrap gap-2 mb-4">
-                      {peer.supportTopics.map((topic) => (
+                      {counselor.supportTopics.map((topic) => (
                         <span key={topic} className="text-sm px-3 py-1 bg-sage-light/60 text-sage rounded-full">
                           {topic}
                         </span>
@@ -743,8 +743,8 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                       <Button
                         size="sm"
-                        onClick={() => handleStartChat(peer)}
-                        disabled={peer.status === 'busy'}
+                        onClick={() => handleStartChat(counselor)}
+                        disabled={counselor.status === 'busy'}
                         className="h-12 w-full sm:w-auto sm:min-w-[140px] rounded-full bg-coral hover:bg-coral/90 text-white text-sm font-semibold shadow-md disabled:bg-muted disabled:text-muted-foreground"
                       >
                         <MessageCircle className="h-4 w-4 mr-1.5" />
@@ -753,7 +753,7 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setBookingPeer(peer)}
+                        onClick={() => setBookingCounselor(counselor)}
                         className="h-12 w-full sm:w-auto sm:min-w-[140px] rounded-full border-coral/40 text-coral hover:bg-coral/10 text-sm font-semibold"
                       >
                         <CalendarPlus className="h-4 w-4 mr-1.5" />
@@ -769,13 +769,13 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
       </main>
 
       <AnimatePresence>
-        {bookingPeer && (
+        {bookingCounselor && (
           <BookingModal
-            peer={bookingPeer}
-            onClose={() => setBookingPeer(null)}
+            counselor={bookingCounselor}
+            onClose={() => setBookingCounselor(null)}
             onBooked={() => {
-              requestCounsellorSession(bookingPeer.id);
-              setBookingPeer(null);
+              requestCounsellorSession(bookingCounselor.id);
+              setBookingCounselor(null);
             }}
           />
         )}
@@ -786,4 +786,4 @@ export const PeerSupportChat = ({ onClose: _onClose, embedded = false }: PeerSup
   );
 };
 
-export default PeerSupportChat;
+export default CounselorSupportChat;

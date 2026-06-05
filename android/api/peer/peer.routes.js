@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { listPeers, getPeerById, searchPeers } from "./peer.controller.js";
+import { listPeers, getPeerById, searchPeers } from "./counselor.controller.js";
 import { seedPeersAPI } from "../utils/seedPeers.js";
 
 const router = Router();

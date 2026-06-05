@@ -21,15 +21,15 @@ import NotFound from "./pages/NotFound";
 import CounselorIndex from "./components/WellMind-Counselor/CounselorIndex";
 import EmotionDashboard from "./pages/EmotionDashboard";
 import Auth from "./pages/Auth";
-import PeerSupportChat from "./components/WellMind-User/Peers-Page/PeerSupportChat";
+import CounselorSupportChat from "./components/WellMind-User/Counselor-Page/CounselorSupportChat";
 import { useAuthStore } from "./stores/authStore";
 import { startNotificationScheduler } from "./lib/notificationScheduler";
 
 const queryClient = new QueryClient();
 
-const UserPeerSupportRoute = () => {
+const UserCounselorSupportRoute = () => {
   const navigate = useNavigate();
-  return <PeerSupportChat onClose={() => navigate("/", { replace: true })} />;
+  return <CounselorSupportChat onClose={() => navigate("/", { replace: true })} />;
 };
 
 const RootNavigator = () => {
@@ -59,7 +59,7 @@ const RootNavigator = () => {
       <Route path="/insights" element={<Insights />} />
       <Route path="/mindfulness" element={<Mindfulness />} />
       <Route path="/rewards" element={<Rewards />} />
-      <Route path="/peer" element={<UserPeerSupportRoute />} />
+      <Route path="/Counselor" element={<UserCounselorSupportRoute />} />
       <Route path="/community" element={<Community />} />
       <Route path="/volunteering" element={<Volunteering />} />
       <Route path="/programs" element={<Programs />} />

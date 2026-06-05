@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { CalendarCheck2, CheckCircle2, Clock, MessageSquare, Timer, Video, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useCounselorStore } from '@/stores/counselorStore';
-import type { AppointmentStatus, CounsellorAppointment } from '@/stores/peerChatStore';
+import type { AppointmentStatus, CounsellorAppointment } from '@/stores/counselorChatStore';
 import { toast } from 'sonner';
 
 const statusClass: Record<AppointmentStatus, string> = {
@@ -44,7 +44,7 @@ export const CounselorAppointments = ({ onOpenChat }: CounselorAppointmentsProps
   };
 
   const handleOpenSession = (appointment: CounsellorAppointment) => {
-    const client = getClientById(appointment.peerId);
+    const client = getClientById(appointment.counselorId);
     if (!client) {
       toast.error('Client not found.');
       return;
@@ -86,7 +86,7 @@ export const CounselorAppointments = ({ onOpenChat }: CounselorAppointmentsProps
       {sortedAppointments.length ? (
         <section className="space-y-3">
           {sortedAppointments.map((appointment) => {
-            const client = getClientById(appointment.peerId);
+            const client = getClientById(appointment.counselorId);
             const canOpen = appointment.status === 'confirmed' || appointment.status === 'requested';
             const appointmentDate = new Date(appointment.appointmentDate);
             const isPast = appointmentDate < new Date(new Date().toDateString());

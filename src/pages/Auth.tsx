@@ -99,7 +99,11 @@ const Auth = () => {
             animate={{ rotate: [0, 5, -5, 0] }}
             transition={{ duration: 4, repeat: Infinity }}
           >
-            <Heart className="w-10 h-10 text-white" fill="currentColor" />
+            <img 
+              src="/logo_removed_bg.png" 
+              alt="Logo" 
+              className="w-20 h-20 object-contain"
+            />
           </motion.div>
           <h1 className="text-3xl font-bold text-sage-800 mb-2">WellMind</h1>
           <p className="text-sage-600">Your mental wellness companion</p>
@@ -261,15 +265,6 @@ const Auth = () => {
                 : 'Already have an account? Switch to Login'}
           </p>
         </motion.div>
-
-        <motion.p
-          className="text-center text-sage-500 text-sm mt-6"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          Your account is connected to WellMind MongoDB
-        </motion.p>
       </motion.div>
     </div>
   );

@@ -16,7 +16,7 @@ export type EmotionSignal =
   | 'neutral'
   | 'positive';
 
-export type DetectionDecision = 'normal_support' | 'peer_support_suggestion' | 'crisis_escalation';
+export type DetectionDecision = 'normal_support' | 'counselor_support_suggestion' | 'crisis_escalation';
 
 export interface SemanticDetectionResult {
   intent: IntentLabel;

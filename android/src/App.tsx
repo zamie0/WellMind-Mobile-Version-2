@@ -59,7 +59,7 @@ const RootNavigator = () => {
       <Route path="/insights" element={<Insights />} />
       <Route path="/mindfulness" element={<Mindfulness />} />
       <Route path="/rewards" element={<Rewards />} />
-      <Route path="/peer" element={<UserPeerSupportRoute />} />
+      <Route path="/counselor" element={<UserPeerSupportRoute />} />
       <Route path="/community" element={<Community />} />
       <Route path="/volunteering" element={<Volunteering />} />
       <Route path="/programs" element={<Programs />} />

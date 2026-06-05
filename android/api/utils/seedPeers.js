@@ -1,12 +1,12 @@
 import connectDB from "../../config/db.js";
-import Peer from "../models/Peer.js";
+import Counselor from "../models/Counselor.js";
 
 const INITIAL_PEERS = [
   {
     displayName: "Khoo Weng Yen",
     isAnonymous: false,
     status: "online",
-    bio: "Anxiety and stress management specialist with 1 year of peer support experience",
+    bio: "Anxiety and stress management specialist with 1 year of counselor support experience",
     supportTopics: ["Anxiety", "Stress", "Work-life balance"],
     specialization: "Anxiety & Stress Specialist",
     rating: 4.9,
@@ -74,13 +74,13 @@ export async function seedPeers() {
     await connectDB();
 
     // Check if peers already exist
-    const existingCount = await Peer.countDocuments();
+    const existingCount = await Counselor.countDocuments();
     if (existingCount > 0) {
       console.log(`Peers already seeded (found ${existingCount} peers). Skipping seed.`);
       return;
     }
 
-    const inserted = await Peer.insertMany(INITIAL_PEERS);
+    const inserted = await Counselor.insertMany(INITIAL_PEERS);
     console.log(`Successfully seeded ${inserted.length} peers`);
   } catch (error) {
     console.error("Error seeding peers:", error);
@@ -91,7 +91,7 @@ export async function seedPeersAPI(req, res) {
   try {
     await connectDB();
 
-    const existingCount = await Peer.countDocuments();
+    const existingCount = await Counselor.countDocuments();
     if (existingCount > 0) {
       return res.status(200).json({
         message: "Peers already exist",
@@ -99,7 +99,7 @@ export async function seedPeersAPI(req, res) {
       });
     }
 
-    const inserted = await Peer.insertMany(INITIAL_PEERS);
+    const inserted = await Counselor.insertMany(INITIAL_PEERS);
     return res.status(201).json({
       message: "Peers seeded successfully",
       count: inserted.length,

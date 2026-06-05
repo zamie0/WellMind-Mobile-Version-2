@@ -1,6 +1,6 @@
 import { create } from 'zustand/react';
 import { persist } from 'zustand/middleware';
-import type { PeerUser, PeerChat, PeerMessage } from '@/types/wellmind';
+import type { CounselorUser, CounselorChat, CounselorMessage } from '@/types/wellmind';
 import { getAzureChatCompletion } from '@/lib/azureOpenAI';
 import { apiRequest } from '@/lib/apiClient';
 
@@ -15,7 +15,7 @@ export interface ReminderPreferences {
 
 export interface CounsellorAppointment {
   id: string;
-  peerId: string;
+  counselorId: string;
   appointmentDate: string;
   slot: string;
   consultationType: ConsultationType;
@@ -26,38 +26,38 @@ export interface CounsellorAppointment {
   createdAt: string;
 }
 
-interface PeerChatState {
-  peerProfile: PeerUser | null;
-  availablePeers: PeerUser[];
-  chats: PeerChat[];
+interface CounselorChatState {
+  counselorProfile: CounselorUser | null;
+  availableCounselors: CounselorUser[];
+  chats: CounselorChat[];
   sessionStatuses: Record<string, 'requested' | 'confirmed' | 'completed'>;
   appointments: CounsellorAppointment[];
   counselorClients: Array<{ userId: string; userName: string; joinedDate: Date }>;
 
-  createPeerProfile: (displayName: string, isAnonymous: boolean, bio?: string, supportTopics?: string[]) => void;
-  updatePeerProfile: (updates: Partial<PeerUser>) => void;
-  loadAvailablePeers: () => void;
+  createCounselorProfile: (displayName: string, isAnonymous: boolean, bio?: string, supportTopics?: string[]) => void;
+  updateCounselorProfile: (updates: Partial<CounselorUser>) => void;
+  loadAvailableCounselors: () => void;
 
-  startChat: (peerId: string) => string;
+  startChat: (counselorId: string) => string;
   sendMessage: (chatId: string, content: string) => void;
   deleteChat: (chatId: string) => void;
-  getChat: (chatId: string) => PeerChat | undefined;
-  getChatWithPeer: (peerId: string) => PeerChat | undefined;
+  getChat: (chatId: string) => CounselorChat | undefined;
+  getChatWithCounselor: (counselorId: string) => CounselorChat | undefined;
 
-  requestCounsellorSession: (peerId: string) => void;
-  setSessionStatus: (peerId: string, status: 'requested' | 'confirmed' | 'completed') => void;
+  requestCounsellorSession: (counselorId: string) => void;
+  setSessionStatus: (counselorId: string, status: 'requested' | 'confirmed' | 'completed') => void;
 
-  getAvailableSlots: (peerId: string, date: string) => string[];
+  getAvailableSlots: (counselorId: string, date: string) => string[];
   bookSession: (
-    peerId: string,
+    counselorId: string,
     date: string,
     slot: string,
     consultationType: ConsultationType,
     reminders: ReminderPreferences,
     notes?: string,
   ) => string | null;
-  getAppointmentsForPeer: (peerId: string) => CounsellorAppointment[];
-  getLatestAppointmentForPeer: (peerId: string) => CounsellorAppointment | undefined;
+  getAppointmentsForCounselor: (counselorId: string) => CounsellorAppointment[];
+  getLatestAppointmentForCounselor: (counselorId: string) => CounsellorAppointment | undefined;
 
   // Counselor-specific methods
   registerClientWithCounselor: (userId: string, userName: string) => void;
@@ -69,12 +69,12 @@ interface PeerChatState {
   rescheduleAppointment: (appointmentId: string, newDate: string, newSlot: string, newConsultationType?: ConsultationType) => void;
 
   // AI assistant fallback while no real supporter is online
-  simulatePeerResponse: (chatId: string) => Promise<void>;
+  simulateCounselorResponse: (chatId: string) => Promise<void>;
 }
 
-const SIMULATED_PEERS: PeerUser[] = [
+const SIMULATED_COUNSELORS: CounselorUser[] = [
   {
-    id: 'peer-1',
+    id: 'counselor-1',
     displayName: 'Khoo Weng Yen',
     isAnonymous: false,
     status: 'online',
@@ -86,7 +86,7 @@ const SIMULATED_PEERS: PeerUser[] = [
     joinedAt: new Date('2024-01-15'),
   },
   {
-    id: 'peer-2',
+    id: 'counselor-2',
     displayName: 'Aina Yusuf',
     isAnonymous: false,
     status: 'online',
@@ -98,7 +98,7 @@ const SIMULATED_PEERS: PeerUser[] = [
     joinedAt: new Date('2024-02-20'),
   },
   {
-    id: 'peer-3',
+    id: 'counselor-3',
     displayName: 'Daniel Tan',
     isAnonymous: false,
     status: 'away',
@@ -110,7 +110,7 @@ const SIMULATED_PEERS: PeerUser[] = [
     joinedAt: new Date('2024-03-10'),
   },
   {
-    id: 'peer-4',
+    id: 'counselor-4',
     displayName: 'Mei Lin',
     isAnonymous: false,
     status: 'online',
@@ -122,7 +122,7 @@ const SIMULATED_PEERS: PeerUser[] = [
     joinedAt: new Date('2024-04-05'),
   },
   {
-    id: 'peer-5',
+    id: 'counselor-5',
     displayName: 'Ravi Nair',
     isAnonymous: false,
     status: 'busy',
@@ -137,7 +137,7 @@ const SIMULATED_PEERS: PeerUser[] = [
 
 const DEFAULT_SLOTS = ['09:00 AM', '10:30 AM', '02:00 PM', '04:30 PM', '07:00 PM'];
 
-const PEER_RESPONSE_FALLBACKS = [
+const COUNSELOR_RESPONSE_FALLBACKS = [
   "I hear you. That sounds really tough. How long have you been feeling this way?",
   "Thank you for sharing that with me. It takes courage to open up.",
   "I've been through something similar. You're not alone in this.",
@@ -150,24 +150,24 @@ const PEER_RESPONSE_FALLBACKS = [
   "You're doing great by reaching out. That's a big step.",
 ];
 
-const getPeerSupportSystemPrompt = (peerName: string): string => {
-  return `You are ${peerName}, a compassionate peer supporter in a private support chat. Keep replies conversational, empathetic, and practical in 2-4 short sentences. Do not use bullet points or structured lists.`;
+const getCounselorSupportSystemPrompt = (counselorName: string): string => {
+  return `You are ${counselorName}, a compassionate counselor in a private support chat. Keep replies conversational, empathetic, and practical in 2-4 short sentences. Do not use bullet points or structured lists.`;
 };
 
-const messageContentToText = (content: PeerMessage['content']): string =>
+const messageContentToText = (content: CounselorMessage['content']): string =>
   typeof content === 'string' ? content : '[encrypted message]';
 
-export const usePeerChatStore = create<PeerChatState>()(
+export const useCounselorChatStore = create<CounselorChatState>()(
   persist(
     (set, get) => ({
-      peerProfile: null,
-      availablePeers: [],
+      counselorProfile: null,
+      availableCounselors: [],
       chats: [],
       sessionStatuses: {},
       appointments: [
         {
           id: 'sample-appt-1',
-          peerId: 'peer-1',
+          counselorId: 'counselor-1',
           appointmentDate: (() => { const d = new Date(); d.setDate(d.getDate() + 3); return d.toISOString().split('T')[0]; })(),
           slot: '10:00 AM',
           consultationType: 'chat',
@@ -179,7 +179,7 @@ export const usePeerChatStore = create<PeerChatState>()(
         },
         {
           id: 'sample-appt-2',
-          peerId: 'peer-2',
+          counselorId: 'counselor-2',
           appointmentDate: (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0]; })(),
           slot: '2:00 PM',
           consultationType: 'video',
@@ -192,8 +192,8 @@ export const usePeerChatStore = create<PeerChatState>()(
       ],
       counselorClients: [],
 
-      createPeerProfile: (displayName, isAnonymous, bio, supportTopics) => {
-        const profile: PeerUser = {
+      createCounselorProfile: (displayName, isAnonymous, bio, supportTopics) => {
+        const profile: CounselorUser = {
           id: `user-${crypto.randomUUID()}`,
           displayName: isAnonymous ? 'Anonymous' : displayName,
           isAnonymous,
@@ -202,16 +202,16 @@ export const usePeerChatStore = create<PeerChatState>()(
           supportTopics: supportTopics || [],
           joinedAt: new Date(),
         };
-        set({ peerProfile: profile });
+        set({ counselorProfile: profile });
       },
 
-      updatePeerProfile: (updates) => {
+      updateCounselorProfile: (updates) => {
         set((state) => ({
-          peerProfile: state.peerProfile ? { ...state.peerProfile, ...updates } : null,
+          counselorProfile: state.counselorProfile ? { ...state.counselorProfile, ...updates } : null,
         }));
       },
 
-      loadAvailablePeers: async () => {
+      loadAvailableCounselors: async () => {
         try {
           const response = await apiRequest<{ counselors: Array<{
             id: string;
@@ -224,7 +224,7 @@ export const usePeerChatStore = create<PeerChatState>()(
           }> }>('/api/counselor');
 
           set({
-            availablePeers: response.counselors.map((counselor) => ({
+            availableCounselors: response.counselors.map((counselor) => ({
               id: counselor.id,
               displayName: counselor.displayName,
               isAnonymous: false,
@@ -240,23 +240,23 @@ export const usePeerChatStore = create<PeerChatState>()(
           });
         } catch (error) {
           console.error('Failed to load counselors from API:', error);
-          set({ availablePeers: [] });
+          set({ availableCounselors: [] });
         }
       },
 
-      startChat: (peerId) => {
-        const existingChat = get().getChatWithPeer(peerId);
+      startChat: (counselorId) => {
+        const existingChat = get().getChatWithCounselor(counselorId);
         if (existingChat) return existingChat.id;
 
-        const peer = get().availablePeers.find((p) => p.id === peerId);
-        const profile = get().peerProfile;
+        const counselor = get().availableCounselors.find((p) => p.id === counselorId);
+        const profile = get().counselorProfile;
 
-        if (!peer || !profile) return '';
+        if (!counselor || !profile) return '';
 
-        const chat: PeerChat = {
+        const chat: CounselorChat = {
           id: `chat-${crypto.randomUUID()}`,
-          participants: [profile.id, peerId],
-          participantNames: [profile.displayName, peer.displayName],
+          participants: [profile.id, counselorId],
+          participantNames: [profile.displayName, counselor.displayName],
           messages: [],
           createdAt: new Date(),
           lastMessageAt: new Date(),
@@ -270,10 +270,10 @@ export const usePeerChatStore = create<PeerChatState>()(
       },
 
       sendMessage: (chatId, content) => {
-        const profile = get().peerProfile;
+        const profile = get().counselorProfile;
         if (!profile) return;
 
-        const message: PeerMessage = {
+        const message: CounselorMessage = {
           id: `msg-${crypto.randomUUID()}`,
           chatId,
           senderId: profile.id,
@@ -295,7 +295,7 @@ export const usePeerChatStore = create<PeerChatState>()(
         }));
 
         setTimeout(() => {
-          void get().simulatePeerResponse(chatId);
+          void get().simulateCounselorResponse(chatId);
         }, 1200 + Math.random() * 1800);
       },
 
@@ -307,50 +307,50 @@ export const usePeerChatStore = create<PeerChatState>()(
         }));
       },
 
-      getChatWithPeer: (peerId) => get().chats.find((c) => c.participants.includes(peerId)),
+      getChatWithCounselor: (counselorId) => get().chats.find((c) => c.participants.includes(counselorId)),
 
-      requestCounsellorSession: (peerId) => {
+      requestCounsellorSession: (counselorId) => {
         set((state) => ({
           sessionStatuses: {
             ...state.sessionStatuses,
-            [peerId]: state.sessionStatuses[peerId] ?? 'requested',
+            [counselorId]: state.sessionStatuses[counselorId] ?? 'requested',
           },
         }));
       },
 
-      setSessionStatus: (peerId, status) => {
+      setSessionStatus: (counselorId, status) => {
         set((state) => ({
           sessionStatuses: {
             ...state.sessionStatuses,
-            [peerId]: status,
+            [counselorId]: status,
           },
           appointments: state.appointments.map((appointment) =>
-            appointment.peerId === peerId && appointment.status !== 'completed' && appointment.status !== 'cancelled'
+            appointment.counselorId === counselorId && appointment.status !== 'completed' && appointment.status !== 'cancelled'
               ? { ...appointment, status }
               : appointment
           ),
         }));
       },
 
-      getAvailableSlots: (peerId, date) => {
+      getAvailableSlots: (counselorId, date) => {
         const booked = new Set(
           get()
             .appointments
-            .filter((appointment) => appointment.peerId === peerId && appointment.appointmentDate === date && appointment.status !== 'cancelled')
+            .filter((appointment) => appointment.counselorId === counselorId && appointment.appointmentDate === date && appointment.status !== 'cancelled')
             .map((appointment) => appointment.slot)
         );
         return DEFAULT_SLOTS.filter((slot) => !booked.has(slot));
       },
 
-      bookSession: (peerId, date, slot, consultationType, reminders, notes) => {
-        const available = get().getAvailableSlots(peerId, date);
+      bookSession: (counselorId, date, slot, consultationType, reminders, notes) => {
+        const available = get().getAvailableSlots(counselorId, date);
         if (!available.includes(slot)) {
           return null;
         }
 
         const appointment: CounsellorAppointment = {
           id: `appt-${crypto.randomUUID()}`,
-          peerId,
+          counselorId,
           appointmentDate: date,
           slot,
           consultationType,
@@ -365,30 +365,30 @@ export const usePeerChatStore = create<PeerChatState>()(
           appointments: [
             appointment,
             ...state.appointments.map((a) =>
-              a.peerId === peerId && (a.status === 'requested' || a.status === 'confirmed')
+              a.counselorId === counselorId && (a.status === 'requested' || a.status === 'confirmed')
                 ? { ...a, status: 'cancelled' as AppointmentStatus }
                 : a
             ),
           ],
           sessionStatuses: {
             ...state.sessionStatuses,
-            [peerId]: 'requested',
+            [counselorId]: 'requested',
           },
         }));
 
         // Simulate counselor registering the client
-        const peerProfile = get().peerProfile;
-        if (peerProfile) {
-          get().registerClientWithCounselor(peerProfile.id, peerProfile.displayName);
+        const counselorProfile = get().counselorProfile;
+        if (counselorProfile) {
+          get().registerClientWithCounselor(counselorProfile.id, counselorProfile.displayName);
         }
 
         return appointment.id;
       },
 
-      getAppointmentsForPeer: (peerId) => get().appointments.filter((appointment) => appointment.peerId === peerId),
+      getAppointmentsForCounselor: (counselorId) => get().appointments.filter((appointment) => appointment.counselorId === counselorId),
 
-      getLatestAppointmentForPeer: (peerId) =>
-        get().appointments.find((appointment) => appointment.peerId === peerId),
+      getLatestAppointmentForCounselor: (counselorId) =>
+        get().appointments.find((appointment) => appointment.counselorId === counselorId),
 
       registerClientWithCounselor: (userId, userName) => {
         set((state) => {
@@ -462,28 +462,28 @@ export const usePeerChatStore = create<PeerChatState>()(
         }));
       },
 
-      simulatePeerResponse: async (chatId) => {
+      simulateCounselorResponse: async (chatId) => {
         const chat = get().getChat(chatId);
-        const profile = get().peerProfile;
+        const profile = get().counselorProfile;
         if (!chat || !profile) return;
 
-        const peerId = chat.participants.find((p) => p !== profile.id);
-        const peer = get().availablePeers.find((p) => p.id === peerId);
-        if (!peer) return;
+        const counselorId = chat.participants.find((p) => p !== profile.id);
+        const counselor = get().availableCounselors.find((p) => p.id === counselorId);
+        if (!counselor) return;
 
         const conversation = chat.messages.slice(-8).map((message) => ({
-          role: message.senderId === peer.id ? 'assistant' as const : 'user' as const,
+          role: message.senderId === counselor.id ? 'assistant' as const : 'user' as const,
           content: messageContentToText(message.content),
         }));
 
-        let content = PEER_RESPONSE_FALLBACKS[Math.floor(Math.random() * PEER_RESPONSE_FALLBACKS.length)];
+        let content = COUNSELOR_RESPONSE_FALLBACKS[Math.floor(Math.random() * COUNSELOR_RESPONSE_FALLBACKS.length)];
 
         try {
           const reply = await getAzureChatCompletion(
             [
               {
                 role: 'system',
-                content: getPeerSupportSystemPrompt(peer.displayName),
+                content: getCounselorSupportSystemPrompt(counselor.displayName),
               },
               ...conversation,
             ],
@@ -494,17 +494,17 @@ export const usePeerChatStore = create<PeerChatState>()(
             content = reply;
           }
         } catch {
-          content = PEER_RESPONSE_FALLBACKS[Math.floor(Math.random() * PEER_RESPONSE_FALLBACKS.length)];
-        }
+            content = COUNSELOR_RESPONSE_FALLBACKS[Math.floor(Math.random() * COUNSELOR_RESPONSE_FALLBACKS.length)];
+          }
 
-        const response: PeerMessage = {
-          id: `msg-${crypto.randomUUID()}`,
-          chatId,
-          senderId: peer.id,
-          senderName: `${peer.displayName} (AI)` ,
-          content,
-          timestamp: new Date(),
-        };
+          const response: CounselorMessage = {
+            id: `msg-${crypto.randomUUID()}`,
+            chatId,
+            senderId: counselor.id,
+            senderName: `${counselor.displayName} (AI)`,
+            content,
+            timestamp: new Date(),
+          };
 
         set((state) => ({
           chats: state.chats.map((c) =>
@@ -520,7 +520,7 @@ export const usePeerChatStore = create<PeerChatState>()(
       },
     }),
     {
-      name: 'wellmind-peer-chat',
+      name: 'wellmind-counselor-chat',
       version: 2,
     }
   )

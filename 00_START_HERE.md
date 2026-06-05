@@ -237,7 +237,7 @@ npm run dev
 ### Workflow 1: User Books Session
 ```
 1. User registers with email & password
-2. Navigates to Peer Support Chat
+2. Navigates to Counselor Support Chat
 3. Finds counselor
 4. Clicks "Request Session"
 5. Fills calendar booking form

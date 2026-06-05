@@ -5,7 +5,7 @@ async function testPeerEndpoint() {
     const options = {
       hostname: 'localhost',
       port: 5001,
-      path: '/api/peer',
+      path: '/api/counselor',
       method: 'GET',
     };
 

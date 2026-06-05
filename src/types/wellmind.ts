@@ -17,8 +17,8 @@ export interface JournalEntry {
   timestamp: Date;
 }
 
-// Peer Support Chat Types
-export interface PeerUser {
+// Counselor Support Chat Types
+export interface CounselorUser {
   id: string;
   displayName: string;
   isAnonymous: boolean;
@@ -37,7 +37,7 @@ export interface EncryptedPayload {
   data: string;
 }
 
-export interface PeerMessage {
+export interface CounselorMessage {
   id: string;
   chatId: string;
   senderId: string;
@@ -47,11 +47,11 @@ export interface PeerMessage {
   timestamp: Date;
 }
 
-export interface PeerChat {
+export interface CounselorChat {
   id: string;
   participants: string[];
   participantNames: string[];
-  messages: PeerMessage[];
+  messages: CounselorMessage[];
   createdAt: Date;
   lastMessageAt: Date;
 }
@@ -62,8 +62,8 @@ export type SessionStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
 
 export interface SessionBooking {
   id: string;
-  peerId: string;
-  peerName: string;
+  counselorId: string;
+  counselorName: string;
   preferredDate: Date;
   consultationType: ConsultationType;
   reminders: ReminderChannel[];
@@ -93,7 +93,7 @@ export interface NotificationSettings {
 
 export interface PrivacySettings {
   shareAnonymousData: boolean;
-  showProfileInPeerChat: boolean;
+  showProfileInCounselorChat: boolean;
   allowDirectMessages: boolean;
   dataRetentionDays: number;
 }

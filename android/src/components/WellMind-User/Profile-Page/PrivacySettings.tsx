@@ -58,7 +58,7 @@ export const PrivacySettings = ({ onClose }: PrivacySettingsProps) => {
     {
       id: 'showProfileInPeerChat',
       icon: <Eye className="h-5 w-5" />,
-      label: 'Show Profile in Peer Chat',
+      label: 'Show Profile in Counselor Chat',
       description: 'Let others see your basic profile info',
       value: privacy.showProfileInPeerChat,
       color: 'text-coral bg-coral-light',
@@ -67,7 +67,7 @@ export const PrivacySettings = ({ onClose }: PrivacySettingsProps) => {
       id: 'allowDirectMessages',
       icon: <MessageCircle className="h-5 w-5" />,
       label: 'Allow Direct Messages',
-      description: 'Let peer supporters message you first',
+      description: 'Let counselor supporters message you first',
       value: privacy.allowDirectMessages,
       color: 'text-sky bg-sky-light',
     },

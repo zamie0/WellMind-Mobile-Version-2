@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { CounsellorAppointment } from './peerChatStore';
+import type { CounsellorAppointment } from './counselorChatStore';
 
 export interface CounselorClient {
   id: string;
@@ -124,7 +124,7 @@ const createInitialAppointments = (): CounsellorAppointment[] => {
   return [
     {
       id: 'counselor-appt-1',
-      peerId: 'client-sarah',
+      counselorId: 'client-sarah',
       appointmentDate: tomorrow.toISOString().split('T')[0],
       slot: '10:30 AM',
       consultationType: 'chat',
@@ -136,7 +136,7 @@ const createInitialAppointments = (): CounsellorAppointment[] => {
     },
     {
       id: 'counselor-appt-2',
-      peerId: 'client-amir',
+      counselorId: 'client-amir',
       appointmentDate: nextWeek.toISOString().split('T')[0],
       slot: '02:00 PM',
       consultationType: 'video',
@@ -303,7 +303,7 @@ export const useCounselorStore = create<CounselorStore>()(
 
         if (status === 'confirmed') {
           const appointment = get().appointments.find((a) => a.id === appointmentId);
-          const client = appointment ? get().getClientById(appointment.peerId) : undefined;
+          const client = appointment ? get().getClientById(appointment.counselorId) : undefined;
           if (appointment && client) {
             const alreadyActive = get()
               .getActiveSessions()
@@ -335,7 +335,7 @@ export const useCounselorStore = create<CounselorStore>()(
         return [
           {
             id: 'mock-appointment-1',
-            peerId: 'mock-peer-sarah',
+            counselorId: 'mock-counselor-sarah',
             appointmentDate: tomorrow.toISOString(),
             slot: '10:30 AM',
             consultationType: 'video',

@@ -1,4 +1,4 @@
-// Real end-to-end encryption for peer chat.
+// Real end-to-end encryption for counselor chat.
 // - Per-identity ECDH P-256 keypair (stored locally, private key never leaves device).
 // - Per-chat AES-GCM symmetric key derived via ECDH between the two participants.
 // - Each message has its own random 12-byte IV.
@@ -14,7 +14,7 @@ interface StoredKey {
 
 interface KeyBook {
   identities: Record<string, StoredKey>;
-  // Public-only keys for remote peers (simulated peers have their keypair generated locally too,
+// Public-only keys for remote counselors (simulated counselors have their keypair generated locally too,
   // but we expose only the public side to the encryption flow).
   publicKeys: Record<string, JsonWebKey>;
 }
@@ -61,12 +61,12 @@ export async function ensureIdentity(id: string): Promise<JsonWebKey> {
   return publicKeyJwk;
 }
 
-/** Register a remote peer's public key (or auto-generate one for simulated peers). */
-export async function ensurePeerPublicKey(peerId: string): Promise<JsonWebKey> {
+/** Register a remote counselor's public key (or auto-generate one for simulated counselors). */
+export async function ensureCounselorPublicKey(counselorId: string): Promise<JsonWebKey> {
   const book = loadBook();
-  if (book.publicKeys[peerId]) return book.publicKeys[peerId];
+  if (book.publicKeys[counselorId]) return book.publicKeys[counselorId];
 
-  // Simulated peer: generate a keypair so derivation works. In a real server-backed flow
+  // Simulated counselor: generate a keypair so derivation works. In a real server-backed flow
   // this would be fetched from a key directory instead.
   const pair = await subtle().generateKey(
     { name: 'ECDH', namedCurve: 'P-256' },
@@ -75,8 +75,8 @@ export async function ensurePeerPublicKey(peerId: string): Promise<JsonWebKey> {
   );
   const publicKeyJwk = await subtle().exportKey('jwk', pair.publicKey);
   const privateKeyJwk = await subtle().exportKey('jwk', pair.privateKey);
-  book.identities[peerId] = { id: peerId, publicKeyJwk, privateKeyJwk };
-  book.publicKeys[peerId] = publicKeyJwk;
+  book.identities[counselorId] = { id: counselorId, publicKeyJwk, privateKeyJwk };
+  book.publicKeys[counselorId] = publicKeyJwk;
   saveBook(book);
   return publicKeyJwk;
 }
@@ -100,15 +100,15 @@ async function importPublic(jwk: JsonWebKey) {
   );
 }
 
-/** Derive a shared AES-GCM key between localId and peerId. */
-async function deriveSharedKey(localId: string, peerId: string): Promise<CryptoKey> {
+/** Derive a shared AES-GCM key between localId and counselorId. */
+async function deriveSharedKey(localId: string, counselorId: string): Promise<CryptoKey> {
   const book = loadBook();
   const local = book.identities[localId];
-  const peerPub = book.publicKeys[peerId];
-  if (!local || !peerPub) throw new Error('Missing keys for E2E derivation');
+  const counselorPub = book.publicKeys[counselorId];
+  if (!local || !counselorPub) throw new Error('Missing keys for E2E derivation');
 
   const privKey = await importPrivate(local.privateKeyJwk);
-  const pubKey = await importPublic(peerPub);
+  const pubKey = await importPublic(counselorPub);
 
   return subtle().deriveKey(
     { name: 'ECDH', public: pubKey },
@@ -126,10 +126,10 @@ export interface Ciphertext {
 
 export async function encryptMessage(
   localId: string,
-  peerId: string,
+  counselorId: string,
   plaintext: string
 ): Promise<Ciphertext> {
-  const key = await deriveSharedKey(localId, peerId);
+  const key = await deriveSharedKey(localId, counselorId);
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
   const enc = new TextEncoder().encode(plaintext);
   const ct = await subtle().encrypt({ name: 'AES-GCM', iv }, key, enc);
@@ -138,11 +138,11 @@ export async function encryptMessage(
 
 export async function decryptMessage(
   localId: string,
-  peerId: string,
+  counselorId: string,
   ct: Ciphertext
 ): Promise<string> {
   try {
-    const key = await deriveSharedKey(localId, peerId);
+    const key = await deriveSharedKey(localId, counselorId);
     const pt = await subtle().decrypt(
       { name: 'AES-GCM', iv: fromB64(ct.iv) },
       key,
@@ -155,10 +155,10 @@ export async function decryptMessage(
 }
 
 /** Short fingerprint of the shared secret — UI can show this so users can verify. */
-export async function chatFingerprint(localId: string, peerId: string): Promise<string> {
+export async function chatFingerprint(localId: string, counselorId: string): Promise<string> {
   const book = loadBook();
   const a = book.publicKeys[localId];
-  const b = book.publicKeys[peerId];
+  const b = book.publicKeys[counselorId];
   if (!a || !b) return '';
   const blob = new TextEncoder().encode(JSON.stringify([a.x, a.y, b.x, b.y].sort()));
   const hash = await subtle().digest('SHA-256', blob);

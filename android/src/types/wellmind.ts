@@ -17,7 +17,7 @@ export interface JournalEntry {
   timestamp: Date;
 }
 
-// Peer Support Chat Types
+// Counselor Support Chat Types
 export interface PeerUser {
   id: string;
   displayName: string;

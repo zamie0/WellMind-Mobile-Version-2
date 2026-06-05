@@ -13,8 +13,8 @@ A **complete dual-role authentication and management system** for WellMind that 
 1. **Access:** `http://localhost:5173/`
 2. **Choose:** Click "I'm a User"
 3. **Register:** Email + Password
-4. **Book Counselor:** In Peer Support Chat, select a counselor and use the calendar booking feature
-5. **Chat:** Message counselors or peer supporters
+4. **Book Counselor:** In Counselor Support Chat, select a counselor and use the calendar booking feature
+5. **Chat:** Message counselors or counselor supporters
 
 ### For Counselors (Professional)
 
@@ -70,7 +70,7 @@ src/
 - ✅ Set appointment reminders
 - ✅ Chat with counselors in real-time
 - ✅ Track appointment status
-- ✅ Message peer supporters
+- ✅ Message counselor supporters
 
 ### Counselor Features
 - ✅ Register/Login as counselor
@@ -181,7 +181,7 @@ Both can chat in real-time
 ### Test 3: Book Appointment
 ```
 1. Register as user
-2. Go to Peer Support Chat
+2. Go to Counselor Support Chat
 3. Find a counselor
 4. Click "Request Session"
 5. Select date, time, type
@@ -353,7 +353,7 @@ JSON.parse(localStorage.getItem('wellmind-auth'));
 
 ### Check Appointments
 ```javascript
-JSON.parse(localStorage.getItem('wellmind-peer-chat'));
+JSON.parse(localStorage.getItem('wellmind-counselor-chat'));
 // Look for appointments array
 ```
 
@@ -382,7 +382,7 @@ JSON.parse(localStorage.getItem('wellmind-counselor'));
 | Login/Register | `/` | Both |
 | User Dashboard | `/` | User |
 | Counselor Dashboard | `/counselor` | Counselor |
-| Peer Support | `/` (in app) | User |
+| Counselor Support | `/` (in app) | User |
 | Appointments | `/counselor` | Counselor |
 | Chat | in-app | Both |
 

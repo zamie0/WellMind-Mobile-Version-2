@@ -164,7 +164,7 @@ HIGH RISK GUARDRAILS:
 - Calm, soft, non-judgmental tone.
 - Validate emotion first.
 - No playful, excited, or slang-heavy tone.
-- Offer gentle support and suggest Peer Support or trusted person.
+- Offer gentle support and suggest Counselor Support or trusted person.
 - Keep it 1 to 2 short sentences.`;
   }
 
@@ -506,7 +506,7 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
           )}
         </AnimatePresence>
 
-        {/* Severe Alert — Bottom-sheet pop-up for Peer Support reminder */}
+        {/* Severe Alert — Bottom-sheet pop-up for Counselor Support reminder */}
         <AnimatePresence>
           {showSevereAlert && (
             <motion.div
@@ -529,7 +529,7 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
                 </div>
               </div>
 
-              {/* Peer Support card */}
+              {/* Counselor Support card */}
               <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-2xl flex-shrink-0">
                   💬
@@ -545,7 +545,7 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
                   className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl"
                   onClick={() => { setShowSevereAlert(false); onClose(); navigate('/counselor'); }}
                 >
-                  Go to Peer Support
+                  Go to Counselor Support
                 </Button>
                 <Button
                   variant="ghost"

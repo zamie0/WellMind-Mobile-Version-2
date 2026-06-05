@@ -44,19 +44,19 @@ interface PeerChatState {
 }
 
 const SIMULATED_PEERS: PeerUser[] = [
-  { id: 'peer-1', displayName: 'Alex', isAnonymous: false, status: 'online',
+  { id: 'counselor-1', displayName: 'Alex', isAnonymous: false, status: 'online',
     bio: 'Here to listen and support. Been through anxiety myself.',
     supportTopics: ['Anxiety', 'Stress', 'Work-life balance'], joinedAt: new Date('2024-01-15') },
-  { id: 'peer-2', displayName: 'Anonymous Helper', isAnonymous: true, status: 'online',
+  { id: 'counselor-2', displayName: 'Anonymous Helper', isAnonymous: true, status: 'online',
     bio: "Sometimes talking to a stranger helps. I'm here for you.",
     supportTopics: ['Depression', 'Loneliness', 'Life transitions'], joinedAt: new Date('2024-02-20') },
-  { id: 'peer-3', displayName: 'Sam', isAnonymous: false, status: 'away',
+  { id: 'counselor-3', displayName: 'Sam', isAnonymous: false, status: 'away',
     bio: 'Student counselor. Happy to chat about anything.',
     supportTopics: ['Academic stress', 'Relationships', 'Self-esteem'], joinedAt: new Date('2024-03-10') },
-  { id: 'peer-4', displayName: 'Jordan', isAnonymous: false, status: 'online',
+  { id: 'counselor-4', displayName: 'Jordan', isAnonymous: false, status: 'online',
     bio: "Mental health advocate. Let's talk!",
     supportTopics: ['General support', 'Mindfulness', 'Coping strategies'], joinedAt: new Date('2024-04-05') },
-  { id: 'peer-5', displayName: 'Anonymous Listener', isAnonymous: true, status: 'busy',
+  { id: 'counselor-5', displayName: 'Anonymous Listener', isAnonymous: true, status: 'busy',
     bio: 'No judgment here. Share what\'s on your mind.',
     supportTopics: ['Family issues', 'Grief', 'Personal growth'], joinedAt: new Date('2024-05-12') },
 ];
@@ -80,7 +80,7 @@ let channel: BroadcastChannel | null = null;
 const getChannel = () => {
   if (typeof window === 'undefined') return null;
   if (!channel && 'BroadcastChannel' in window) {
-    channel = new BroadcastChannel('wellmind-peer-chat-rt');
+    channel = new BroadcastChannel('wellmind-counselor-chat-rt');
     channel.onmessage = (e) => {
       const { chatId, message } = e.data || {};
       if (chatId && message) {
@@ -100,11 +100,11 @@ export const usePeerChatStore = create<PeerChatState>()(
       bookings: [],
 
       bookSession: ({ peerId, preferredDate, consultationType, reminders, notes }) => {
-        const peer = get().availablePeers.find((p) => p.id === peerId);
-        if (!peer) return null;
+        const counselor = get().availablePeers.find((p) => p.id === peerId);
+        if (!counselor) return null;
         const booking: SessionBooking = {
           id: `booking-${crypto.randomUUID()}`,
-          peerId, peerName: peer.displayName, preferredDate,
+          peerId, peerName: counselor.displayName, preferredDate,
           consultationType, reminders, notes,
           status: 'pending', createdAt: new Date(),
         };
@@ -115,8 +115,8 @@ export const usePeerChatStore = create<PeerChatState>()(
             setTimeout(() => {
               try {
                 if ('Notification' in window && Notification.permission === 'granted') {
-                  new Notification('Upcoming peer session', {
-                    body: `Session with ${peer.displayName} in 15 minutes`,
+                  new Notification('Upcoming counselor session', {
+                    body: `Session with ${counselor.displayName} in 15 minutes`,
                   });
                 }
               } catch {}
@@ -155,7 +155,7 @@ export const usePeerChatStore = create<PeerChatState>()(
 
       loadAvailablePeers: () => {
         set({ availablePeers: SIMULATED_PEERS });
-        // Ensure each peer has a public key registered (auto-generated for simulated peers).
+        // Ensure each counselor has a public key registered (auto-generated for simulated peers).
         SIMULATED_PEERS.forEach((p) => { ensurePeerPublicKey(p.id).catch(() => {}); });
       },
 
@@ -163,17 +163,17 @@ export const usePeerChatStore = create<PeerChatState>()(
         const existingChat = get().getChatWithPeer(peerId);
         if (existingChat) return existingChat.id;
 
-        const peer = get().availablePeers.find((p) => p.id === peerId);
+        const counselor = get().availablePeers.find((p) => p.id === peerId);
         const profile = get().peerProfile;
-        if (!peer || !profile) return '';
+        if (!counselor || !profile) return '';
 
         await ensureIdentity(profile.id);
-        await ensurePeerPublicKey(peer.id);
+        await ensurePeerPublicKey(counselor.id);
 
         const chat: PeerChat = {
           id: `chat-${crypto.randomUUID()}`,
           participants: [profile.id, peerId],
-          participantNames: [profile.displayName, peer.displayName],
+          participantNames: [profile.displayName, counselor.displayName],
           messages: [],
           createdAt: new Date(),
           lastMessageAt: new Date(),
@@ -234,16 +234,16 @@ export const usePeerChatStore = create<PeerChatState>()(
         const profile = get().peerProfile;
         if (!chat || !profile) return;
         const peerId = chat.participants.find((p) => p !== profile.id);
-        const peer = get().availablePeers.find((p) => p.id === peerId);
-        if (!peer) return;
+        const counselor = get().availablePeers.find((p) => p.id === peerId);
+        if (!counselor) return;
 
         const text = PEER_RESPONSES[Math.floor(Math.random() * PEER_RESPONSES.length)];
-        // The simulated peer encrypts using its own (locally-stored) keypair toward our public key.
-        const cipher = await encryptMessage(peer.id, profile.id, text);
+        // The simulated counselor encrypts using its own (locally-stored) keypair toward our public key.
+        const cipher = await encryptMessage(counselor.id, profile.id, text);
 
         const response: PeerMessage = {
           id: `msg-${crypto.randomUUID()}`,
-          chatId, senderId: peer.id, senderName: peer.displayName,
+          chatId, senderId: counselor.id, senderName: counselor.displayName,
           content: cipher, timestamp: new Date(),
         };
 
@@ -258,7 +258,7 @@ export const usePeerChatStore = create<PeerChatState>()(
         getChannel()?.postMessage({ chatId, message: response });
       },
     }),
-    { name: 'wellmind-peer-chat' }
+    { name: 'wellmind-counselor-chat' }
   )
 );
 

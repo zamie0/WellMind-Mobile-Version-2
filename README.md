@@ -27,7 +27,7 @@ WellMind is designed as a **preventive and supportive platform**, not a replacem
   Instant calming mode for anxiety or emotional overload with guided breathing and grounding.
 
 * 👥 **Anonymous Community Support**
-  Safe, moderated peer interaction without revealing personal identity.
+  Safe, moderated counselor interaction without revealing personal identity.
 
 * 🎮 **Gamification & Engagement**
   Streaks, badges, Calm Coins, and a virtual companion to encourage healthy habits.

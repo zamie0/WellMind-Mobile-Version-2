@@ -335,7 +335,7 @@ export const useCounselorStore = create<CounselorStore>()(
         return [
           {
             id: 'mock-appointment-1',
-            peerId: 'mock-peer-sarah',
+            peerId: 'mock-counselor-sarah',
             appointmentDate: tomorrow.toISOString(),
             slot: '10:30 AM',
             consultationType: 'video',

@@ -1,7 +1,7 @@
 import express from "express";
 import userRoutes from "./user/user.routes.js";
 import counselorRoutes from "./counselor/counselor.routes.js";
-import peerRoutes from "./peer/peer.routes.js";
+import peerRoutes from "./counselor/counselor.routes.js";
 import { loadEnv } from "./utils/loadEnv.js";
 import { seedPeers } from "./utils/seedPeers.js";
 
@@ -23,7 +23,7 @@ app.use((req, res, next) => {
 app.get("/api/health", (_req, res) => res.json({ ok: true, service: "wellmind-mobile-api" }));
 app.use("/api/user", userRoutes);
 app.use("/api/counselor", counselorRoutes);
-app.use("/api/peer", peerRoutes);
+app.use("/api/counselor", peerRoutes);
 
 app.listen(port, () => {
   console.log(`WellMind Mobile API running on http://localhost:${port}`);

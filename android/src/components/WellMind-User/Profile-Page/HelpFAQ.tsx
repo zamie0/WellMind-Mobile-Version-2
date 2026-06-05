@@ -107,16 +107,16 @@ const faqs: FAQItem[] = [
     answer: 'The optional PIN adds an extra layer of privacy. When enabled, you\'ll need to enter your PIN to access the app. This keeps your personal wellness data safe from prying eyes.',
   },
 
-  // Peer Support
+  // Counselor Support
   {
-    category: 'Peer Support',
-    question: 'What is Peer Support Chat?',
-    answer: 'Peer Support connects you with trained supporters who understand mental health challenges. You can chat anonymously or share your name. It\'s a safe space to talk without judgment.',
+    category: 'Counselor Support',
+    question: 'What is Counselor Support Chat?',
+    answer: 'Counselor Support connects you with trained supporters who understand mental health challenges. You can chat anonymously or share your name. It\'s a safe space to talk without judgment.',
   },
   {
-    category: 'Peer Support',
-    question: 'Are peer supporters professionals?',
-    answer: 'Peer supporters are trained volunteers who have personal experience with mental health challenges. They\'re here to listen and support, but they\'re not licensed therapists. For professional help, please consult a mental health professional.',
+    category: 'Counselor Support',
+    question: 'Are counselor supporters professionals?',
+    answer: 'Counselor supporters are trained volunteers who have personal experience with mental health challenges. They\'re here to listen and support, but they\'re not licensed therapists. For professional help, please consult a mental health professional.',
   },
 
   // Troubleshooting
@@ -138,7 +138,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
   'Mood Tracking': <BarChart3 className="h-5 w-5" />,
   'Weekly Plan': <Heart className="h-5 w-5" />,
   'Privacy & Security': <Shield className="h-5 w-5" />,
-  'Peer Support': <MessageCircle className="h-5 w-5" />,
+  'Counselor Support': <MessageCircle className="h-5 w-5" />,
   'Troubleshooting': <HelpCircle className="h-5 w-5" />,
 };
 
@@ -148,7 +148,7 @@ const categoryColors: Record<string, string> = {
   'Mood Tracking': 'text-sky bg-sky-light',
   'Weekly Plan': 'text-lavender bg-lavender-light',
   'Privacy & Security': 'text-honey bg-honey-light',
-  'Peer Support': 'text-coral bg-coral-light',
+  'Counselor Support': 'text-coral bg-coral-light',
   'Troubleshooting': 'text-muted-foreground bg-muted',
 };
 

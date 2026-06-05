@@ -150,7 +150,7 @@ npm run dev
 # 4. Fill all professional fields
 
 # Test booking flow
-# 1. User: Book appointment from Peer Support
+# 1. User: Book appointment from Counselor Support
 # 2. Counselor: See & confirm in dashboard
 # 3. Both: Join session & chat
 ```
@@ -187,7 +187,7 @@ Browser LocalStorage
 │  ├─ Appointments
 │  └─ Availability slots
 │
-├─ wellmind-peer-chat
+├─ wellmind-counselor-chat
 │  ├─ Messages
 │  ├─ Appointments
 │  └─ Counselor clients (NEW)
@@ -333,7 +333,7 @@ A: Integrate WebRTC in CounselorChat.tsx. See docs for details.
 │  │                          │     ├─ Clients    │
 │  ├─ User Dashboard         │     ├─ Appts     │
 │  │  ├─ Home                │     └─ Settings   │
-│  │  ├─ Peer Support        │                   │
+│  │  ├─ Counselor Support        │                   │
 │  │  │  └─ Book Session     │  ┌─ Chat ─────┐  │
 │  │  ├─ Profile             │  │ Session    │  │
 │  │  └─ Other Pages         │  │ Timer      │  │

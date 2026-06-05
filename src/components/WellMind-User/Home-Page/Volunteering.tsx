@@ -7,7 +7,7 @@ import { useCommunityStore } from '@/stores/communityStore';
 import { toast } from 'sonner';
 
 const opportunities = [
-  { id: 'listener', title: 'Peer Listener', org: 'WellMind Foundation', location: 'Remote', hours: '2 hrs/week', desc: 'Provide a compassionate ear for those who need to talk.' },
+  { id: 'listener', title: 'Counselor Listener', org: 'WellMind Foundation', location: 'Remote', hours: '2 hrs/week', desc: 'Provide a compassionate ear for those who need to talk.' },
   { id: 'workshop', title: 'Workshop Facilitator', org: 'Campus Wellness', location: 'Hybrid', hours: '4 hrs/month', desc: 'Help run mindfulness sessions for students.' },
   { id: 'content', title: 'Content Creator', org: 'Mind Matters', location: 'Remote', hours: 'Flexible', desc: 'Write articles and stories about mental wellness.' },
   { id: 'outreach', title: 'Community Outreach', org: 'Hope Network', location: 'Local', hours: '3 hrs/week', desc: 'Connect with underserved communities in your area.' },

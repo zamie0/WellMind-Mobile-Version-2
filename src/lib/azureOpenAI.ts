@@ -70,7 +70,7 @@ const ALLOWED_EMOTIONS: EmotionLabel[] = ['happy', 'calm', 'stress', 'anxious', 
 
 const scoreToDecision = (riskScore: number): DetectionDecision => {
   if (riskScore <= 30) return 'normal_support';
-  if (riskScore <= 60) return 'peer_support_suggestion';
+  if (riskScore <= 60) return 'counselor_support_suggestion';
   return 'crisis_escalation';
 };
 
@@ -194,11 +194,10 @@ export const detectEmotion = async (
 
   if (requestedDecision === 'crisis_escalation' && (confidence < 0.8 || semantic.self_harm_intent < 0.7)) {
     if (safetyFlags.direct_self_harm_detected) {
-      requestedDecision = 'peer_support_suggestion';
+      requestedDecision = 'counselor_support_suggestion';
       reasons.push('direct self-harm detected so escalation remains high concern despite lower confidence');
     } else {
-      requestedDecision = 'peer_support_suggestion';
-      reasons.push('crisis escalation prevented due to low self-harm confidence');
+      requestedDecision = 'counselor_support_suggestion';
     }
   }
 
