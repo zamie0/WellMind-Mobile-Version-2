@@ -13,6 +13,7 @@
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
+    "ignoreDeprecations": "5.0",
     "noEmit": true,
     "jsx": "react-jsx",
     "types": ["vite/client", "react", "react-dom"],
@@ -23,7 +24,6 @@
     "noUnusedParameters": false,
     "noImplicitAny": false,
     "noFallthroughCasesInSwitch": false,
-
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
