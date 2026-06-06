@@ -72,69 +72,6 @@ interface CounselorChatState {
   simulateCounselorResponse: (chatId: string) => Promise<void>;
 }
 
-const SIMULATED_COUNSELORS: CounselorUser[] = [
-  {
-    id: 'counselor-1',
-    displayName: 'Khoo Weng Yen',
-    isAnonymous: false,
-    status: 'online',
-    supportTopics: ['Anxiety', 'Stress', 'Work-life balance'],
-    specialization: 'Anxiety & Stress Specialist',
-    rating: 4.9,
-    experienceYears: 1,
-    consultationMethods: ['chat', 'video'],
-    joinedAt: new Date('2024-01-15'),
-  },
-  {
-    id: 'counselor-2',
-    displayName: 'Aina Yusuf',
-    isAnonymous: false,
-    status: 'online',
-    supportTopics: ['Depression', 'Loneliness', 'Life transitions'],
-    specialization: 'Student Mental Health Support',
-    rating: 4.7,
-    experienceYears: 5,
-    consultationMethods: ['chat', 'video'],
-    joinedAt: new Date('2024-02-20'),
-  },
-  {
-    id: 'counselor-3',
-    displayName: 'Daniel Tan',
-    isAnonymous: false,
-    status: 'away',
-    supportTopics: ['Academic stress', 'Relationships', 'Self-esteem'],
-    specialization: 'Relationship & Emotional Wellness',
-    rating: 4.8,
-    experienceYears: 6,
-    consultationMethods: ['chat', 'video'],
-    joinedAt: new Date('2024-03-10'),
-  },
-  {
-    id: 'counselor-4',
-    displayName: 'Mei Lin',
-    isAnonymous: false,
-    status: 'online',
-    supportTopics: ['General support', 'Mindfulness', 'Coping strategies'],
-    specialization: 'Mindfulness & Wellness Coach',
-    rating: 4.6,
-    experienceYears: 4,
-    consultationMethods: ['chat', 'video'],
-    joinedAt: new Date('2024-04-05'),
-  },
-  {
-    id: 'counselor-5',
-    displayName: 'Ravi Nair',
-    isAnonymous: false,
-    status: 'busy',
-    supportTopics: ['Family issues', 'Grief', 'Personal growth'],
-    specialization: 'Grief & Family Counsellor',
-    rating: 4.8,
-    experienceYears: 7,
-    consultationMethods: ['chat', 'video'],
-    joinedAt: new Date('2024-05-12'),
-  },
-];
-
 const DEFAULT_SLOTS = ['09:00 AM', '10:30 AM', '02:00 PM', '04:30 PM', '07:00 PM'];
 
 const COUNSELOR_RESPONSE_FALLBACKS = [
@@ -164,32 +101,7 @@ export const useCounselorChatStore = create<CounselorChatState>()(
       availableCounselors: [],
       chats: [],
       sessionStatuses: {},
-      appointments: [
-        {
-          id: 'sample-appt-1',
-          counselorId: 'counselor-1',
-          appointmentDate: (() => { const d = new Date(); d.setDate(d.getDate() + 3); return d.toISOString().split('T')[0]; })(),
-          slot: '10:00 AM',
-          consultationType: 'chat',
-          reminders: { push: true, email: false, local: true },
-          status: 'requested',
-          notes: 'Sample session – feel free to book a real one.',
-          persistence: 'local-mock',
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: 'sample-appt-2',
-          counselorId: 'counselor-2',
-          appointmentDate: (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString().split('T')[0]; })(),
-          slot: '2:00 PM',
-          consultationType: 'video',
-          reminders: { push: true, email: false, local: true },
-          status: 'confirmed',
-          notes: 'Sample confirmed session.',
-          persistence: 'local-mock',
-          createdAt: new Date().toISOString(),
-        },
-      ],
+      appointments: [],
       counselorClients: [],
 
       createCounselorProfile: (displayName, isAnonymous, bio, supportTopics) => {
@@ -494,17 +406,17 @@ export const useCounselorChatStore = create<CounselorChatState>()(
             content = reply;
           }
         } catch {
-            content = COUNSELOR_RESPONSE_FALLBACKS[Math.floor(Math.random() * COUNSELOR_RESPONSE_FALLBACKS.length)];
-          }
+          content = COUNSELOR_RESPONSE_FALLBACKS[Math.floor(Math.random() * COUNSELOR_RESPONSE_FALLBACKS.length)];
+        }
 
-          const response: CounselorMessage = {
-            id: `msg-${crypto.randomUUID()}`,
-            chatId,
-            senderId: counselor.id,
-            senderName: `${counselor.displayName} (AI)`,
-            content,
-            timestamp: new Date(),
-          };
+        const response: CounselorMessage = {
+          id: `msg-${crypto.randomUUID()}`,
+          chatId,
+          senderId: counselor.id,
+          senderName: `${counselor.displayName} (AI)`,
+          content,
+          timestamp: new Date(),
+        };
 
         set((state) => ({
           chats: state.chats.map((c) =>

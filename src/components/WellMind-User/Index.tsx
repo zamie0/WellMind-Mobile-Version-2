@@ -5,7 +5,7 @@ import Home from './Home-Page/Home';
 import Onboarding from '../../pages/Onboarding';
 import Auth from '../../pages/Auth';
 import PinSetup from '@/components/WellMind-User/Profile-Page/PinSetup';
-import PinVerify from '@/components/WellMind-User/Profile-Page/PinVerify';
+import PinVerify from '@/pages/PinVerify';
 
 const Index = () => {
   const user = useWellMindStore((state) => state.user);

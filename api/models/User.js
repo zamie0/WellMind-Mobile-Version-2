@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-userSchema.index({ email: 1 }, { unique: true });
+// Index already declared with `unique: true` on the `email` path above.
+// Removed duplicate schema.index to avoid mongoose duplicate index warning.
 
 export default mongoose.models.User || mongoose.model("User", userSchema);

@@ -65,98 +65,14 @@ interface CounselorStore {
   getUpcomingAppointments: () => CounsellorAppointment[];
 }
 
-const createInitialClients = (): CounselorClient[] => [
-  {
-    id: 'client-sarah',
-    displayName: 'Sarah Johnson',
-    isAnonymous: false,
-    recentMood: 'Anxious',
-    lastInteraction: new Date(),
-    appointmentCount: 4,
-    notes: 'Academic pressure and comparison with classmates. Responds well to small daily goals.',
-  },
-  {
-    id: 'client-amir',
-    displayName: 'Amir Rahman',
-    isAnonymous: false,
-    recentMood: 'Stressed',
-    lastInteraction: new Date(Date.now() - 1000 * 60 * 60 * 18),
-    appointmentCount: 2,
-    notes: 'Workload concerns. Explore sleep routine and boundaries.',
-  },
-  {
-    id: 'client-anon',
-    displayName: 'Anonymous Client',
-    isAnonymous: true,
-    recentMood: 'Low',
-    lastInteraction: new Date(Date.now() - 1000 * 60 * 60 * 42),
-    appointmentCount: 1,
-    notes: 'Prefers anonymous support. Keep questions gentle and concrete.',
-  },
-];
-
-const createInitialSessions = (): CounselorSession[] => [
-  {
-    id: 'session-sarah-chat',
-    clientId: 'client-sarah',
-    clientName: 'Sarah Johnson',
-    type: 'chat',
-    startTime: new Date(Date.now() - 1000 * 60 * 9),
-    status: 'in-progress',
-  },
-  {
-    id: 'session-amir-video',
-    clientId: 'client-amir',
-    clientName: 'Amir Rahman',
-    type: 'video',
-    startTime: new Date(Date.now() - 1000 * 60 * 28),
-    status: 'in-progress',
-  },
-];
-
-const createInitialAppointments = (): CounsellorAppointment[] => {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  const nextWeek = new Date();
-  nextWeek.setDate(nextWeek.getDate() + 7);
-
-  return [
-    {
-      id: 'counselor-appt-1',
-      counselorId: 'client-sarah',
-      appointmentDate: tomorrow.toISOString().split('T')[0],
-      slot: '10:30 AM',
-      consultationType: 'chat',
-      reminders: { push: true, email: false, local: true },
-      status: 'requested',
-      notes: 'Follow-up on study stress.',
-      persistence: 'local-mock',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'counselor-appt-2',
-      counselorId: 'client-amir',
-      appointmentDate: nextWeek.toISOString().split('T')[0],
-      slot: '02:00 PM',
-      consultationType: 'video',
-      reminders: { push: true, email: true, local: true },
-      status: 'confirmed',
-      notes: 'Review coping plan.',
-      persistence: 'local-mock',
-      createdAt: new Date().toISOString(),
-    },
-  ];
-};
-
 export const useCounselorStore = create<CounselorStore>()(
   persist(
     (set, get) => ({
-      clients: createInitialClients(),
-      sessions: createInitialSessions(),
+      clients: [],
+      sessions: [],
       activeChatId: null,
       availability: [],
-      appointments: createInitialAppointments(),
+      appointments: [],
 
       addClient: (client) => {
         set((state) => ({
@@ -325,30 +241,7 @@ export const useCounselorStore = create<CounselorStore>()(
           })
           .sort((a, b) => new Date(a.appointmentDate).getTime() - new Date(b.appointmentDate).getTime());
 
-        if (upcomingAppointments.length > 0) {
-          return upcomingAppointments;
-        }
-
-        const tomorrow = new Date(now);
-        tomorrow.setDate(now.getDate() + 1);
-
-        return [
-          {
-            id: 'mock-appointment-1',
-            counselorId: 'mock-counselor-sarah',
-            appointmentDate: tomorrow.toISOString(),
-            slot: '10:30 AM',
-            consultationType: 'video',
-            reminders: {
-              push: true,
-              email: false,
-              local: true,
-            },
-            status: 'confirmed',
-            persistence: 'local-mock',
-            createdAt: now.toISOString(),
-          },
-        ];
+        return upcomingAppointments;
       },
     }),
     {
