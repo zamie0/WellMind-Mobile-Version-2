@@ -16,6 +16,7 @@ import Index from "./components/WellMind-User/Index";
 import Insights from "./components/WellMind-User/Insight-Page/Insights";
 import Mindfulness from "./components/WellMind-User/Mindful-Page/Mindfulness";
 import MindBuddy from "./components/WellMind-User/MindBuddy-Page/MindBuddy";
+import AchievementsPage from "./components/WellMind-User/MindBuddy-Page/AchievementsPage";
 import Profile from "./components/WellMind-User/Profile-Page/Profile";
 import NotFound from "./pages/NotFound";
 import CounselorIndex from "./components/WellMind-Counselor/CounselorIndex";
@@ -59,6 +60,7 @@ const RootNavigator = () => {
       <Route path="/insights" element={<Insights />} />
       <Route path="/mindfulness" element={<Mindfulness />} />
       <Route path="/MindBuddy" element={<MindBuddy />} />
+      <Route path="/achievements" element={<AchievementsPage />} />
       <Route path="/Counselor" element={<UserCounselorSupportRoute />} />
       <Route path="/community" element={<Community />} />
       <Route path="/volunteering" element={<Volunteering />} />

@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { PetShop } from './PetShop';
 import { FoodMenu } from './FoodMenu';
 import { GamesMenu } from './GamesMenu';
+import type { Game } from './GamesMenu';
 import { MindBuddyChat } from './MindBuddyChat';
 import { BuddyCharacter } from './BuddyCharacter';
 import { toast } from 'sonner';
@@ -122,24 +123,22 @@ export const VirtualPet = () => {
     }
   };
 
-  const handlePlay = (game: { cost: number; happinessGain: number; energyLoss: number; expGain: number }) => {
-    if (spendCoins(game.cost)) {
-      useWellMindStore.setState((state) => ({
-        pet: {
-          ...state.pet,
-          happiness: Math.min(100, state.pet.happiness + game.happinessGain),
-          energy: Math.max(0, state.pet.energy - game.energyLoss),
-          lastPlayed: new Date(),
-        },
-      }));
-      addPetExperience(game.expGain);
-      setShowAction('play');
-      setIsInteracting(true);
-      setTimeout(() => {
-        setShowAction(null);
-        setIsInteracting(false);
-      }, 1500);
-    }
+  const handlePlay = (game: Game) => {
+    useWellMindStore.setState((state) => ({
+      pet: {
+        ...state.pet,
+        happiness: Math.min(100, state.pet.happiness + game.happinessGain),
+        energy: Math.max(0, state.pet.energy - game.energyLoss),
+        lastPlayed: new Date(),
+      },
+    }));
+    addPetExperience(game.expGain);
+    setShowAction('play');
+    setIsInteracting(true);
+    setTimeout(() => {
+      setShowAction(null);
+      setIsInteracting(false);
+    }, 1500);
   };
 
   const handleClean = () => {

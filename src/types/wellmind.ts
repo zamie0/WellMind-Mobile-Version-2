@@ -141,19 +141,61 @@ export interface VirtualPet {
 
 // Rewards Types
 export type BadgeId = 
+  // Progress (10)
   | 'first_checkin'
   | 'streak_3'
   | 'streak_7'
+  | 'streak_14'
   | 'streak_30'
+  | 'streak_60'
+  | 'streak_100'
+  | 'first_journal'
+  | 'first_breathing'
+  | 'first_meditation'
+  // Skills (10)
   | 'breathing_master'
+  | 'breathing_expert'
   | 'journal_starter'
   | 'journal_master'
+  | 'journal_pro'
+  | 'meditation_beginner'
+  | 'meditation_master'
   | 'mood_tracker'
+  | 'mood_analyst'
+  | 'gratitude_practice'
+  // Activities (10)
   | 'calm_explorer'
-  | 'pet_lover'
+  | 'mindfulness_journey'
+  | 'exercise_enthusiast'
+  | 'exercise_warrior'
+  | 'social_butterfly'
+  | 'reading_lover'
+  | 'podcast_listener'
+  | 'music_therapist'
+  | 'wellness_routine'
+  | 'perfect_week'
+  // Milestones (10)
   | 'coin_collector'
-  | 'pet_level_5'
-  | 'pet_level_10';
+  | 'coin_wealthy'
+  | 'coin_rich'
+  | 'coin_elite'
+  | 'monthly_champion'
+  | 'quarterly_champion'
+  | 'yearly_champion'
+  | 'consistency_king'
+  | 'comeback_champion'
+  | 'milestone_master'
+  // Special (10)
+  | 'pet_lover'
+  | 'pet_trainer'
+  | 'pet_master'
+  | 'pet_level_25'
+  | 'perfect_pet'
+  | 'early_bird'
+  | 'night_owl'
+  | 'weekend_warrior'
+  | 'community_helper'
+  | 'wellness_ambassador';
 
 export interface Badge {
   id: BadgeId;

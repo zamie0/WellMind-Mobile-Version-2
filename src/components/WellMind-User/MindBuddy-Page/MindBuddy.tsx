@@ -9,7 +9,9 @@ import {
   Award,
   Wind,
   Gamepad2,
+  ArrowRight,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import { useWellMindStore } from "@/stores/wellmindStore";
 import { BottomNav } from "@/components/WellMind-User/BottomNav";
@@ -17,6 +19,7 @@ import { VirtualPet } from "@/components/WellMind-User/MindBuddy-Page/MindBuddy/
 import {
   BadgeCard,
   getAllBadgeIds,
+  getRecentBadges,
 } from "@/components/WellMind-User/MindBuddy-Page/BadgeCard";
 
 import { Button } from "@/components/ui/button";
@@ -55,6 +58,7 @@ const coinRules = [
 /* ---------------- Page ---------------- */
 
 const MindBuddy = () => {
+  const navigate = useNavigate();
   const {
     calmCoins,
     badges,
@@ -65,6 +69,7 @@ const MindBuddy = () => {
 
   const allBadges = getAllBadgeIds();
   const unlockedCount = badges.length;
+  const recentBadges = getRecentBadges(badges, 4);
 
   /* ---------------- Easter Egg State ---------------- */
   const [achievementsClicks, setAchievementsClicks] = useState(0);
@@ -95,6 +100,10 @@ const MindBuddy = () => {
         description: "Daily bonus claimed successfully",
       });
     }
+  };
+
+  const handleViewAllAchievements = () => {
+    navigate("/achievements", { replace: true });
   };
 
   return (
@@ -177,22 +186,44 @@ const MindBuddy = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <h2
-            onClick={handleAchievementsClick}
-            className="text-lg font-semibold text-foreground mb-3 cursor-pointer select-none"
-          >
-            Achievements
-          </h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2
+              onClick={handleAchievementsClick}
+              className="text-lg font-semibold text-foreground cursor-pointer select-none"
+            >
+              Achievements
+            </h2>
+            <span className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded-md">
+              {unlockedCount}/{allBadges.length}
+            </span>
+          </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            {allBadges.map((badgeId, index) => (
-              <BadgeCard
-                key={badgeId}
-                badgeId={badgeId}
-                unlocked={badges.includes(badgeId)}
-                index={index}
-              />
-            ))}
+          {/* Recent Achievements Preview */}
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              {recentBadges.map((badgeId, index) => (
+                <BadgeCard
+                  key={badgeId}
+                  badgeId={badgeId}
+                  unlocked={badges.includes(badgeId)}
+                  index={index}
+                />
+              ))}
+            </div>
+
+            {/* More Button */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleViewAllAchievements}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-card border border-border hover:bg-card/80 transition-colors"
+            >
+              <Trophy className="w-4 h-4 text-primary" />
+              <span className="font-medium text-sm text-foreground">
+                View All Achievements
+              </span>
+              <ArrowRight className="w-4 h-4 text-muted-foreground ml-auto" />
+            </motion.button>
           </div>
         </motion.div>
 

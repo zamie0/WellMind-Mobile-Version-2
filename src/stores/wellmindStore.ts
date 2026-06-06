@@ -32,6 +32,21 @@ interface WellMindState {
   // Mood Prediction
   moodPrediction: MoodPrediction | null;
   
+  // Achievement Tracking
+  breathingExercises: number;
+  meditationSessions: number;
+  gratitudeEntries: number;
+  exerciseCount: number;
+  weeklyCheckIns: number;
+  monthlyCheckIns: number;
+  earlyBirdCount: number;
+  nightOwlCount: number;
+  weekendCheckIns: number;
+  communityConnections: number;
+  perfectWeekDates: Date[];
+  consistentDays: number;
+  lastActivityDate: Date | null;
+  
   // Actions
   setUser: (user: UserProfile) => void;
   updateUser: (data: Partial<UserProfile>) => void;
@@ -69,6 +84,13 @@ interface WellMindState {
   checkAndUnlockBadges: () => void;
   purchaseSkin: (skin: PetSkin, price: number) => boolean;
   purchaseAccessory: (accessory: PetAccessory, price: number) => boolean;
+  
+  // Achievement Actions
+  addBreathingExercise: () => void;
+  addMeditationSession: () => void;
+  addExercise: () => void;
+  addGratitudeEntry: () => void;
+  addCommunityConnection: () => void;
   
   // Weekly Plan Actions
   generateWeeklyPlan: () => void;
@@ -209,6 +231,21 @@ export const useWellMindStore = create<WellMindState>()(
         },
       ] as HealingGoal[],
       moodPrediction: null,
+      
+      // Achievement Tracking Initialization
+      breathingExercises: 0,
+      meditationSessions: 0,
+      gratitudeEntries: 0,
+      exerciseCount: 0,
+      weeklyCheckIns: 0,
+      monthlyCheckIns: 0,
+      earlyBirdCount: 0,
+      nightOwlCount: 0,
+      weekendCheckIns: 0,
+      communityConnections: 0,
+      perfectWeekDates: [],
+      consistentDays: 0,
+      lastActivityDate: null,
 
       setUser: (user) => set({ user }),
 
@@ -238,6 +275,20 @@ export const useWellMindStore = create<WellMindState>()(
           triggers,
           timestamp: new Date(),
         };
+        
+        // Track time of day for early bird/night owl achievements
+        const hour = new Date().getHours();
+        if (hour >= 5 && hour < 12) {
+          set((state) => ({ earlyBirdCount: state.earlyBirdCount + 1 }));
+        } else if (hour >= 20 || hour < 5) {
+          set((state) => ({ nightOwlCount: state.nightOwlCount + 1 }));
+        }
+        
+        // Track weekend check-ins
+        const dayOfWeek = new Date().getDay();
+        if (dayOfWeek === 0 || dayOfWeek === 6) {
+          set((state) => ({ weekendCheckIns: state.weekendCheckIns + 1 }));
+        }
         
         set((state) => ({
           moodEntries: [entry, ...state.moodEntries],
@@ -305,6 +356,7 @@ export const useWellMindStore = create<WellMindState>()(
       updateStreak: () => {
         const { lastCheckIn, currentStreak } = get();
         const now = new Date();
+        const safeStreak = typeof currentStreak === 'number' && !isNaN(currentStreak) ? currentStreak : 0;
         
         if (!lastCheckIn) {
           set({ currentStreak: 1 });
@@ -319,7 +371,7 @@ export const useWellMindStore = create<WellMindState>()(
         if (diffDays === 0) {
           return;
         } else if (diffDays === 1) {
-          set({ currentStreak: currentStreak + 1 });
+          set({ currentStreak: safeStreak + 1 });
         } else {
           set({ currentStreak: 1 });
         }
@@ -468,18 +520,22 @@ export const useWellMindStore = create<WellMindState>()(
 
       addPetExperience: (amount) => {
         const { pet } = get();
-        const newExp = pet.experience + amount;
-        const expToLevel = pet.level * 100;
+        const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+        const safeExp = typeof pet.experience === 'number' && !isNaN(pet.experience) ? pet.experience : 0;
+        const safeLevel = typeof pet.level === 'number' && !isNaN(pet.level) ? pet.level : 1;
+        
+        const newExp = safeExp + safeAmount;
+        const expToLevel = safeLevel * 100;
         
         if (newExp >= expToLevel) {
           set((state) => ({
             pet: {
               ...state.pet,
-              level: state.pet.level + 1,
+              level: safeLevel + 1,
               experience: newExp - expToLevel,
             }
           }));
-          get().addCoins(pet.level * 10);
+          get().addCoins(safeLevel * 10);
           get().checkAndUnlockBadges();
         } else {
           set((state) => ({
@@ -490,16 +546,18 @@ export const useWellMindStore = create<WellMindState>()(
 
       // Rewards Actions
       addCoins: (amount) => {
+        const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
         set((state) => ({
-          calmCoins: state.calmCoins + amount,
-          totalCoinsEarned: state.totalCoinsEarned + amount,
+          calmCoins: Math.max(0, (state.calmCoins || 0) + safeAmount),
+          totalCoinsEarned: Math.max(0, (state.totalCoinsEarned || 0) + safeAmount),
         }));
         get().checkAndUnlockBadges();
       },
 
       spendCoins: (amount) => {
-        if (get().calmCoins < amount) return false;
-        set((state) => ({ calmCoins: state.calmCoins - amount }));
+        const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+        if ((get().calmCoins || 0) < safeAmount) return false;
+        set((state) => ({ calmCoins: Math.max(0, (state.calmCoins || 0) - safeAmount) }));
         return true;
       },
 
@@ -540,8 +598,10 @@ export const useWellMindStore = create<WellMindState>()(
       },
 
       checkAndUnlockBadges: () => {
-        const { moodEntries, journalEntries, currentStreak, totalCoinsEarned, badges, pet } = get();
+        const state = get();
+        const { moodEntries, journalEntries, currentStreak, totalCoinsEarned, badges, pet, breathingExercises, meditationSessions, gratitudeEntries, exerciseCount, earlyBirdCount, nightOwlCount, weekendCheckIns, communityConnections } = state;
         
+        // ===== PROGRESS (10) =====
         if (moodEntries.length >= 1 && !badges.includes('first_checkin')) {
           get().unlockBadge('first_checkin');
         }
@@ -551,31 +611,196 @@ export const useWellMindStore = create<WellMindState>()(
         if (currentStreak >= 7 && !badges.includes('streak_7')) {
           get().unlockBadge('streak_7');
         }
+        if (currentStreak >= 14 && !badges.includes('streak_14')) {
+          get().unlockBadge('streak_14');
+        }
         if (currentStreak >= 30 && !badges.includes('streak_30')) {
           get().unlockBadge('streak_30');
         }
-        if (moodEntries.length >= 10 && !badges.includes('mood_tracker')) {
-          get().unlockBadge('mood_tracker');
+        if (currentStreak >= 60 && !badges.includes('streak_60')) {
+          get().unlockBadge('streak_60');
         }
-        if (totalCoinsEarned >= 100 && !badges.includes('coin_collector')) {
-          get().unlockBadge('coin_collector');
+        if (currentStreak >= 100 && !badges.includes('streak_100')) {
+          get().unlockBadge('streak_100');
         }
-        if (pet.happiness >= 90 && !badges.includes('pet_lover')) {
-          get().unlockBadge('pet_lover');
+        if (journalEntries.length >= 1 && !badges.includes('first_journal')) {
+          get().unlockBadge('first_journal');
         }
-        if (pet.level >= 5 && !badges.includes('pet_level_5')) {
-          get().unlockBadge('pet_level_5');
+        if (breathingExercises >= 1 && !badges.includes('first_breathing')) {
+          get().unlockBadge('first_breathing');
         }
-        if (pet.level >= 10 && !badges.includes('pet_level_10')) {
-          get().unlockBadge('pet_level_10');
+        if (meditationSessions >= 1 && !badges.includes('first_meditation')) {
+          get().unlockBadge('first_meditation');
         }
-        // Journal badges
-        if (journalEntries.length >= 1 && !badges.includes('journal_starter')) {
+        
+        // ===== SKILLS (10) =====
+        if (breathingExercises >= 10 && !badges.includes('breathing_master')) {
+          get().unlockBadge('breathing_master');
+        }
+        if (breathingExercises >= 25 && !badges.includes('breathing_expert')) {
+          get().unlockBadge('breathing_expert');
+        }
+        if (journalEntries.length >= 3 && !badges.includes('journal_starter')) {
           get().unlockBadge('journal_starter');
         }
         if (journalEntries.length >= 10 && !badges.includes('journal_master')) {
           get().unlockBadge('journal_master');
         }
+        if (journalEntries.length >= 25 && !badges.includes('journal_pro')) {
+          get().unlockBadge('journal_pro');
+        }
+        if (meditationSessions >= 5 && !badges.includes('meditation_beginner')) {
+          get().unlockBadge('meditation_beginner');
+        }
+        if (meditationSessions >= 25 && !badges.includes('meditation_master')) {
+          get().unlockBadge('meditation_master');
+        }
+        if (moodEntries.length >= 10 && !badges.includes('mood_tracker')) {
+          get().unlockBadge('mood_tracker');
+        }
+        if (moodEntries.length >= 50 && !badges.includes('mood_analyst')) {
+          get().unlockBadge('mood_analyst');
+        }
+        if (gratitudeEntries >= 10 && !badges.includes('gratitude_practice')) {
+          get().unlockBadge('gratitude_practice');
+        }
+        
+        // ===== ACTIVITIES (10) =====
+        if (breathingExercises >= 1 && meditationSessions >= 1 && exerciseCount >= 1 && !badges.includes('calm_explorer')) {
+          get().unlockBadge('calm_explorer');
+        }
+        if ((breathingExercises + meditationSessions) >= 15 && !badges.includes('mindfulness_journey')) {
+          get().unlockBadge('mindfulness_journey');
+        }
+        if (exerciseCount >= 10 && !badges.includes('exercise_enthusiast')) {
+          get().unlockBadge('exercise_enthusiast');
+        }
+        if (exerciseCount >= 25 && !badges.includes('exercise_warrior')) {
+          get().unlockBadge('exercise_warrior');
+        }
+        if (communityConnections >= 5 && !badges.includes('social_butterfly')) {
+          get().unlockBadge('social_butterfly');
+        }
+        // These would need actual app integration to track properly
+        if (!badges.includes('reading_lover') && Math.random() > 0.9) {
+          // Placeholder for reading tracker
+        }
+        if (!badges.includes('podcast_listener') && Math.random() > 0.9) {
+          // Placeholder for podcast tracker
+        }
+        if (!badges.includes('music_therapist') && Math.random() > 0.9) {
+          // Placeholder for music tracker
+        }
+        if ((moodEntries.length > 0 || journalEntries.length > 0) && currentStreak >= 7 && !badges.includes('wellness_routine')) {
+          get().unlockBadge('wellness_routine');
+        }
+        if (currentStreak >= 7 && moodEntries.filter(e => {
+          const date = new Date(e.timestamp);
+          const today = new Date();
+          return date.toDateString() === today.toDateString();
+        }).length >= 1 && !badges.includes('perfect_week')) {
+          get().unlockBadge('perfect_week');
+        }
+        
+        // ===== MILESTONES (10) =====
+        if (totalCoinsEarned >= 100 && !badges.includes('coin_collector')) {
+          get().unlockBadge('coin_collector');
+        }
+        if (totalCoinsEarned >= 500 && !badges.includes('coin_wealthy')) {
+          get().unlockBadge('coin_wealthy');
+        }
+        if (totalCoinsEarned >= 1000 && !badges.includes('coin_rich')) {
+          get().unlockBadge('coin_rich');
+        }
+        if (totalCoinsEarned >= 2500 && !badges.includes('coin_elite')) {
+          get().unlockBadge('coin_elite');
+        }
+        if (moodEntries.length >= 30 && !badges.includes('monthly_champion')) {
+          get().unlockBadge('monthly_champion');
+        }
+        if (moodEntries.length >= 90 && !badges.includes('quarterly_champion')) {
+          get().unlockBadge('quarterly_champion');
+        }
+        if (moodEntries.length >= 365 && !badges.includes('yearly_champion')) {
+          get().unlockBadge('yearly_champion');
+        }
+        if (currentStreak >= 30 && !badges.includes('consistency_king')) {
+          get().unlockBadge('consistency_king');
+        }
+        if (badges.length > 0 && badges.length % 10 === 0 && !badges.includes('comeback_champion')) {
+          get().unlockBadge('comeback_champion');
+        }
+        if (badges.length >= 10 && !badges.includes('milestone_master')) {
+          get().unlockBadge('milestone_master');
+        }
+        
+        // ===== SPECIAL (10) =====
+        if (pet.happiness >= 90 && !badges.includes('pet_lover')) {
+          get().unlockBadge('pet_lover');
+        }
+        if (pet.level >= 5 && !badges.includes('pet_trainer')) {
+          get().unlockBadge('pet_trainer');
+        }
+        if (pet.level >= 10 && !badges.includes('pet_master')) {
+          get().unlockBadge('pet_master');
+        }
+        if (pet.level >= 25 && !badges.includes('pet_level_25')) {
+          get().unlockBadge('pet_level_25');
+        }
+        if (pet.happiness >= 95 && pet.health >= 90 && pet.cleanliness >= 90 && !badges.includes('perfect_pet')) {
+          get().unlockBadge('perfect_pet');
+        }
+        if (earlyBirdCount >= 7 && !badges.includes('early_bird')) {
+          get().unlockBadge('early_bird');
+        }
+        if (nightOwlCount >= 7 && !badges.includes('night_owl')) {
+          get().unlockBadge('night_owl');
+        }
+        if (weekendCheckIns >= 4 && !badges.includes('weekend_warrior')) {
+          get().unlockBadge('weekend_warrior');
+        }
+        if (communityConnections >= 5 && !badges.includes('community_helper')) {
+          get().unlockBadge('community_helper');
+        }
+        // Wellness ambassador - unlock all categories
+        const hasProgress = badges.some(b => ['first_checkin', 'streak_3', 'streak_7', 'streak_14', 'streak_30', 'streak_60', 'streak_100', 'first_journal', 'first_breathing', 'first_meditation'].includes(b));
+        const hasSkills = badges.some(b => ['breathing_master', 'breathing_expert', 'journal_starter', 'journal_master', 'journal_pro', 'meditation_beginner', 'meditation_master', 'mood_tracker', 'mood_analyst', 'gratitude_practice'].includes(b));
+        const hasActivities = badges.some(b => ['calm_explorer', 'mindfulness_journey', 'exercise_enthusiast', 'exercise_warrior', 'social_butterfly', 'wellness_routine', 'perfect_week'].includes(b));
+        const hasMilestones = badges.some(b => ['coin_collector', 'coin_wealthy', 'monthly_champion', 'yearly_champion', 'consistency_king'].includes(b));
+        const hasSpecial = badges.some(b => ['pet_lover', 'pet_trainer', 'pet_master', 'early_bird', 'night_owl', 'weekend_warrior'].includes(b));
+        if (hasProgress && hasSkills && hasActivities && hasMilestones && hasSpecial && !badges.includes('wellness_ambassador')) {
+          get().unlockBadge('wellness_ambassador');
+        }
+      },
+      
+      addBreathingExercise: () => {
+        set((state) => ({ breathingExercises: (state.breathingExercises || 0) + 1 }));
+        get().addCoins(5);
+        get().checkAndUnlockBadges();
+      },
+      
+      addMeditationSession: () => {
+        set((state) => ({ meditationSessions: (state.meditationSessions || 0) + 1 }));
+        get().addCoins(8);
+        get().checkAndUnlockBadges();
+      },
+      
+      addExercise: () => {
+        set((state) => ({ exerciseCount: (state.exerciseCount || 0) + 1 }));
+        get().addCoins(7);
+        get().checkAndUnlockBadges();
+      },
+      
+      addGratitudeEntry: () => {
+        set((state) => ({ gratitudeEntries: (state.gratitudeEntries || 0) + 1 }));
+        get().addCoins(5);
+        get().checkAndUnlockBadges();
+      },
+      
+      addCommunityConnection: () => {
+        set((state) => ({ communityConnections: (state.communityConnections || 0) + 1 }));
+        get().addCoins(10);
+        get().checkAndUnlockBadges();
       },
 
       toggleHealingGoal: (id) => {
@@ -741,7 +966,62 @@ export const useWellMindStore = create<WellMindState>()(
     }),
     {
       name: 'wellmind-storage',
-      version: 1,
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        // Migration function to ensure data integrity
+        if (version === 0 || version === 1) {
+          // Validate and fix numeric fields
+          return {
+            ...persistedState,
+            calmCoins: typeof persistedState.calmCoins === 'number' && !isNaN(persistedState.calmCoins) 
+              ? persistedState.calmCoins 
+              : 0,
+            totalCoinsEarned: typeof persistedState.totalCoinsEarned === 'number' && !isNaN(persistedState.totalCoinsEarned)
+              ? persistedState.totalCoinsEarned
+              : 0,
+            currentStreak: typeof persistedState.currentStreak === 'number' && !isNaN(persistedState.currentStreak)
+              ? persistedState.currentStreak
+              : 0,
+            breathingExercises: typeof persistedState.breathingExercises === 'number' && !isNaN(persistedState.breathingExercises)
+              ? persistedState.breathingExercises
+              : 0,
+            meditationSessions: typeof persistedState.meditationSessions === 'number' && !isNaN(persistedState.meditationSessions)
+              ? persistedState.meditationSessions
+              : 0,
+            gratitudeEntries: typeof persistedState.gratitudeEntries === 'number' && !isNaN(persistedState.gratitudeEntries)
+              ? persistedState.gratitudeEntries
+              : 0,
+            exerciseCount: typeof persistedState.exerciseCount === 'number' && !isNaN(persistedState.exerciseCount)
+              ? persistedState.exerciseCount
+              : 0,
+            weeklyCheckIns: typeof persistedState.weeklyCheckIns === 'number' && !isNaN(persistedState.weeklyCheckIns)
+              ? persistedState.weeklyCheckIns
+              : 0,
+            monthlyCheckIns: typeof persistedState.monthlyCheckIns === 'number' && !isNaN(persistedState.monthlyCheckIns)
+              ? persistedState.monthlyCheckIns
+              : 0,
+            earlyBirdCount: typeof persistedState.earlyBirdCount === 'number' && !isNaN(persistedState.earlyBirdCount)
+              ? persistedState.earlyBirdCount
+              : 0,
+            nightOwlCount: typeof persistedState.nightOwlCount === 'number' && !isNaN(persistedState.nightOwlCount)
+              ? persistedState.nightOwlCount
+              : 0,
+            weekendCheckIns: typeof persistedState.weekendCheckIns === 'number' && !isNaN(persistedState.weekendCheckIns)
+              ? persistedState.weekendCheckIns
+              : 0,
+            communityConnections: typeof persistedState.communityConnections === 'number' && !isNaN(persistedState.communityConnections)
+              ? persistedState.communityConnections
+              : 0,
+            consistentDays: typeof persistedState.consistentDays === 'number' && !isNaN(persistedState.consistentDays)
+              ? persistedState.consistentDays
+              : 0,
+            badges: Array.isArray(persistedState.badges) ? persistedState.badges : [],
+            moodEntries: Array.isArray(persistedState.moodEntries) ? persistedState.moodEntries : [],
+            journalEntries: Array.isArray(persistedState.journalEntries) ? persistedState.journalEntries : [],
+          };
+        }
+        return persistedState;
+      },
     }
   )
 );
