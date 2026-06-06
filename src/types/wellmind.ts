@@ -29,6 +29,7 @@ export interface CounselorUser {
   rating?: number;
   experienceYears?: number;
   consultationMethods?: ConsultationType[];
+  avatarUrl?: string;
   joinedAt: Date;
 }
 

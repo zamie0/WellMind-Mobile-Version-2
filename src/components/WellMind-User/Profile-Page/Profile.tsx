@@ -3,10 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { BottomNav } from '@/components/WellMind-User/BottomNav';
 import { useWellMindStore } from '@/stores/wellmindStore';
 import { useAuthStore } from '@/stores/authStore';
-import { Button } from '@/components/ui/button';
-import { 
-  User, Bell, Shield, Heart, HelpCircle, ChevronRight, LogOut, KeyRound,
-  Settings, Pencil
+import {
+  User, Bell, Shield, Heart, HelpCircle, ChevronRight,
+  LogOut, KeyRound, Settings, Pencil, LayoutList,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -17,10 +16,27 @@ import CrisisSupport from '@/components/WellMind-User/Profile-Page/CrisisSupport
 import HelpFAQ from '@/components/WellMind-User/Profile-Page/HelpFAQ';
 import ProfileSettings from '@/components/WellMind-User/Profile-Page/ProfileSettings';
 
-type ActiveScreen = 'main' | 'profileSettings' | 'pin' | 'notifications' | 'privacy' | 'crisis' | 'help' ;
+type ActiveScreen = 'main' | 'profileSettings' | 'pin' | 'notifications' | 'privacy' | 'crisis' | 'help';
 
+/* ── Helpers ────────────────────────────────────────────────────── */
+const SectionHeading = ({
+  children,
+  icon,
+}: {
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+}) => (
+  <div className="flex items-center gap-2 mb-3 px-0.5">
+    {icon}
+    <h2 className="text-base font-bold" style={{ color: '#1a2b38', letterSpacing: '-0.01em' }}>
+      {children}
+    </h2>
+  </div>
+);
+
+/* ── Page ───────────────────────────────────────────────────────── */
 export const Profile = () => {
-  const user = useWellMindStore((state) => state.user);
+  const user = useWellMindStore((s) => s.user);
   const { logout, hasPin } = useAuthStore();
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>('main');
   const navigate = useNavigate();
@@ -31,168 +47,216 @@ export const Profile = () => {
     navigate('/');
   };
 
-  if (activeScreen === 'profileSettings') {
-    return <ProfileSettings onClose={() => setActiveScreen('main')} />;
-  } 
+  /* ── Sub-screens ─────────────────────────────────────────────── */
+  if (activeScreen === 'profileSettings') return <ProfileSettings onClose={() => setActiveScreen('main')} />;
+  if (activeScreen === 'pin') return (
+    <PinSetup
+      onComplete={() => { setActiveScreen('main'); toast.success('PIN updated successfully!'); }}
+      onSkip={() => setActiveScreen('main')}
+    />
+  );
+  if (activeScreen === 'notifications') return <NotificationsSettings onClose={() => setActiveScreen('main')} />;
+  if (activeScreen === 'privacy')       return <PrivacySettings       onClose={() => setActiveScreen('main')} />;
+  if (activeScreen === 'crisis')        return <CrisisSupport         onClose={() => setActiveScreen('main')} />;
+  if (activeScreen === 'help')          return <HelpFAQ               onClose={() => setActiveScreen('main')} />;
 
-  // Render sub-screens
-  if (activeScreen === 'pin') {
-    return (
-      <PinSetup 
-        onComplete={() => {
-          setActiveScreen('main');
-          toast.success('PIN updated successfully!');
-        }}
-        onSkip={() => setActiveScreen('main')}
-      />
-    );
-  }
-
-  if (activeScreen === 'notifications') {
-    return <NotificationsSettings onClose={() => setActiveScreen('main')} />;
-  }
-
-  if (activeScreen === 'privacy') {
-    return <PrivacySettings onClose={() => setActiveScreen('main')} />;
-  }
-
-  if (activeScreen === 'crisis') {
-    return <CrisisSupport onClose={() => setActiveScreen('main')} />;
-  }
-
-  if (activeScreen === 'help') {
-    return <HelpFAQ onClose={() => setActiveScreen('main')} />;
-  }
-
+  /* ── Menu items ──────────────────────────────────────────────── */
   const menuItems = [
     {
-      icon: <KeyRound className="h-5 w-5" />,
+      Icon: KeyRound,
       label: hasPin() ? 'Change PIN' : 'Set Up PIN',
       description: hasPin() ? 'Update your quick access PIN' : 'Enable quick PIN login',
-      color: 'bg-sage-light text-sage',
+      accent: '#6bab9e',
       screen: 'pin' as ActiveScreen,
     },
     {
-      icon: <Bell className="h-5 w-5" />,
+      Icon: Bell,
       label: 'Notifications',
       description: 'Manage your reminders',
-      color: 'bg-honey-light text-honey',
+      accent: '#f59e0b',
       screen: 'notifications' as ActiveScreen,
     },
     {
-      icon: <Shield className="h-5 w-5" />,
+      Icon: Shield,
       label: 'Privacy',
       description: 'Data and security settings',
-      color: 'bg-sky-light text-sky',
+      accent: '#39a89b',
       screen: 'privacy' as ActiveScreen,
     },
     {
-      icon: <Heart className="h-5 w-5" />,
+      Icon: Heart,
       label: 'Crisis Support',
       description: 'Emergency resources',
-      color: 'bg-destructive/10 text-destructive',
+      accent: '#e8735a',
       screen: 'crisis' as ActiveScreen,
     },
     {
-      icon: <HelpCircle className="h-5 w-5" />,
+      Icon: HelpCircle,
       label: 'Help & FAQ',
       description: 'Get support and answers',
-      color: 'bg-lavender-light text-lavender',
+      accent: '#8fa3b1',
       screen: 'help' as ActiveScreen,
     },
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <header className="gradient-sage px-5 pt-safe-top pb-8 rounded-b-[2rem]">
-        <div className="pt-6">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-4"
-          >
-            {/* Avatar with edit badge */}
-            <div className="relative">
-              <div className="w-20 h-20 rounded-full gradient-hero flex items-center justify-center shadow-card overflow-hidden">
+    <div
+      className="min-h-screen pb-28"
+      style={{ background: 'linear-gradient(180deg, #f0f7f5 0%, #f7faf9 60%, #ffffff 100%)' }}
+    >
+      {/* ── Hero ──────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="relative overflow-hidden px-5 pt-10 pb-8"
+      >
+        {/* Background rings */}
+        <div
+          className="pointer-events-none absolute -top-20 -right-20 w-72 h-72 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(57,168,155,0.13) 0%, transparent 70%)' }}
+        />
+        <div
+          className="pointer-events-none absolute top-10 -left-16 w-56 h-56 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(232,115,90,0.08) 0%, transparent 70%)' }}
+        />
+
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          {/* Badge */}
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#39a89b' }}>
+              <User className="h-4 w-4 text-white" />
+            </div>
+            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#39a89b' }}>
+              Profile
+            </span>
+          </div>
+
+          {/* Profile row */}
+          <div className="flex items-center gap-4">
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
+              <div
+                className="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden"
+                style={{
+                  background: 'linear-gradient(135deg, #39a89b, #6bab9e)',
+                  boxShadow: '0 4px 16px rgba(57,168,155,0.3)',
+                }}
+              >
                 {user?.avatar ? (
                   <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  <User className="h-10 w-10 text-primary-foreground" />
+                  <User className="h-9 w-9 text-white" />
                 )}
               </div>
               <button
                 type="button"
                 onClick={() => setActiveScreen('profileSettings')}
-                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-card shadow-card flex items-center justify-center border-2 border-background hover:bg-muted transition-colors"
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center border-2"
+                style={{
+                  background: 'white',
+                  borderColor: '#f0f7f5',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                }}
                 aria-label="Edit profile"
               >
-                <Pencil className="h-3.5 w-3.5 text-foreground" />
+                <Pencil className="h-3 w-3" style={{ color: '#39a89b' }} />
               </button>
             </div>
 
-            {/* Name */}
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-foreground">
+            {/* Name + sub */}
+            <div className="flex-1 min-w-0">
+              <h1
+                className="text-[1.6rem] font-bold leading-tight mb-1"
+                style={{ color: '#1a2b38', letterSpacing: '-0.02em' }}
+              >
                 {user?.name || 'Friend'}
               </h1>
-              <p className="text-muted-foreground">Your wellness journey</p>
+              <p className="text-sm" style={{ color: '#5f7585' }}>Your wellness journey</p>
             </div>
 
-            {/* Settings button */}
+            {/* Settings icon */}
             <button
               type="button"
               onClick={() => setActiveScreen('profileSettings')}
-              className="w-10 h-10 rounded-full bg-card/60 backdrop-blur-sm flex items-center justify-center shadow-soft hover:bg-card transition-colors"
+              className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}
               aria-label="Profile settings"
             >
-              <Settings className="h-5 w-5 text-foreground" />
+              <Settings className="h-5 w-5" style={{ color: '#5f7585' }} />
             </button>
-          </motion.div>
-        </div>
-      </header>
-
-      <main className="px-5 py-6 space-y-6">
-
-        {/* Menu Items */}
-        <section className="space-y-3">
-          {menuItems.map((item, index) => (
-            <motion.button
-              key={item.label}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 + index * 0.1 }}
-              onClick={() => setActiveScreen(item.screen)}
-              className="w-full bg-card rounded-2xl p-4 shadow-soft flex items-center gap-4 hover:shadow-card transition-all"
-            >
-              <div className={`w-12 h-12 rounded-xl ${item.color} flex items-center justify-center`}>
-                {item.icon}
-              </div>
-              <div className="flex-1 text-left">
-                <p className="font-medium text-foreground">{item.label}</p>
-                <p className="text-sm text-muted-foreground">{item.description}</p>
-              </div>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </motion.button>
-          ))}
-        </section>
-
-        {/* Logout Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-<Button
-  variant="outline"
-  onClick={handleLogout}
-  className="w-full py-6 rounded-2xl border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200 gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
->
-  <LogOut className="h-5 w-5" />
-  Log Out
-</Button>
+          </div>
         </motion.div>
+      </motion.div>
+
+      {/* ── Main ──────────────────────────────────────────────── */}
+      <main className="px-5 space-y-6">
+
+        {/* Menu */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}>
+          <SectionHeading icon={<LayoutList className="h-4 w-4" style={{ color: '#39a89b' }} />}>
+            Account Settings
+          </SectionHeading>
+
+          <div className="space-y-3">
+            {menuItems.map(({ Icon, label, description, accent, screen }, i) => (
+              <motion.button
+                key={label}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.22 + i * 0.07 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setActiveScreen(screen)}
+                className="w-full rounded-3xl overflow-hidden text-left"
+                style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
+              >
+                {/* Accent line */}
+                <div
+                  className="h-1 w-full"
+                  style={{ background: `linear-gradient(90deg, ${accent}, ${accent}99)` }}
+                />
+                <div className="flex items-center gap-4 px-4 py-3.5">
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: `${accent}18` }}
+                  >
+                    <Icon className="h-5 w-5" style={{ color: accent }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm" style={{ color: '#1a2b38' }}>{label}</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#8fa3b1' }}>{description}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 flex-shrink-0" style={{ color: '#c5d3da' }} />
+                </div>
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Logout */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.58 }}>
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={handleLogout}
+            className="w-full rounded-3xl overflow-hidden flex items-center justify-center gap-2.5 py-4 font-bold text-sm"
+            style={{
+              background: 'white',
+              color: '#e8735a',
+              boxShadow: '0 4px 20px rgba(232,115,90,0.12)',
+            }}
+          >
+            {/* Coral accent line */}
+            <div
+              className="absolute top-0 left-0 right-0 h-1"
+              style={{ background: 'linear-gradient(90deg, #e8735a, #f0957f)' }}
+            />
+            <LogOut className="h-4 w-4" />
+            Log Out
+          </motion.button>
+        </motion.div>
+
+        <div/>
       </main>
+
       <BottomNav />
     </div>
   );
