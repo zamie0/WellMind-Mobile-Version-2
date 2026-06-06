@@ -277,8 +277,7 @@ export const detectEmotion = async (
         safetyFlags.harm_to_others_detected,
         lonelinessDetected
     );
-
-    // Never show calm/happy/neutral when direct self-harm language is present
+    
     if (
         safetyFlags.direct_self_harm_detected &&
         (finalLabel === 'calm' || finalLabel === 'neutral' || finalLabel === 'happy')
