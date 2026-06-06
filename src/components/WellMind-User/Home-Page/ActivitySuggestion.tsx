@@ -1,18 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Gamepad2, 
-  UtensilsCrossed, 
-  Footprints, 
-  Headphones, 
-  PenLine, 
-  Sparkles as CleanIcon,
-  BookOpen,
-  Wind,
-  Shuffle,
-  X,
-  Clock,
-  Star
+  Gamepad2, UtensilsCrossed, Footprints, Headphones, PenLine, Sparkles as CleanIcon, BookOpen,
+  Wind, Shuffle, X, Clock, Star, Dumbbell,  Sun, Sparkles, Heart, Lightbulb  
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -147,6 +137,66 @@ const activities: Activity[] = [
     duration: '1-3 min',
     difficulty: 'Easy',
     color: 'bg-cyan-100 text-cyan-600'
+  },
+  {
+    id: 'stretch',
+    icon: <Dumbbell className="h-6 w-6" />,
+    title: 'Light Stretching',
+    shortDesc: 'Release tension in your body',
+    details: [
+      'Stretch your neck, shoulders, and back gently',
+      'Reach your arms overhead and take a deep breath',
+      'Roll your shoulders slowly forward and backward',
+      'Focus on how your body feels as you move'
+    ],
+    duration: '5-10 min',
+    difficulty: 'Easy',
+    color: 'bg-indigo-100 text-indigo-600'
+  },
+  {
+    id: 'sunlight',
+    icon: <Sun className="h-6 w-6" />,
+    title: 'Get Some Sunlight',
+    shortDesc: 'Boost your mood naturally',
+    details: [
+      'Step outside for a few minutes',
+      'Let natural light touch your skin',
+      'Take slow, mindful breaths',
+      'Notice the warmth and environment around you'
+    ],
+    duration: '5-15 min',
+    difficulty: 'Easy',
+    color: 'bg-yellow-100 text-yellow-600'
+  },
+  {
+    id: 'meditate',
+    icon: <Sparkles className="h-6 w-6" />,
+    title: 'Quick Mindful Meditation',
+    shortDesc: 'Clear mental clutter',
+    details: [
+      'Sit comfortably and close your eyes',
+      'Focus on your breath going in and out',
+      'Let thoughts come and go without judgment',
+      'Even 2–5 minutes helps reset your mind'
+    ],
+    duration: '2-5 min',
+    difficulty: 'Easy',
+    color: 'bg-violet-100 text-violet-600'
+  },
+  {
+    id: 'gratitude',
+    icon: <Heart className="h-6 w-6" />,
+    title: 'Gratitude Check-in',
+    shortDesc: 'Shift focus to positivity',
+    details: [
+      'Think of 3 things you are grateful for today',
+      'They can be small or meaningful moments',
+      'Say them out loud or write them down',
+      'Notice how your mood shifts gently'
+    ],
+    duration: '3-5 min',
+    difficulty: 'Easy',
+    color: 'bg-rose-100 text-rose-600'
   }
 ];
 
@@ -173,7 +223,7 @@ export const ActivitySuggestion = () => {
         className="bg-card rounded-2xl p-5 border border-border"
       >
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-lg">💡</span>
+          <Lightbulb className="h-6 w-6 text-yellow-500" />
           <h3 className="font-semibold text-foreground">What Can I Do Now?</h3>
         </div>
         
@@ -191,7 +241,7 @@ export const ActivitySuggestion = () => {
 
         {/* Quick activity grid */}
         <div className="mt-4 grid grid-cols-4 gap-2">
-          {activities.slice(0, 8).map((activity) => (
+          {activities.slice(0, 12).map((activity) => (
             <motion.button
               key={activity.id}
               whileHover={{ scale: 1.05 }}
@@ -200,7 +250,7 @@ export const ActivitySuggestion = () => {
                 setSelectedActivity(activity);
                 setShowSuggestion(true);
               }}
-              className={`p-3 rounded-xl ${activity.color} transition-all`}
+              className={`p-3 rounded-xl ${activity.color} flex items-center justify-center transition-all`}
             >
               {activity.icon}
             </motion.button>

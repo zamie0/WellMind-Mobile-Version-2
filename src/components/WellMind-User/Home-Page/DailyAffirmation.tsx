@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, RefreshCw } from 'lucide-react';
+import { Sparkles, RefreshCw, Flower  } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const affirmations = [
@@ -124,7 +124,7 @@ export const DailyAffirmation = ({ onRefresh }: DailyAffirmationProps) => {
       
       <div className="relative">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-lg">🌸</span>
+          <Flower className="h-6 w-6 text-pink-500" />
           <span className="text-sm font-medium text-coral-foreground/70">Daily Affirmation</span>
         </div>
         

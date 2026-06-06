@@ -16,7 +16,7 @@ import { YourGoals } from '@/components/WellMind-User/Home-Page/Goals/YourGoals'
 import { RelaxGamesSheet } from '@/components/WellMind-User/Home-Page/RelaxGames';
 import { AmbientSoundsSheet } from '@/components/WellMind-User/Home-Page/Quick Actions/Ambient Sounds/AmbientSoundsSheet';
 import { useWellMindStore } from '@/stores/wellmindStore';
-import { Flame, Plus } from 'lucide-react';
+import { Flame, Plus, Leaf, Heart   } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const Home = () => {
@@ -59,7 +59,8 @@ export const Home = () => {
   };
 
   const handleAffirmationClick = () => {
-    toast.success('You are valued and worthy! 💚', {
+    toast.success('You are valued and worthy!', {
+      icon: <Heart className="h-4 w-4 text-green-500" />,
       description: 'Remember to be kind to yourself today.',
     });
   };
@@ -68,39 +69,51 @@ export const Home = () => {
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="gradient-calm pt-safe-top">
-        <div className="px-5 pt-6 pb-8">
+        <div className="px-5 pt-6 pb-8 space-y-4">
+
+          {/* Top Row */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between mb-6"
+            className="flex items-start justify-between"
           >
+            {/* Greeting */}
             <div>
               <p className="text-muted-foreground text-sm">{getGreeting()}</p>
-              <h1 className="text-2xl font-bold text-foreground">
-                {user?.name || 'Friend'} 🌿
+
+              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                {user?.name || 'Friend'}
+                <Leaf className="h-5 w-5 text-green-600" />
               </h1>
             </div>
-            
-            {/* Streak badge */}
+
+            {/* Streak */}
             {currentStreak > 0 && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="flex items-center gap-2 bg-coral-light px-4 py-2 rounded-full"
+                className="flex items-center gap-1.5 bg-white/60 backdrop-blur px-3 py-1.5 rounded-full shadow-sm border border-white/40"
               >
-                <Flame className="h-5 w-5 text-coral" />
-                <span className="font-semibold text-coral">{currentStreak}</span>
+                <Flame className="h-4 w-4 text-orange-500" />
+                <span className="font-semibold text-foreground">
+                  {currentStreak}
+                </span>
               </motion.div>
             )}
           </motion.div>
 
-          {/* Today's mood or check-in prompt */}
+          {/* Mood Section */}
           {!todaysMood ? (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.15 }}
+              className="bg-card/80 backdrop-blur rounded-2xl p-5 shadow-soft border border-border/50"
             >
+              <p className="text-sm text-muted-foreground mb-3">
+                Let’s check in with yourself
+              </p>
+
               <Button
                 variant="hero"
                 size="lg"
@@ -115,9 +128,12 @@ export const Home = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-card rounded-2xl p-4 shadow-soft"
+              className="bg-card/80 backdrop-blur rounded-2xl p-5 shadow-soft border border-border/50 space-y-3"
             >
-              <p className="text-sm text-muted-foreground mb-1">Today you felt</p>
+              <p className="text-sm text-muted-foreground">
+                Today you felt
+              </p>
+
               <div className="flex items-center gap-3">
                 <span className="text-3xl">
                   {todaysMood.emotion === 'happy' && '😊'}
@@ -128,17 +144,20 @@ export const Home = () => {
                   {todaysMood.emotion === 'exhausted' && '😩'}
                   {todaysMood.emotion === 'numb' && '😶'}
                 </span>
+
                 <span className="font-medium text-foreground capitalize">
                   {todaysMood.emotion}
                 </span>
               </div>
+
               {todaysMood.note && (
-                <p className="text-sm text-muted-foreground mt-2 italic">
+                <p className="text-sm text-muted-foreground italic border-l-2 border-muted pl-3">
                   "{todaysMood.note}"
                 </p>
               )}
             </motion.div>
           )}
+
         </div>
       </header>
 
