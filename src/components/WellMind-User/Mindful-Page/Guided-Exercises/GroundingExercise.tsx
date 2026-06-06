@@ -180,7 +180,7 @@ export const GroundingExercise = ({ onClose }: GroundingExerciseProps) => {
               </motion.div>
 
               <h3 className="text-2xl font-bold text-foreground mb-2">
-                Well done! 🌟
+                Well done!
               </h3>
               <p className="text-muted-foreground mb-6">
                 You've grounded yourself in the present moment.

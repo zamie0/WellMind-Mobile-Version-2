@@ -192,13 +192,13 @@ export const SleepMeditation = ({ onClose }: SleepMeditationProps) => {
               animate={{ opacity: 1, scale: 1 }}
               className="text-center"
             >
-              <motion.div
-                className="text-6xl mb-6"
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                🌙
-              </motion.div>
+<motion.div
+  className="mb-6 flex justify-center items-center"
+  animate={{ scale: [1, 1.1, 1] }}
+  transition={{ duration: 2, repeat: Infinity }}
+>
+  <Moon className="w-16 h-16 text-indigo-400" />
+</motion.div>
               <h3 className="text-2xl font-semibold text-white mb-2">
                 Sweet Dreams
               </h3>

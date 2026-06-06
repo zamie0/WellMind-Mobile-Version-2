@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Sparkles, Heart } from 'lucide-react';
+import { X, Check, Sparkles, Heart, Sunrise, Handshake } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -9,9 +9,9 @@ interface GratitudeExerciseProps {
 }
 
 const prompts = [
-  { emoji: '🌅', prompt: 'Something that made you smile today' },
-  { emoji: '🤝', prompt: 'A person you are grateful for' },
-  { emoji: '✨', prompt: 'A small thing you often take for granted' },
+  { icon: Sunrise, prompt: 'Something that made you smile today' },
+  { icon: Handshake, prompt: 'A person you are grateful for' },
+  { icon: Sparkles, prompt: 'A small thing you often take for granted' },
 ];
 
 export const GratitudeExercise = ({ onClose }: GratitudeExerciseProps) => {
@@ -88,9 +88,9 @@ export const GratitudeExercise = ({ onClose }: GratitudeExerciseProps) => {
               <motion.div
                 animate={{ rotate: [0, 5, -5, 0] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="text-6xl text-center mb-4"
+                className="flex justify-center mb-4"
               >
-                {prompt.emoji}
+                <prompt.icon className="h-14 w-14 text-muted-foreground" />
               </motion.div>
 
               {/* Prompt text */}
@@ -138,8 +138,8 @@ export const GratitudeExercise = ({ onClose }: GratitudeExerciseProps) => {
                 <Sparkles className="w-12 h-12 text-honey" />
               </motion.div>
 
-              <h2 className="text-2xl font-bold text-foreground mb-4">
-                Beautiful! 🌟
+              <h2 className="text-2xl font-bold text-foreground mb-4 flex items-center justify-center gap-2">
+                Beautiful!
               </h2>
 
               <p className="text-muted-foreground mb-6">
@@ -148,14 +148,18 @@ export const GratitudeExercise = ({ onClose }: GratitudeExerciseProps) => {
 
               {/* Summary */}
               <div className="bg-white/80 rounded-2xl p-4 mb-6 text-left space-y-3">
-                {entries.map((entry, idx) => (
-                  entry.trim() && (
+                {entries.map((entry, idx) => {
+                  if (!entry.trim()) return null;
+
+                  const Icon = prompts[idx]?.icon;
+
+                  return (
                     <div key={idx} className="flex items-start gap-3">
-                      <span className="text-xl">{prompts[idx].emoji}</span>
+                      {Icon && <Icon className="h-5 w-5 text-muted-foreground mt-0.5" />}
                       <p className="text-sm text-foreground flex-1">{entry}</p>
                     </div>
-                  )
-                ))}
+                  );
+                })}
               </div>
 
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-6">

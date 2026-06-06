@@ -1,6 +1,19 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Pause, SkipForward, Check } from 'lucide-react';
+import {
+  X,
+  Play,
+  Pause,
+  SkipForward,
+  Check,
+  Sunrise,
+  Umbrella,
+  Waves,
+  Sun,
+  Wind,
+  Feather,
+  Sparkles,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface VisualizationExerciseProps {
@@ -11,49 +24,49 @@ const scenes = [
   {
     title: 'Preparation',
     instruction: 'Close your eyes. Take three deep breaths. Let your body relax completely.',
-    visual: '🌅',
+    icon: Sunrise,
     background: 'from-sky-light to-background',
     duration: 15,
   },
   {
     title: 'A Peaceful Beach',
     instruction: 'Imagine yourself on a warm, sandy beach. Feel the soft sand beneath your feet.',
-    visual: '🏖️',
+    icon: Umbrella,
     background: 'from-honey-light to-background',
     duration: 20,
   },
   {
     title: 'The Gentle Waves',
     instruction: 'Watch the crystal-clear waves rolling in and out. Hear their soothing rhythm.',
-    visual: '🌊',
+    icon: Waves,
     background: 'from-sky-light to-background',
     duration: 20,
   },
   {
     title: 'Warm Sunlight',
     instruction: 'Feel the warm sun on your skin. It fills you with golden, healing energy.',
-    visual: '☀️',
+    icon: Sun,
     background: 'from-honey-light to-background',
     duration: 20,
   },
   {
     title: 'A Gentle Breeze',
     instruction: 'A soft, cool breeze brushes your face. It carries away all your worries.',
-    visual: '🍃',
+    icon: Wind,
     background: 'from-sage-light to-background',
     duration: 20,
   },
   {
     title: 'Peace Within',
     instruction: 'Feel a deep sense of peace washing over you. You are safe. You are calm.',
-    visual: '🕊️',
+    icon: Feather,
     background: 'from-lavender-light to-background',
     duration: 20,
   },
   {
     title: 'Carrying Peace',
     instruction: 'Slowly bring your awareness back. This peace stays with you always.',
-    visual: '✨',
+    icon: Sparkles,
     background: 'from-primary-light to-background',
     duration: 15,
   },
@@ -97,6 +110,7 @@ export const VisualizationExercise = ({ onClose }: VisualizationExerciseProps) =
   };
 
   const scene = scenes[currentScene];
+  const Icon = scene.icon;
 
   return (
     <motion.div
@@ -136,9 +150,9 @@ export const VisualizationExercise = ({ onClose }: VisualizationExerciseProps) =
                   repeat: Infinity,
                   ease: 'easeInOut',
                 }}
-                className="text-8xl mb-8"
+                className="mb-8 flex justify-center"
               >
-                {scene.visual}
+                <Icon className="h-20 w-20 text-foreground/70" />
               </motion.div>
 
               <h2 className="text-2xl font-bold text-foreground mb-4">{scene.title}</h2>

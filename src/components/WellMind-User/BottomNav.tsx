@@ -7,7 +7,7 @@ const navItems = [
   { icon: Home, label: 'Home', path: '/' },
   { icon: BarChart2, label: 'Insights', path: '/insights' },
   { icon: Wind, label: 'Mindful', path: '/mindfulness' },
-  { icon: Sparkles, label: 'MindBuddy', path: '/rewards' },
+  { icon: Sparkles, label: 'MindBuddy', path: '/MindBuddy' },
   { icon: Users, label: 'Counselor', path: '/Counselor' },
   { icon: User, label: 'Profile', path: '/profile' },
 ];

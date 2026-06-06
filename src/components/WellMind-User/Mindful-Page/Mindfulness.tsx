@@ -146,27 +146,22 @@ export const Mindfulness = () => {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header with Hero Image */}
-      <header className="relative">
-        <div className="h-48 overflow-hidden">
-          <img 
-            src={heroMindfulness} 
-            alt="Peaceful mindfulness illustration" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
-        </div>
-        <div className="px-5 -mt-8 relative z-10">
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-2xl font-bold text-foreground"
-          >
-            Mindfulness
-          </motion.h1>
-          <p className="text-muted-foreground">Take a moment for yourself</p>
-        </div>
-      </header>
+{/* Header */}
+<header className="px-5 pt-safe-top">
+  <motion.div
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="pt-6 pb-4 space-y-2"
+  >
+    <h1 className="text-2xl font-bold text-foreground tracking-tight">
+      Mindfulness
+    </h1>
+
+    <p className="text-muted-foreground text-sm leading-relaxed max-w-xs">
+      Take a moment for yourself, breathe, and return to the present.
+    </p>
+  </motion.div>
+</header>
 
       <main className="px-5 py-4 space-y-8">
         {/* Exercises */}

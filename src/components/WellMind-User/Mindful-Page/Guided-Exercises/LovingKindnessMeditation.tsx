@@ -1,6 +1,18 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Pause, SkipForward, Check, Heart } from 'lucide-react';
+import {
+  X,
+  Play,
+  Pause,
+  SkipForward,
+  Check,
+  Heart,
+  User,
+  Smile,
+  Handshake,
+  Sprout,
+  Globe,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface LovingKindnessMeditationProps {
@@ -10,7 +22,7 @@ interface LovingKindnessMeditationProps {
 const stages = [
   {
     recipient: 'Yourself',
-    emoji: '🪞',
+    icon: User,
     instruction: 'Start by sending loving-kindness to yourself. You deserve love and compassion.',
     phrases: [
       'May I be happy',
@@ -22,7 +34,7 @@ const stages = [
   },
   {
     recipient: 'A Loved One',
-    emoji: '💝',
+    icon: Heart,
     instruction: 'Think of someone you love deeply. Send them your warmest wishes.',
     phrases: [
       'May you be happy',
@@ -34,7 +46,7 @@ const stages = [
   },
   {
     recipient: 'A Neutral Person',
-    emoji: '🤝',
+    icon: Handshake,
     instruction: 'Think of someone you neither like nor dislike. Extend kindness to them too.',
     phrases: [
       'May you be happy',
@@ -46,7 +58,7 @@ const stages = [
   },
   {
     recipient: 'A Difficult Person',
-    emoji: '🌱',
+    icon: Sprout,
     instruction: 'Think of someone you find challenging. This is the hardest but most transformative.',
     phrases: [
       'May you be happy',
@@ -58,7 +70,7 @@ const stages = [
   },
   {
     recipient: 'All Beings',
-    emoji: '🌍',
+    icon: Globe,
     instruction: 'Expand your loving-kindness to all living beings everywhere.',
     phrases: [
       'May all beings be happy',
@@ -159,7 +171,9 @@ export const LovingKindnessMeditation = ({ onClose }: LovingKindnessMeditationPr
                 }}
                 className="w-32 h-32 rounded-full bg-lavender/20 flex items-center justify-center mx-auto mb-6"
               >
-                <span className="text-5xl">{stage.emoji}</span>
+                <span className="text-5xl">
+                  <stage.icon className="w-12 h-12" />
+                </span>
               </motion.div>
 
               <p className="text-sm text-muted-foreground mb-2">

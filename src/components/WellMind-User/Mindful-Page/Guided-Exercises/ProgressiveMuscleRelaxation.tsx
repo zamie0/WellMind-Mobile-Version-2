@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Pause, SkipForward, Check } from 'lucide-react';
+import { X, Play, Pause, SkipForward, Check, Zap, Smile, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ProgressiveMuscleRelaxationProps {
@@ -107,8 +107,12 @@ export const ProgressiveMuscleRelaxation = ({ onClose }: ProgressiveMuscleRelaxa
                 transition={{ duration: 0.5 }}
                 className="w-32 h-32 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg"
               >
-                <span className="text-4xl text-white font-bold">
-                  {phase === 'tense' ? '💪' : '😌'}
+                <span className="text-white font-bold">
+                  {phase === 'tense' ? (
+                    <Zap className="w-10 h-10" />
+                  ) : (
+                    <Smile className="w-10 h-10" />
+                  )}
                 </span>
               </motion.div>
 
@@ -123,7 +127,17 @@ export const ProgressiveMuscleRelaxation = ({ onClose }: ProgressiveMuscleRelaxa
               <div className={`inline-block px-4 py-2 rounded-full text-sm font-medium mb-6 ${
                 phase === 'tense' ? 'bg-coral/20 text-coral' : 'bg-sage/20 text-sage'
               }`}>
-                {phase === 'tense' ? '⚡ TENSE' : '🌿 RELEASE'}
+                {phase === "tense" ? (
+                  <span className="flex items-center gap-2 text-white font-semibold">
+                    <Zap className="w-5 h-5 text-yellow-400" />
+                    TENSE
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2 text-white font-semibold">
+                    <Leaf className="w-5 h-5 text-green-400" />
+                    RELEASE
+                  </span>
+                )}
               </div>
 
               {/* Progress bar */}

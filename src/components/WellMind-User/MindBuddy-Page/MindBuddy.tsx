@@ -1,18 +1,14 @@
-import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Gift, Trophy, TrendingUp } from 'lucide-react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { useWellMindStore } from '@/stores/wellmindStore';
 import { BottomNav } from '@/components/WellMind-User/BottomNav';
 import { VirtualPet } from '@/components/WellMind-User/MindBuddy-Page/MindBuddy/VirtualPet';
 import { BadgeCard, getAllBadgeIds } from '@/components/WellMind-User/MindBuddy-Page/BadgeCard';
+
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
-const Rewards = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-
+const MindBuddy = () => {
   const { 
     calmCoins, 
     totalCoinsEarned, 
@@ -21,17 +17,6 @@ const Rewards = () => {
     canClaimDailyBonus,
     currentStreak,
   } = useWellMindStore();
-
-  useEffect(() => {
-    const state = location.state as { openMindBuddy?: boolean; fromEmotionDashboard?: boolean } | null;
-    if (state?.openMindBuddy) {
-      navigate('/rewards', { replace: true });
-      window.setTimeout(() => {
-        const chatTrigger = document.querySelector('[data-mindbuddy-open-trigger="true"]') as HTMLButtonElement | null;
-        chatTrigger?.click();
-      }, 0);
-    }
-  }, [location.state, navigate]);
 
   const allBadges = getAllBadgeIds();
   const unlockedCount = badges.length;
@@ -53,7 +38,7 @@ const Rewards = () => {
         animate={{ opacity: 1, y: 0 }}
         className="px-5 pt-6 pb-4"
       >
-        <h1 className="text-2xl font-bold text-foreground">Rewards</h1>
+        <h1 className="text-2xl font-bold text-foreground">MindBuddy</h1>
         <p className="text-muted-foreground text-sm mt-1">
           Earn coins, unlock badges, care for your pet
         </p>
@@ -168,4 +153,4 @@ const Rewards = () => {
   );
 };
 
-export default Rewards;
+export default MindBuddy;
