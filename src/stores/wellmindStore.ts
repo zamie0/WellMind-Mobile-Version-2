@@ -34,6 +34,7 @@ interface WellMindState {
   
   // Actions
   setUser: (user: UserProfile) => void;
+  updateUser: (data: Partial<UserProfile>) => void;
   completeOnboarding: (name: string) => void;
   addMoodEntry: (emotion: Emotion, note?: string, triggers?: string[]) => void;
   getMoodHistory: (days?: number) => MoodEntry[];
@@ -210,6 +211,11 @@ export const useWellMindStore = create<WellMindState>()(
       moodPrediction: null,
 
       setUser: (user) => set({ user }),
+
+      updateUser: (data: Partial<UserProfile>) =>
+        set((state) => ({
+          user: state.user ? { ...state.user, ...data } : state.user,
+      })),
 
       completeOnboarding: (name) => {
         set({

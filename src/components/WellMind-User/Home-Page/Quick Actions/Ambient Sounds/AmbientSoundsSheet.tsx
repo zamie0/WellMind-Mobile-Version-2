@@ -87,25 +87,6 @@ export const AmbientSoundsSheet = ({ open, onClose }: Props) => {
                 );
               })}
             </div>
-
-            <div className="bg-muted/40 rounded-2xl p-4 mb-4">
-              <div className="flex items-center gap-3 mb-2">
-                <Volume2 className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-foreground">Volume</span>
-                <span className="text-xs text-muted-foreground ml-auto">{Math.round(volume * 100)}%</span>
-              </div>
-              <Slider
-                value={[volume * 100]}
-                onValueChange={handleVolume}
-                max={100}
-                step={1}
-              />
-            </div>
-
-            <p className="text-xs text-muted-foreground text-center leading-relaxed">
-              🎧 Plays in the background when the screen is locked or the tab is minimized.
-              For playback after fully closing the app, install it as a native app.
-            </p>
           </motion.div>
         </motion.div>
       )}

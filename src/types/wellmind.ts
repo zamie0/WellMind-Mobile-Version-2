@@ -75,7 +75,8 @@ export interface SessionBooking {
 export interface UserProfile {
   id: string;
   name: string;
-  reminderTime?: string;
+  email?: string;
+  avatar?: string; // base64 string
   notificationsEnabled: boolean;
   onboardingCompleted: boolean;
   streak: number;

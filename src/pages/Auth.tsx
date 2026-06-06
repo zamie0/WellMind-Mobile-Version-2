@@ -96,8 +96,6 @@ const Auth = () => {
         >
           <motion.div
             className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-sage-400 to-sage-500 rounded-3xl shadow-lg mb-4"
-            animate={{ rotate: [0, 5, -5, 0] }}
-            transition={{ duration: 4, repeat: Infinity }}
           >
             <img 
               src="/logo_removed_bg.png" 
@@ -122,8 +120,8 @@ const Auth = () => {
               onClick={() => setRole('user')}
               className={`p-4 rounded-2xl border-2 transition-all text-left ${
                 role === 'user'
-                  ? 'border-sage-400 bg-sage-50 shadow-sm'
-                  : 'border-sage-100 bg-white hover:border-sage-200'
+                  ? 'border-[hsl(var(--sage))] bg-[hsl(var(--sage-light))] shadow-md scale-[1.03]'
+                  : 'border-[hsl(var(--border))] bg-white hover:border-[hsl(var(--sage))]'
               }`}
             >
               <Users className={`w-5 h-5 mb-2 ${role === 'user' ? 'text-sage-600' : 'text-sage-400'}`} />
@@ -138,8 +136,8 @@ const Auth = () => {
               }}
               className={`p-4 rounded-2xl border-2 transition-all text-left ${
                 role === 'counselor'
-                  ? 'border-coral-400 bg-coral-50 shadow-sm'
-                  : 'border-sage-100 bg-white hover:border-coral-200'
+                  ? 'border-[hsl(var(--coral))] bg-[hsl(var(--coral-light))] shadow-md scale-[1.03]'
+                  : 'border-[hsl(var(--border))] bg-white hover:border-[hsl(var(--coral))]'
               }`}
             >
               <Stethoscope className={`w-5 h-5 mb-2 ${role === 'counselor' ? 'text-coral-600' : 'text-sage-400'}`} />
@@ -149,28 +147,57 @@ const Auth = () => {
           </div>
 
           {/* Toggle */}
-          <div className="flex bg-sage-100 rounded-2xl p-1 mb-6">
-            <button
-              type="button"
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                isLogin ? 'bg-white text-sage-800 shadow-sm' : 'text-sage-500 hover:text-sage-700'
-              }`}
-            >
-              Login
-            </button>
-            {!isCounselor && (
-              <button
-                type="button"
-                onClick={() => setIsLogin(false)}
-                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
-                  !isLogin ? 'bg-white text-sage-800 shadow-sm' : 'text-sage-500 hover:text-sage-700'
-                }`}
+          <AnimatePresence mode="wait">
+            {isCounselor ? (
+              <motion.div
+                key="counselor-banner"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center gap-3 mb-6 p-4 rounded-2xl bg-coral-50 border border-coral-200"
               >
-                Register
-              </button>
+                <Stethoscope className="w-5 h-5 text-coral-500 shrink-0" />
+                <div>
+                  <p className="font-semibold text-coral-800 text-sm">Counselor Login</p>
+                  <p className="text-xs text-coral-500">Access your counselor dashboard</p>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="user-toggle"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.2 }}
+                className="relative flex bg-[hsl(var(--sage-light))] rounded-full p-1 mb-6"
+              >
+                <div
+                  className={`absolute top-1 bottom-1 w-1/2 rounded-full bg-[hsl(var(--sage))] transition-all duration-300 ${
+                    isLogin ? 'left-1' : 'left-[calc(50%-4px)]'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(true)}
+                  className="relative z-10 flex-1 py-2 text-sm font-semibold"
+                >
+                  <span className={isLogin ? 'text-white' : 'text-[hsl(var(--sage-dark))]'}>
+                    Login
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsLogin(false)}
+                  className="relative z-10 flex-1 py-2 text-sm font-semibold"
+                >
+                  <span className={!isLogin ? 'text-white' : 'text-[hsl(var(--sage-dark))]'}>
+                    Register
+                  </span>
+                </button>
+              </motion.div>
             )}
-          </div>
+          </AnimatePresence>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <AnimatePresence mode="wait">
@@ -256,14 +283,6 @@ const Auth = () => {
               )}
             </Button>
           </form>
-
-          <p className="text-center text-sage-500 text-sm mt-6">
-            {isLogin
-              ? "Don't have an account? Switch to Register"
-              : isCounselor
-                ? 'Counselor accounts are created in the Portal'
-                : 'Already have an account? Switch to Login'}
-          </p>
         </motion.div>
       </motion.div>
     </div>

@@ -5,17 +5,9 @@ import { useWellMindStore } from '@/stores/wellmindStore';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { 
-  User, 
-  Bell, 
-  Shield, 
-  Heart, 
-  HelpCircle, 
-  ChevronRight,
-  Flame,
-  Calendar,
-  Sparkles,
-  LogOut,
-  KeyRound
+  User, Bell, Shield, Heart, HelpCircle, ChevronRight,
+  Flame, Calendar, Sparkles, LogOut, KeyRound,
+  Settings, Pencil
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -25,8 +17,9 @@ import PrivacySettings from '@/components/WellMind-User/Profile-Page/PrivacySett
 import CrisisSupport from '@/components/WellMind-User/Profile-Page/CrisisSupport';
 import HelpFAQ from '@/components/WellMind-User/Profile-Page/HelpFAQ';
 import AchievementsSheet from '@/components/WellMind-User/Profile-Page/AchievementsSheet';
+import ProfileSettings from '@/components/WellMind-User/Profile-Page/ProfileSettings';
 
-type ActiveScreen = 'main' | 'pin' | 'notifications' | 'privacy' | 'crisis' | 'help';
+type ActiveScreen = 'main' | 'profileSettings' | 'pin' | 'notifications' | 'privacy' | 'crisis' | 'help' ;
 
 export const Profile = () => {
   const user = useWellMindStore((state) => state.user);
@@ -43,6 +36,10 @@ export const Profile = () => {
     toast.success('Logged out successfully');
     navigate('/');
   };
+
+  if (activeScreen === 'profileSettings') {
+    return <ProfileSettings onClose={() => setActiveScreen('main')} />;
+  } 
 
   // Render sub-screens
   if (activeScreen === 'pin') {
@@ -121,15 +118,42 @@ export const Profile = () => {
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-4"
           >
-            <div className="w-20 h-20 rounded-full gradient-hero flex items-center justify-center shadow-card">
-              <User className="h-10 w-10 text-primary-foreground" />
+            {/* Avatar with edit badge */}
+            <div className="relative">
+              <div className="w-20 h-20 rounded-full gradient-hero flex items-center justify-center shadow-card overflow-hidden">
+                {user?.avatar ? (
+                  <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="h-10 w-10 text-primary-foreground" />
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveScreen('profileSettings')}
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-card shadow-card flex items-center justify-center border-2 border-background hover:bg-muted transition-colors"
+                aria-label="Edit profile"
+              >
+                <Pencil className="h-3.5 w-3.5 text-foreground" />
+              </button>
             </div>
-            <div>
+
+            {/* Name */}
+            <div className="flex-1">
               <h1 className="text-2xl font-bold text-foreground">
                 {user?.name || 'Friend'}
               </h1>
               <p className="text-muted-foreground">Your wellness journey</p>
             </div>
+
+            {/* Settings button */}
+            <button
+              type="button"
+              onClick={() => setActiveScreen('profileSettings')}
+              className="w-10 h-10 rounded-full bg-card/60 backdrop-blur-sm flex items-center justify-center shadow-soft hover:bg-card transition-colors"
+              aria-label="Profile settings"
+            >
+              <Settings className="h-5 w-5 text-foreground" />
+            </button>
           </motion.div>
         </div>
       </header>

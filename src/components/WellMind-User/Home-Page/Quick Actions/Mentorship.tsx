@@ -6,11 +6,50 @@ import { BottomNav } from '@/components/WellMind-User/BottomNav';
 import { useCommunityStore } from '@/stores/communityStore';
 import { toast } from 'sonner';
 
+import {
+  Flower,
+  Waves,
+  Leaf,
+  GraduationCap,
+} from 'lucide-react';
+
 const mentors = [
-  { id: 'sarah', name: 'Sarah Chen', specialty: 'Anxiety & Stress', experience: '8 years', rating: 4.9, bio: 'Licensed counselor passionate about helping young adults.', emoji: '🌸' },
-  { id: 'marcus', name: 'Marcus Johnson', specialty: 'Career & Burnout', experience: '12 years', rating: 4.8, bio: 'Helps professionals find balance and meaning.', emoji: '🌊' },
-  { id: 'aisha', name: 'Aisha Patel', specialty: 'Mindfulness Coach', experience: '6 years', rating: 5.0, bio: 'Guides you through meditation and mindful living.', emoji: '🌿' },
-  { id: 'david', name: 'David Kim', specialty: 'Student Wellness', experience: '5 years', rating: 4.7, bio: 'Former teacher, now mentoring students through challenges.', emoji: '🎓' },
+  {
+    id: 'sarah',
+    name: 'Sarah Chen',
+    specialty: 'Anxiety & Stress',
+    experience: '8 years',
+    rating: 4.9,
+    bio: 'Licensed counselor passionate about helping young adults.',
+    icon: Flower,
+  },
+  {
+    id: 'marcus',
+    name: 'Marcus Johnson',
+    specialty: 'Career & Burnout',
+    experience: '12 years',
+    rating: 4.8,
+    bio: 'Helps professionals find balance and meaning.',
+    icon: Waves,
+  },
+  {
+    id: 'aisha',
+    name: 'Aisha Patel',
+    specialty: 'Mindfulness Coach',
+    experience: '6 years',
+    rating: 5.0,
+    bio: 'Guides you through meditation and mindful living.',
+    icon: Leaf,
+  },
+  {
+    id: 'david',
+    name: 'David Kim',
+    specialty: 'Student Wellness',
+    experience: '5 years',
+    rating: 4.7,
+    bio: 'Former teacher, now mentoring students through challenges.',
+    icon: GraduationCap,
+  },
 ];
 
 export default function Mentorship() {
@@ -19,15 +58,12 @@ export default function Mentorship() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <header className="gradient-sage pt-safe-top">
-        <div className="px-5 pt-6 pb-8">
+      <header className="gradient-sage px-5 pt-safe-top pb-8 rounded-b-[2rem]">
+        <div className="pt-6">
           <button onClick={() => navigate('/')} className="mb-4 p-2 -ml-2 rounded-lg hover:bg-white/20">
             <ArrowLeft className="h-5 w-5 text-foreground" />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white/30 flex items-center justify-center">
-              <UserPlus className="h-6 w-6 text-foreground" />
-            </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Mentorship</h1>
               <p className="text-sm text-foreground/70">Get guidance from those who've been there</p>
@@ -48,8 +84,8 @@ export default function Mentorship() {
               className="bg-card rounded-2xl p-4 shadow-soft border border-border"
             >
               <div className="flex items-start gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-primary-light flex items-center justify-center text-2xl">
-                  {m.emoji}
+                <div className="w-14 h-14 rounded-2xl bg-primary-light flex items-center justify-center">
+                  <m.icon className="w-7 h-7 text-foreground stroke-[1.5]" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between">

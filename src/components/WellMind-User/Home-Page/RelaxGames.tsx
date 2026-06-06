@@ -3,22 +3,22 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useWellMindStore } from '@/stores/wellmindStore';
 import { toast } from 'sonner';
-import { BubblePopGame } from './Games/BubblePopGame';
-import { BreathingGame } from './Games/BreathingGame';
-import { ColorMatchGame } from './Games/ColorMatchGame';
-import { ZenGardenGame } from './Games/ZenGardenGame';
-import { BlockPuzzleGame } from './Games/BlockPuzzleGame';
-import { MemoryMatchGame } from './Games/MemoryMatchGame';
-import { NumberFlowGame } from './Games/NumberFlowGame';
-import { PatternTraceGame } from './Games/PatternTraceGame';
-import { WordCalmGame } from './Games/WordCalmGame';
-import { TapRhythmGame } from './Games/TapRhythmGame';
-import { SlidingPuzzleGame } from './Games/SlidingPuzzleGame';
-import { ReactionTapGame } from './Games/ReactionTapGame';
-import { TicTacZenGame } from './Games/TicTacZenGame';
-import { MathCalmGame } from './Games/MathCalmGame';
-import { DotConnectGame } from './Games/DotConnectGame';
-import { FallingLeavesGame } from './Games/FallingLeavesGame';
+import { BubblePopGame } from './Quick Actions/Games/BubblePopGame';
+import { BreathingGame } from './Quick Actions/Games/BreathingGame';
+import { ColorMatchGame } from './Quick Actions/Games/ColorMatchGame';
+import { ZenGardenGame } from './Quick Actions/Games/ZenGardenGame';
+import { BlockPuzzleGame } from './Quick Actions/Games/BlockPuzzleGame';
+import { MemoryMatchGame } from './Quick Actions/Games/MemoryMatchGame';
+import { NumberFlowGame } from './Quick Actions/Games/NumberFlowGame';
+import { PatternTraceGame } from './Quick Actions/Games/PatternTraceGame';
+import { WordCalmGame } from './Quick Actions/Games/WordCalmGame';
+import { TapRhythmGame } from './Quick Actions/Games/TapRhythmGame';
+import { SlidingPuzzleGame } from './Quick Actions/Games/SlidingPuzzleGame';
+import { ReactionTapGame } from './Quick Actions/Games/ReactionTapGame';
+import { TicTacZenGame } from './Quick Actions/Games/TicTacZenGame';
+import { MathCalmGame } from './Quick Actions/Games/MathCalmGame';
+import { DotConnectGame } from './Quick Actions/Games/DotConnectGame';
+import { FallingLeavesGame } from './Quick Actions/Games/FallingLeavesGame';
 
 type GameType =
   | 'bubble' | 'breathing' | 'color' | 'zen' | 'block' | 'memory'

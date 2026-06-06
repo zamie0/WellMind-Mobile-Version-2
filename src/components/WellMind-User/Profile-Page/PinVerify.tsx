@@ -54,11 +54,13 @@ const PinVerify = () => {
       >
         {/* Logo */}
         <motion.div
-          className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-sage-400 to-sage-500 rounded-3xl shadow-lg mb-6"
-          animate={{ scale: [1, 1.03, 1] }}
-          transition={{ duration: 3, repeat: Infinity }}
+          className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-sage-400 to-sage-500 rounded-3xl shadow-lg mb-4"
         >
-          <Heart className="w-10 h-10 text-white" fill="currentColor" />
+          <img 
+            src="/logo_removed_bg.png" 
+            alt="Logo" 
+            className="w-20 h-20 object-contain"
+          />
         </motion.div>
 
         <h1 className="text-2xl font-bold text-sage-800 mb-2">Welcome Back!</h1>
