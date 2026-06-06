@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, X, Sparkles, Trash2, Phone } from 'lucide-react';
+import { Send, X, Sparkles, Trash2, Phone, Brain, Siren, Handshake, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useWellMindStore } from '@/stores/wellmindStore';
@@ -377,61 +377,75 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
       className="fixed inset-0 z-50 bg-background flex flex-col"
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/10 to-accent/10" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
-        <div className="flex items-center gap-3">
-          <motion.div 
-            className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-2xl"
-            animate={{ scale: isTalking ? [1, 1.1, 1] : 1 }}
-            transition={{ duration: 0.3, repeat: isTalking ? Infinity : 0 }}
-          >
-            {buddyExpressions[expression].face}
-          </motion.div>
-          <div>
-            <h3 className="font-semibold text-foreground flex items-center gap-2">
-              {petName}
-              <Sparkles className="w-4 h-4 text-primary" />
-            </h3>
-
+      <div
+        className="gradient-sage px-4 pb-4 rounded-b-[1.5rem] shrink-0"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}
+      >
+        <div className="flex items-center justify-between">
+          {/* Left — avatar + name */}
+          <div className="flex items-center gap-3">
+            <motion.div
+              className="w-12 h-12 rounded-full bg-card/60 shadow-soft flex items-center justify-center text-2xl"
+              animate={{ scale: isTalking ? [1, 1.1, 1] : 1 }}
+              transition={{ duration: 0.3, repeat: isTalking ? Infinity : 0 }}
+            >
+              {buddyExpressions[expression].face}
+            </motion.div>
+            <div>
+              <h3 className="font-semibold text-foreground flex items-center gap-1.5">
+                {petName}
+                <Sparkles className="w-4 h-4 text-primary" />
+              </h3>
+              <p className="text-xs text-muted-foreground">Your MindBuddy</p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => { clearHistory(); }}
-            className="h-8 w-8"
-            title="Clear chat history"
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
-          <div className="relative h-8 w-8">
+
+          {/* Right — actions */}
+          <div className="flex items-center gap-1">
+            {/* Emotion Dashboard */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate('/emotion-dashboard')}
-              className="h-8 w-8 text-xl relative overflow-hidden"
+              className="h-9 w-9 rounded-xl bg-card/50 hover:bg-card/80 transition-colors relative overflow-hidden"
               title="My Emotions"
             >
-              🌈
+              <Brain className="w-4 h-4 text-lavender" />
+              {/* subtle shimmer */}
               <motion.span
-                className="pointer-events-none absolute inset-0 rounded-md"
+                className="pointer-events-none absolute inset-0 rounded-xl"
                 style={{
-                  background:
-                    'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.65) 50%, transparent 70%)',
+                  background: 'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.5) 50%, transparent 70%)',
                   backgroundSize: '200% 100%',
                 }}
                 animate={{ backgroundPosition: ['200% 0', '-200% 0'] }}
-                transition={{ duration: 1.6, repeat: Infinity, repeatDelay: 2.5, ease: 'easeInOut' }}
+                transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
               />
             </Button>
+
+            {/* Clear history */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => clearHistory()}
+              className="h-9 w-9 rounded-xl bg-card/50 hover:bg-card/80 transition-colors"
+              title="Clear chat history"
+            >
+              <Trash2 className="w-4 h-4 text-muted-foreground" />
+            </Button>
+
+            {/* Close */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-9 w-9 rounded-xl bg-card/50 hover:bg-card/80 transition-colors"
+            >
+              <X className="w-4 h-4 text-muted-foreground" />
+            </Button>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
-            <X className="w-4 h-4" />
-          </Button>
         </div>
       </div>
-
-
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -452,7 +466,9 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
               >
                 {/* Red header band */}
                 <div className="bg-red-600 px-5 py-4 flex items-center gap-3">
-                  <span className="text-3xl">🚨</span>
+                  <div className="w-10 h-10 rounded-full bg-destructive-foreground/20 flex items-center justify-center shrink-0">
+                    <Siren className="w-5 h-5 text-destructive-foreground" />
+                  </div>
                   <div>
                     <p className="text-white font-bold text-base">You Matter. Help is Here.</p>
                     <p className="text-red-100 text-xs">Crisis Support — Available 24/7</p>
@@ -466,7 +482,10 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
 
                   {/* Primary hotline */}
                   <div className="bg-red-50 border border-red-200 rounded-2xl p-4 space-y-3">
-                    <p className="text-xs font-semibold text-red-700 uppercase tracking-wide">📞 Call Now (Free, 24/7)</p>
+                    <p className="text-xs font-semibold text-red-700 uppercase tracking-wide flex items-center gap-1">
+                      <Phone className="w-4 h-4 text-red-700" />
+                      Call Now (Free, 24/7)
+                    </p>
                     <Button
                       className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl flex flex-col h-auto py-3"
                       onClick={() => window.open('tel:0376272929')}
@@ -520,7 +539,9 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
               <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto" />
 
               <div className="flex items-start gap-3">
-                <span className="text-3xl mt-0.5">🤝</span>
+                <span className="mt-0.5 flex items-center">
+                  <Handshake className="w-6 h-6 text-current" />
+                </span>
                 <div>
                   <h4 className="font-bold text-gray-900 text-base">You deserve real support</h4>
                   <p className="text-gray-500 text-sm mt-0.5">
@@ -531,8 +552,8 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
 
               {/* Counselor Support card */}
               <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-2xl flex-shrink-0">
-                  💬
+                <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                  <MessageCircle className="w-6 h-6 text-orange-600" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-orange-900 text-sm">UPM Counselling Service</p>
@@ -613,41 +634,66 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
       </div>
 
       {/* Quick Replies */}
-      <div className="px-4 py-2 flex gap-2 overflow-x-auto scrollbar-hide">
-        {['How are you?', "I'm feeling anxious", "I'm happy today!", 'Tell me something nice'].map((text) => (
-          <Button
+      <div className="px-4 py-2 flex gap-2 overflow-x-auto scrollbar-hide shrink-0">
+        {[
+          { text: "I'm feeling anxious", emoji: '😰' },
+          { text: "I'm happy today!", emoji: '😄' },
+          { text: 'Tell me something nice', emoji: '💚' },
+        ].map(({ text, emoji }, i) => (
+          <motion.div
             key={text}
-            variant="outline"
-            size="sm"
-            onClick={() => handleSend(text)}
-            className="whitespace-nowrap text-xs rounded-full"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.07 }}
           >
-            {text}
-          </Button>
+            <button
+              onClick={() => void handleSend(text)}
+              className="whitespace-nowrap text-xs rounded-full px-3.5 py-2 bg-card shadow-soft border border-border text-foreground hover:bg-muted transition-colors flex items-center gap-1.5 shrink-0"
+            >
+              <span>{emoji}</span>
+              <span>{text}</span>
+            </button>
+          </motion.div>
         ))}
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-border bg-background safe-area-bottom">
-        <div className="flex gap-2">
+      <div
+        className="shrink-0 px-4 pt-3 pb-4 bg-background border-t border-border"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
+      >
+        <div className="flex items-center gap-2 bg-muted rounded-2xl px-3 py-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={`Talk to ${petName}...`}
-            className="flex-1 px-4 py-3 bg-muted rounded-full text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none py-1.5 px-1"
           />
-          <Button
-            onClick={() => {
-              void handleSend();
-            }}
-            disabled={!input.trim() || isTyping}
-            size="icon"
-            className="rounded-full h-12 w-12"
+
+          {/* Send button — inside the bar */}
+          <motion.div
+            animate={{ scale: input.trim() ? 1 : 0.85, opacity: input.trim() ? 1 : 0.4 }}
+            transition={{ duration: 0.15 }}
           >
-            <Send className="w-5 h-5" />
-          </Button>
+            <Button
+              onClick={() => void handleSend()}
+              disabled={!input.trim() || isTyping}
+              size="icon"
+              className="rounded-xl h-9 w-9 shrink-0"
+            >
+              {isTyping ? (
+                <motion.div
+                  className="w-4 h-4 border-2 border-primary-foreground/60 border-t-primary-foreground rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </Button>
+          </motion.div>
         </div>
       </div>
     </motion.div>

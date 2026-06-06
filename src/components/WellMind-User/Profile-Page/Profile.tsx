@@ -5,8 +5,7 @@ import { useWellMindStore } from '@/stores/wellmindStore';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { 
-  User, Bell, Shield, Heart, HelpCircle, ChevronRight,
-  Flame, Calendar, Sparkles, LogOut, KeyRound,
+  User, Bell, Shield, Heart, HelpCircle, ChevronRight, LogOut, KeyRound,
   Settings, Pencil
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -16,19 +15,14 @@ import NotificationsSettings from '@/components/WellMind-User/Profile-Page/Notif
 import PrivacySettings from '@/components/WellMind-User/Profile-Page/PrivacySettings';
 import CrisisSupport from '@/components/WellMind-User/Profile-Page/CrisisSupport';
 import HelpFAQ from '@/components/WellMind-User/Profile-Page/HelpFAQ';
-import AchievementsSheet from '@/components/WellMind-User/Profile-Page/AchievementsSheet';
 import ProfileSettings from '@/components/WellMind-User/Profile-Page/ProfileSettings';
 
 type ActiveScreen = 'main' | 'profileSettings' | 'pin' | 'notifications' | 'privacy' | 'crisis' | 'help' ;
 
 export const Profile = () => {
   const user = useWellMindStore((state) => state.user);
-  const currentStreak = useWellMindStore((state) => state.currentStreak);
-  const moodEntries = useWellMindStore((state) => state.moodEntries);
-  const badges = useWellMindStore((state) => state.badges);
   const { logout, hasPin } = useAuthStore();
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>('main');
-  const [showAchievements, setShowAchievements] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -159,105 +153,6 @@ export const Profile = () => {
       </header>
 
       <main className="px-5 py-6 space-y-6">
-        {/* Stats Cards */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-3 gap-3"
-        >
-          <div className="bg-card rounded-2xl p-4 shadow-soft text-center">
-            <Flame className="h-6 w-6 text-coral mx-auto mb-2" />
-            <p className="text-2xl font-bold text-foreground">{currentStreak}</p>
-            <p className="text-xs text-muted-foreground">Day Streak</p>
-          </div>
-          <div className="bg-card rounded-2xl p-4 shadow-soft text-center">
-            <Calendar className="h-6 w-6 text-sage mx-auto mb-2" />
-            <p className="text-2xl font-bold text-foreground">{moodEntries.length}</p>
-            <p className="text-xs text-muted-foreground">Check-ins</p>
-          </div>
-          <div className="bg-card rounded-2xl p-4 shadow-soft text-center">
-            <Sparkles className="h-6 w-6 text-honey mx-auto mb-2" />
-            <p className="text-2xl font-bold text-foreground">
-              {badges.length}
-            </p>
-            <p className="text-xs text-muted-foreground">Badges</p>
-          </div>
-        </motion.div>
-
-        {/* Achievements Preview */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-card rounded-2xl p-5 shadow-soft"
-        >
-          <button
-            type="button"
-            onClick={() => setShowAchievements(true)}
-            className="w-full text-left"
-          >
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="font-semibold text-foreground">Recent Achievements</h2>
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                View all
-                <ChevronRight className="h-4 w-4" />
-              </span>
-            </div>
-          </button>
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => setShowAchievements(true)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                setShowAchievements(true);
-              }
-            }}
-            className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide cursor-pointer"
-          >
-            {currentStreak >= 1 && (
-              <div className="flex flex-col items-center">
-                <div className="w-14 h-14 rounded-full bg-coral-light flex items-center justify-center text-2xl mb-1">
-                  🌱
-                </div>
-                <span className="text-xs text-muted-foreground">First Step</span>
-              </div>
-            )}
-            {currentStreak >= 3 && (
-              <div className="flex flex-col items-center">
-                <div className="w-14 h-14 rounded-full bg-sage-light flex items-center justify-center text-2xl mb-1">
-                  🔥
-                </div>
-                <span className="text-xs text-muted-foreground">3 Day Streak</span>
-              </div>
-            )}
-            {currentStreak >= 7 && (
-              <div className="flex flex-col items-center">
-                <div className="w-14 h-14 rounded-full bg-honey-light flex items-center justify-center text-2xl mb-1">
-                  ⭐
-                </div>
-                <span className="text-xs text-muted-foreground">Week Warrior</span>
-              </div>
-            )}
-            {moodEntries.length >= 10 && (
-              <div className="flex flex-col items-center">
-                <div className="w-14 h-14 rounded-full bg-lavender-light flex items-center justify-center text-2xl mb-1">
-                  💪
-                </div>
-                <span className="text-xs text-muted-foreground">Dedicated</span>
-              </div>
-            )}
-            {currentStreak < 1 && moodEntries.length < 10 && (
-              <div className="flex flex-col items-center opacity-50">
-                <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center text-2xl mb-1">
-                  🔒
-                </div>
-                <span className="text-xs text-muted-foreground">Keep going!</span>
-              </div>
-            )}
-          </div>
-        </motion.section>
 
         {/* Menu Items */}
         <section className="space-y-3">
@@ -288,31 +183,16 @@ export const Profile = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Button
-            variant="outline"
-            onClick={handleLogout}
-            className="w-full py-6 rounded-2xl border-coral/30 text-coral hover:bg-coral/10 gap-2"
-          >
-            <LogOut className="h-5 w-5" />
-            Log Out
-          </Button>
-        </motion.div>
-
-        {/* App Info */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="text-center pt-4"
-        >
-          <p className="text-sm text-muted-foreground">WellMind v1.0.0</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Made with 💚 for your mental wellness
-          </p>
+<Button
+  variant="outline"
+  onClick={handleLogout}
+  className="w-full py-6 rounded-2xl border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200 gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+>
+  <LogOut className="h-5 w-5" />
+  Log Out
+</Button>
         </motion.div>
       </main>
-
-      <AchievementsSheet open={showAchievements} onClose={() => setShowAchievements(false)} />
       <BottomNav />
     </div>
   );

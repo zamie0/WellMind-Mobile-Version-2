@@ -10,19 +10,22 @@ const slides = [
   {
     icon: <Heart className="h-16 w-16 text-coral" />,
     title: "Welcome to WellMind",
-    description: "Your safe space for mental wellness. Track your mood, practice mindfulness, and understand your emotional patterns.",
+    description:
+      "Your safe space for mental wellness. Track your mood, practice mindfulness, and understand your emotional patterns.",
     color: "bg-coral-light",
   },
   {
     icon: <Shield className="h-16 w-16 text-sage" />,
     title: "Your Privacy Matters",
-    description: "All your data stays on your device. We never share your personal information. This is your private journey.",
+    description:
+      "All your data stays on your device. We never share your personal information. This is your private journey.",
     color: "bg-sage-light",
   },
   {
     icon: <Sparkles className="h-16 w-16 text-honey" />,
     title: "Small Steps, Big Impact",
-    description: "Just a few minutes daily can help you build awareness and develop healthy mental habits.",
+    description:
+      "Just a few minutes daily can help you build awareness and develop healthy mental habits.",
     color: "bg-honey-light",
   },
 ];
@@ -30,19 +33,28 @@ const slides = [
 export const Onboarding = () => {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
-  const completeOnboarding = useWellMindStore((state) => state.completeOnboarding);
+  const completeOnboarding = useWellMindStore(
+    (state) => state.completeOnboarding
+  );
 
   const handleNext = () => {
     if (step < slides.length - 1) {
       setStep(step + 1);
     } else {
-      setStep(slides.length); // Go to name input
+      setStep(slides.length);
     }
   };
 
   const handleComplete = () => {
-    completeOnboarding(name || 'Friend');
+    if (!name.trim()) {
+      setError('Please enter your name');
+      return;
+    }
+
+    setError('');
+    completeOnboarding(name.trim());
     navigate('/');
   };
 
@@ -60,8 +72,10 @@ export const Onboarding = () => {
             transition={{ duration: 0.3 }}
             className="flex-1 flex flex-col"
           >
-            {/* Illustration area */}
-            <div className={`flex-1 flex items-center justify-center ${slides[step].color} rounded-b-[3rem]`}>
+            {/* Illustration */}
+            <div
+              className={`flex-1 flex items-center justify-center ${slides[step].color} rounded-b-[3rem]`}
+            >
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -74,7 +88,7 @@ export const Onboarding = () => {
               </motion.div>
             </div>
 
-            {/* Content area */}
+            {/* Content */}
             <div className="p-8 pb-12">
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
@@ -84,7 +98,7 @@ export const Onboarding = () => {
               >
                 {slides[step].title}
               </motion.h1>
-              
+
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -94,20 +108,27 @@ export const Onboarding = () => {
                 {slides[step].description}
               </motion.p>
 
-              {/* Progress dots */}
+              {/* Progress */}
               <div className="flex justify-center gap-2 mb-8">
                 {slides.map((_, i) => (
                   <div
                     key={i}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      i === step ? 'w-6 bg-primary' : 'bg-muted'
+                    className={`h-2 rounded-full transition-all ${
+                      i === step ? 'w-6 bg-primary' : 'w-2 bg-muted'
                     }`}
                   />
                 ))}
               </div>
 
-              <Button variant="hero" size="lg" className="w-full" onClick={handleNext}>
-                {step === slides.length - 1 ? "Get Started" : "Continue"}
+              <Button
+                variant="hero"
+                size="lg"
+                className="w-full"
+                onClick={handleNext}
+              >
+                {step === slides.length - 1
+                  ? 'Get Started'
+                  : 'Continue'}
                 <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
             </div>
@@ -128,6 +149,7 @@ export const Onboarding = () => {
               >
                 <span className="text-4xl">🌱</span>
               </motion.div>
+
               <h1 className="text-2xl font-bold text-foreground mb-2">
                 What should we call you?
               </h1>
@@ -139,21 +161,29 @@ export const Onboarding = () => {
             <Input
               placeholder="Enter your name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="text-center text-lg h-14 rounded-xl mb-6"
+              onChange={(e) => {
+                setName(e.target.value);
+                if (error) setError('');
+              }}
+              className="text-center text-lg h-14 rounded-xl mb-2"
             />
 
-            <Button variant="hero" size="lg" onClick={handleComplete}>
+            {/* Error message */}
+            {error && (
+              <p className="text-red-500 text-sm text-center mb-4">
+                {error}
+              </p>
+            )}
+
+            <Button
+              variant="hero"
+              size="lg"
+              onClick={handleComplete}
+              disabled={!name.trim()}
+            >
               Let's Begin
               <Sparkles className="h-5 w-5 ml-2" />
             </Button>
-
-            <button
-              onClick={handleComplete}
-              className="text-muted-foreground text-sm mt-4 hover:text-foreground transition-colors"
-            >
-              Skip for now
-            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -161,7 +191,8 @@ export const Onboarding = () => {
       {/* Disclaimer */}
       <div className="p-4 text-center">
         <p className="text-xs text-muted-foreground">
-          This app is not a substitute for professional medical advice, diagnosis, or treatment.
+          This app is not a substitute for professional medical advice,
+          diagnosis, or treatment.
         </p>
       </div>
     </div>

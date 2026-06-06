@@ -20,7 +20,7 @@ import AchievementsPage from "./components/WellMind-User/MindBuddy-Page/Achievem
 import Profile from "./components/WellMind-User/Profile-Page/Profile";
 import NotFound from "./pages/NotFound";
 import CounselorIndex from "./components/WellMind-Counselor/CounselorIndex";
-import EmotionDashboard from "./pages/EmotionDashboard";
+import EmotionDashboard from "./components/WellMind-User/MindBuddy-Page/MindBuddy/MindBuddy-Chat/EmotionDashboard";
 import Auth from "./pages/Auth";
 import CounselorSupportChat from "./components/WellMind-User/Counselor-Page/CounselorSupportChat";
 import { useAuthStore } from "./stores/authStore";

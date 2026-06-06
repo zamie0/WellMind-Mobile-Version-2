@@ -11,7 +11,7 @@ import { PetShop } from './PetShop';
 import { FoodMenu } from './FoodMenu';
 import { GamesMenu } from './GamesMenu';
 import type { Game } from './GamesMenu';
-import { MindBuddyChat } from './MindBuddyChat';
+import { MindBuddyChat } from './MindBuddy-Chat/MindBuddyChat';
 import { BuddyCharacter } from './BuddyCharacter';
 import { toast } from 'sonner';
 import type { PetMood, PetSkin, PetAccessory } from '@/types/wellmind';
