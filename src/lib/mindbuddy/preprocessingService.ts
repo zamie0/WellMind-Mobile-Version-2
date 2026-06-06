@@ -1,5 +1,4 @@
 const SLANG_MAP: Record<string, string> = {
-  // Common English contractions/abbreviations
   gonna: 'going to',
   wanna: 'want to',
   imma: 'i am going to',
@@ -18,7 +17,6 @@ const SLANG_MAP: Record<string, string> = {
   smh: 'shaking my head',
   fyi: 'for your information',
   irl: 'in real life',
-  // Malaysian / Manglish particles (softeners — preserve meaning, strip tone confusion)
   lah: '',
   la: '',
   leh: '',
@@ -32,7 +30,6 @@ const SLANG_MAP: Record<string, string> = {
   weh: '',
   eh: '',
   ah: '',
-  // Malaysian negative / casual
   takde: 'no',
   tak: 'not',
   nak: 'want to',
