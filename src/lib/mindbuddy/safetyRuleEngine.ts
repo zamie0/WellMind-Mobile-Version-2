@@ -76,8 +76,6 @@ export const DIRECT_SELF_HARM_PATTERNS = [
     'i want to punish myself',
     'i wanna punish myself',
 ];
-
-/** Violence or harm directed at other people — not treated as self-harm / suicide crisis. */
 export const HARM_TO_OTHERS_PATTERNS = [
     'hurt others',
     'hurt other people',
@@ -177,8 +175,7 @@ const HARM_TO_OTHERS_REGEX: RegExp[] = [
     /\bhurt\s+others\b/,
     /\bhurt\s+other\s+people\b/,
 ];
-
-/** User is describing being harmed by someone else — not self-harm intent. */
+ 
 const HARMED_BY_OTHERS_REGEX: RegExp[] = [
     /\b(they|he|she|someone|people|everyone|my friend|my mum|my mom|mother|father|dad|lecturer|boss|bully|classmate)\s+(hurt|hit|cut|killed|attacked|punched|beat)\s+me\b/,
     /\b(hurt|hit|cut|killed|attacked|punched|beat)\s+me\s+(yesterday|today|again|before|last\s+week)\b/,
