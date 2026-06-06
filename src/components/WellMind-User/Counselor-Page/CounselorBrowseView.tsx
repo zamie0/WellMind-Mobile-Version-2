@@ -438,13 +438,6 @@ export const CounselorBrowseView = ({
                         </div>
                       </div>
 
-                      {/* Bio */}
-                      {(counselor.bio || counselor.specialization) && (
-                        <p className="text-xs leading-relaxed mb-3" style={{ color: '#5f7585' }}>
-                          {counselor.bio || counselor.specialization}
-                        </p>
-                      )}
-
                       {/* Topic chips */}
                       {counselor.supportTopics.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mb-4">
