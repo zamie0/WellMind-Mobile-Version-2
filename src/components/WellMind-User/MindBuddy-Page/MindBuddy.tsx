@@ -1,19 +1,64 @@
-import { motion } from 'framer-motion';
-import { Sparkles, Gift, Trophy, TrendingUp } from 'lucide-react';
-import { useWellMindStore } from '@/stores/wellmindStore';
-import { BottomNav } from '@/components/WellMind-User/BottomNav';
-import { VirtualPet } from '@/components/WellMind-User/MindBuddy-Page/MindBuddy/VirtualPet';
-import { BadgeCard, getAllBadgeIds } from '@/components/WellMind-User/MindBuddy-Page/BadgeCard';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Gift,
+  Trophy,
+  TrendingUp,
+  Coins,
+  Target,
+  Award,
+  Wind,
+  Gamepad2,
+} from "lucide-react";
 
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { useWellMindStore } from "@/stores/wellmindStore";
+import { BottomNav } from "@/components/WellMind-User/BottomNav";
+import { VirtualPet } from "@/components/WellMind-User/MindBuddy-Page/MindBuddy/VirtualPet";
+import {
+  BadgeCard,
+  getAllBadgeIds,
+} from "@/components/WellMind-User/MindBuddy-Page/BadgeCard";
+
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
+/* ---------------- Earn Rules ---------------- */
+
+const coinRules = [
+  {
+    icon: Target,
+    text: "Daily check-in: +10 coins",
+    color: "text-yellow-400",
+  },
+  {
+    icon: Gift,
+    text: "Daily bonus: +15 coins",
+    color: "text-pink-400",
+  },
+  {
+    icon: Award,
+    text: "Unlock badge: +25 coins",
+    color: "text-amber-400",
+  },
+  {
+    icon: Wind,
+    text: "Complete exercise: +5 coins",
+    color: "text-cyan-400",
+  },
+  {
+    icon: Gamepad2,
+    text: "Play games: up to +15 coins",
+    color: "text-purple-400",
+  },
+];
+
+/* ---------------- Page ---------------- */
 
 const MindBuddy = () => {
-  const { 
-    calmCoins, 
-    totalCoinsEarned, 
-    badges, 
-    claimDailyBonus, 
+  const {
+    calmCoins,
+    badges,
+    claimDailyBonus,
     canClaimDailyBonus,
     currentStreak,
   } = useWellMindStore();
@@ -21,11 +66,33 @@ const MindBuddy = () => {
   const allBadges = getAllBadgeIds();
   const unlockedCount = badges.length;
 
+  /* ---------------- Easter Egg State ---------------- */
+  const [achievementsClicks, setAchievementsClicks] = useState(0);
+
+  const handleAchievementsClick = () => {
+    const next = achievementsClicks + 1;
+    setAchievementsClicks(next);
+
+    if (next === 5) {
+      useWellMindStore.setState((state) => ({
+        calmCoins: state.calmCoins + 200,
+        totalCoinsEarned: state.totalCoinsEarned + 200,
+      }));
+
+      setAchievementsClicks(0);
+
+      toast.success("+200 Coins Secret Bonus!", {
+        description: "Easter egg unlocked 🎉",
+      });
+    }
+  };
+
   const handleClaimBonus = () => {
     const bonus = claimDailyBonus();
+
     if (bonus > 0) {
       toast.success(`+${bonus} Calm Coins earned!`, {
-        description: 'Daily bonus claimed successfully',
+        description: "Daily bonus claimed successfully",
       });
     }
   };
@@ -45,7 +112,7 @@ const MindBuddy = () => {
       </motion.header>
 
       <div className="px-5 space-y-6">
-        {/* Stats Overview */}
+        {/* Stats */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -53,18 +120,24 @@ const MindBuddy = () => {
           className="grid grid-cols-3 gap-3"
         >
           <div className="bg-honey/10 rounded-xl p-4 text-center">
-            <Sparkles className="w-5 h-5 text-honey mx-auto mb-1" />
+            <Coins className="w-5 h-5 text-honey mx-auto mb-1" />
             <p className="text-xl font-bold text-foreground">{calmCoins}</p>
             <p className="text-xs text-muted-foreground">Coins</p>
           </div>
+
           <div className="bg-primary/10 rounded-xl p-4 text-center">
             <Trophy className="w-5 h-5 text-primary mx-auto mb-1" />
-            <p className="text-xl font-bold text-foreground">{unlockedCount}/{allBadges.length}</p>
+            <p className="text-xl font-bold text-foreground">
+              {unlockedCount}/{allBadges.length}
+            </p>
             <p className="text-xs text-muted-foreground">Badges</p>
           </div>
+
           <div className="bg-coral/10 rounded-xl p-4 text-center">
             <TrendingUp className="w-5 h-5 text-coral mx-auto mb-1" />
-            <p className="text-xl font-bold text-foreground">{currentStreak}</p>
+            <p className="text-xl font-bold text-foreground">
+              {currentStreak}
+            </p>
             <p className="text-xs text-muted-foreground">Streak</p>
           </div>
         </motion.div>
@@ -81,7 +154,7 @@ const MindBuddy = () => {
               className="w-full bg-gradient-to-r from-honey to-coral text-foreground py-6 rounded-xl shadow-card"
             >
               <Gift className="w-5 h-5 mr-2" />
-              Claim Daily Bonus (+15 Coins)
+              Claim Daily Bonus (+25 Coins)
             </Button>
           </motion.div>
         )}
@@ -92,17 +165,25 @@ const MindBuddy = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <h2 className="text-lg font-semibold text-foreground mb-3">Your Calm Companion</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-3">
+            Your Calm Companion
+          </h2>
           <VirtualPet />
         </motion.div>
 
-        {/* Badges Section */}
+        {/* Achievements (CLICK 5X EASTER EGG) */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <h2 className="text-lg font-semibold text-foreground mb-3">Achievements</h2>
+          <h2
+            onClick={handleAchievementsClick}
+            className="text-lg font-semibold text-foreground mb-3 cursor-pointer select-none"
+          >
+            Achievements
+          </h2>
+
           <div className="grid grid-cols-2 gap-3">
             {allBadges.map((badgeId, index) => (
               <BadgeCard
@@ -122,28 +203,23 @@ const MindBuddy = () => {
           transition={{ delay: 0.6 }}
           className="bg-card rounded-xl p-4 shadow-soft"
         >
-          <h3 className="font-medium text-foreground mb-3">How to Earn Calm Coins</h3>
+          <h3 className="font-medium text-foreground mb-3">
+            How to Earn Calm Coins
+          </h3>
+
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li className="flex items-center gap-2">
-              <span className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-xs">🎯</span>
-              Daily check-in: +10 coins
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-xs">🎁</span>
-              Daily bonus: +15 coins
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-xs">🏅</span>
-              Unlock badge: +25 coins
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-xs">🌬️</span>
-              Complete exercise: +5 coins
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-xs">🎮</span>
-              Play games: up to +15 coins
-            </li>
+            {coinRules.map((rule, i) => {
+              const Icon = rule.icon;
+
+              return (
+                <li key={i} className="flex items-center gap-2">
+                  <span className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Icon className={`w-4 h-4 ${rule.color}`} />
+                  </span>
+                  {rule.text}
+                </li>
+              );
+            })}
           </ul>
         </motion.div>
       </div>

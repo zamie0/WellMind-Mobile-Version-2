@@ -277,8 +277,6 @@ export const VirtualPet = () => {
             <ActionButton
               icon="✨"
               label="Clean"
-              cost={5}
-              disabled={calmCoins < 5}
               onClick={handleClean}
             />
             <ActionButton
