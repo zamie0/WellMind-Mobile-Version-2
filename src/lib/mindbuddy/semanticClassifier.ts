@@ -178,7 +178,6 @@ export const classifySemantics = async (
         ]);
 
         const parsed = safeJsonParse<Partial<SemanticDetectionResult>>(semanticRaw);
-        // If Azure returned something unparseable, fall back to local classifier
         if (!parsed) return localKeywordClassifier(preprocessedUserInput);
 
         const parsedIntent = (parsed.intent || '').toLowerCase().trim() as IntentLabel;
@@ -198,7 +197,6 @@ export const classifySemantics = async (
                 : ['semantic classifier completed'],
         };
     } catch {
-        // Azure unavailable — use local keyword classifier instead of neutral default
         return localKeywordClassifier(preprocessedUserInput);
     }
 };
