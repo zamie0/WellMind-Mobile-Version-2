@@ -197,12 +197,6 @@ export const PanicButton = ({ variant = 'fab' }: PanicButtonProps) => {
               {/* Controls */}
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => setSoundEnabled(!soundEnabled)}
-                  className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors"
-                >
-                  {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-                </button>
-                <button
                   onClick={closePanicMode}
                   className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors"
                 >
