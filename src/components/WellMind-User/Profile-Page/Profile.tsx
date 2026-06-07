@@ -5,7 +5,7 @@ import { useWellMindStore } from '@/stores/wellmindStore';
 import { useAuthStore } from '@/stores/authStore';
 import {
   User, Bell, Shield, Heart, HelpCircle, ChevronRight,
-  LogOut, KeyRound, Settings, Pencil, LayoutList,
+  LogOut, KeyRound, Settings, Pencil, LayoutList, Palette
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
@@ -244,17 +244,12 @@ export const Profile = () => {
               boxShadow: '0 4px 20px rgba(232,115,90,0.12)',
             }}
           >
-            {/* Coral accent line */}
-            <div
-              className="absolute top-0 left-0 right-0 h-1"
-              style={{ background: 'linear-gradient(90deg, #e8735a, #f0957f)' }}
-            />
             <LogOut className="h-4 w-4" />
             Log Out
           </motion.button>
         </motion.div>
 
-        <div/>
+        <div className=''/>
       </main>
 
       <BottomNav />

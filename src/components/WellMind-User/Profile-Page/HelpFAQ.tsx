@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { 
-  ArrowLeft, 
-  Search, 
+import {
+  ArrowLeft,
+  Search,
   ChevronDown,
   Heart,
   Sparkles,
@@ -45,14 +44,14 @@ const faqs: FAQItem[] = [
   { category: 'Troubleshooting', question: 'The app feels slow. What can I do?', answer: 'Try closing and reopening the app. If the issue persists, clearing some old data in Privacy settings might help. Your most important data will be preserved.' },
 ];
 
-const categoryMeta: Record<string, { icon: React.ReactNode; color: string; iconColor: string }> = {
-  'Getting Started':    { icon: <Sparkles className="h-4 w-4" />,      color: 'bg-coral-light',    iconColor: 'text-coral' },
-  'Virtual Pet':        { icon: <PawPrint className="h-4 w-4" />,       color: 'bg-sage-light',     iconColor: 'text-sage' },
-  'Mood Tracking':      { icon: <BarChart3 className="h-4 w-4" />,      color: 'bg-sky-light',      iconColor: 'text-sky' },
-  'Weekly Plan':        { icon: <Heart className="h-4 w-4" />,          color: 'bg-lavender-light', iconColor: 'text-lavender' },
-  'Privacy & Security': { icon: <Shield className="h-4 w-4" />,         color: 'bg-honey-light',    iconColor: 'text-honey' },
-  'Counselor Support':  { icon: <MessageCircle className="h-4 w-4" />,  color: 'bg-coral-light',    iconColor: 'text-coral' },
-  'Troubleshooting':    { icon: <HelpCircle className="h-4 w-4" />,     color: 'bg-muted',          iconColor: 'text-muted-foreground' },
+const categoryMeta: Record<string, { icon: React.ElementType; accent: string; accentBg: string }> = {
+  'Getting Started':    { icon: Sparkles,       accent: '#e8735a', accentBg: 'rgba(232,115,90,0.1)'   },
+  'Virtual Pet':        { icon: PawPrint,        accent: '#39a89b', accentBg: 'rgba(57,168,155,0.1)'   },
+  'Mood Tracking':      { icon: BarChart3,       accent: '#3b82f6', accentBg: 'rgba(59,130,246,0.1)'   },
+  'Weekly Plan':        { icon: Heart,           accent: '#7c6fa0', accentBg: 'rgba(124,111,160,0.1)'  },
+  'Privacy & Security': { icon: Shield,          accent: '#d97706', accentBg: 'rgba(251,191,36,0.12)'  },
+  'Counselor Support':  { icon: MessageCircle,   accent: '#e8735a', accentBg: 'rgba(232,115,90,0.1)'   },
+  'Troubleshooting':    { icon: HelpCircle,      accent: '#8fa3b1', accentBg: 'rgba(143,163,177,0.1)'  },
 };
 
 export const HelpFAQ = ({ onClose }: HelpFAQProps) => {
@@ -78,124 +77,235 @@ export const HelpFAQ = ({ onClose }: HelpFAQProps) => {
   }, {} as Record<string, FAQItem[]>);
 
   return (
-    <div className="min-h-screen bg-background pb-10">
-
-      {/* Header — WellMind pattern */}
-      <header className="gradient-sage px-5 pt-safe-top pb-8 rounded-b-[2rem]">
-        <div className="pt-6">
-          <Button
-            variant="ghost"
-            size="icon"
+    <div
+      className="min-h-screen pb-28"
+      style={{ background: 'linear-gradient(180deg, #f0f7f5 0%, #f7faf9 60%, #ffffff 100%)' }}
+    >
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <header
+        className="sticky top-0 z-10 px-5 py-3.5"
+        style={{
+          background: 'rgba(240,247,245,0.96)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '0.5px solid rgba(57,168,155,0.15)',
+          paddingTop: 'max(env(safe-area-inset-top), 14px)',
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileTap={{ scale: 0.94 }}
             onClick={onClose}
-            className="mb-2 -ml-2 text-foreground"
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+            aria-label="Go back"
           >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="text-2xl font-bold text-foreground">Help & FAQ</h1>
-            <p className="text-muted-foreground">Find answers to common questions</p>
-          </motion.div>
+            <ArrowLeft className="h-4 w-4" style={{ color: '#5f7585' }} />
+          </motion.button>
 
-          {/* Search bar inside header */}
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div
+              className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, #39a89b, #6bab9e)',
+                boxShadow: '0 2px 8px rgba(57,168,155,0.3)',
+              }}
+            >
+              <HelpCircle className="h-4 w-4 text-white" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-sm truncate" style={{ color: '#1a2b38' }}>Help & FAQ</p>
+              <p className="text-[11px] font-semibold" style={{ color: '#39a89b' }}>
+                Find answers to common questions
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ── Hero + Search ────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="relative overflow-hidden px-5 pt-8 pb-6"
+      >
+        <div
+          className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(57,168,155,0.13) 0%, transparent 70%)' }}
+        />
+        <div
+          className="pointer-events-none absolute top-8 -left-12 w-48 h-48 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(107,171,158,0.08) 0%, transparent 70%)' }}
+        />
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <h2
+            className="text-[1.75rem] font-bold leading-tight mb-1.5"
+            style={{ color: '#1a2b38', letterSpacing: '-0.02em' }}
+          >
+            How can we{'\n'}help you?
+          </h2>
+          <p className="text-[14px] leading-relaxed mb-5" style={{ color: '#5f7585' }}>
+            Browse categories or search for answers.
+          </p>
+
+          {/* Search bar */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="mt-4 relative"
+            className="relative"
           >
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4"
+              style={{ color: '#8fa3b1' }}
+            />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for help..."
-              className="w-full pl-10 pr-4 py-3 bg-card/80 backdrop-blur-sm rounded-2xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 shadow-soft"
+              className="w-full pl-10 pr-4 py-3.5 rounded-2xl text-sm outline-none"
+              style={{
+                background: 'white',
+                color: '#1a2b38',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
+                border: '1px solid rgba(57,168,155,0.15)',
+              }}
             />
           </motion.div>
-        </div>
-      </header>
+        </motion.div>
+      </motion.div>
 
-      <main className="px-5 py-6 space-y-5">
+      <main className="px-5 space-y-4 pb-6">
 
-        {/* Category chips */}
+        {/* ── Category chips ── */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
           className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide"
         >
-          <button
+          <motion.button
+            whileTap={{ scale: 0.96 }}
             onClick={() => setSelectedCategory(null)}
-            className={`shrink-0 text-xs font-medium px-3.5 py-2 rounded-full transition-all ${
+            className="shrink-0 text-[11px] font-bold px-3.5 py-2 rounded-full"
+            style={
               selectedCategory === null
-                ? 'bg-primary text-primary-foreground shadow-sm'
-                : 'bg-card shadow-soft text-muted-foreground hover:text-foreground border border-border'
-            }`}
+                ? {
+                    background: 'linear-gradient(135deg, #39a89b, #6bab9e)',
+                    color: 'white',
+                    boxShadow: '0 3px 10px rgba(57,168,155,0.3)',
+                  }
+                : {
+                    background: 'white',
+                    color: '#8fa3b1',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    border: '1px solid rgba(143,163,177,0.2)',
+                  }
+            }
           >
             All
-          </button>
+          </motion.button>
+
           {categories.map((cat) => {
             const meta = categoryMeta[cat];
+            const Icon = meta.icon;
             const isActive = selectedCategory === cat;
             return (
-              <button
+              <motion.button
                 key={cat}
+                whileTap={{ scale: 0.96 }}
                 onClick={() => setSelectedCategory(isActive ? null : cat)}
-                className={`shrink-0 text-xs font-medium px-3.5 py-2 rounded-full transition-all flex items-center gap-1.5 ${
+                className="shrink-0 text-[11px] font-bold px-3.5 py-2 rounded-full flex items-center gap-1.5"
+                style={
                   isActive
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'bg-card shadow-soft text-muted-foreground hover:text-foreground border border-border'
-                }`}
+                    ? {
+                        background: `linear-gradient(135deg, ${meta.accent}, ${meta.accent}cc)`,
+                        color: 'white',
+                        boxShadow: `0 3px 10px ${meta.accent}33`,
+                      }
+                    : {
+                        background: 'white',
+                        color: '#8fa3b1',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                        border: '1px solid rgba(143,163,177,0.2)',
+                      }
+                }
               >
-                <span className={isActive ? 'text-primary-foreground' : meta.iconColor}>
-                  {meta.icon}
-                </span>
+                <Icon className="h-3 w-3" />
                 {cat}
-              </button>
+              </motion.button>
             );
           })}
         </motion.div>
 
-        {/* FAQ Groups */}
+        {/* ── FAQ Groups ── */}
         {Object.entries(groupedFaqs).map(([category, items], catIndex) => {
           const meta = categoryMeta[category];
+          const CategoryIcon = meta.icon;
           return (
             <motion.section
               key={category}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: catIndex * 0.08 }}
+              transition={{ delay: 0.08 + catIndex * 0.07, type: 'spring', stiffness: 280, damping: 26 }}
             >
               {/* Category header */}
-              <div className="flex items-center gap-2.5 mb-3">
-                <div className={`w-8 h-8 rounded-xl ${meta.color} ${meta.iconColor} flex items-center justify-center`}>
-                  {meta.icon}
+              <div className="flex items-center gap-2.5 mb-3 px-1">
+                <div
+                  className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: meta.accentBg }}
+                >
+                  <CategoryIcon className="h-4 w-4" style={{ color: meta.accent }} strokeWidth={1.75} />
                 </div>
-                <h2 className="font-semibold text-foreground text-sm">{category}</h2>
-                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                <h2 className="text-sm font-bold" style={{ color: '#1a2b38' }}>{category}</h2>
+                <span
+                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{ background: meta.accentBg, color: meta.accent }}
+                >
                   {items.length}
                 </span>
               </div>
 
               {/* FAQ items */}
-              <div className="bg-card rounded-2xl shadow-soft overflow-hidden divide-y divide-border">
-                {items.map((faq) => {
+              <div className="space-y-2">
+                {items.map((faq, i) => {
                   const isOpen = expandedQuestion === faq.question;
                   return (
-                    <div key={faq.question}>
+                    <motion.div
+                      key={faq.question}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.05 + i * 0.04 }}
+                      className="rounded-3xl overflow-hidden"
+                      style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
+                    >
+                      {/* Accent line */}
+                      <div
+                        className="h-0.5 w-full"
+                        style={{ background: `linear-gradient(90deg, ${meta.accent}, ${meta.accent}88)` }}
+                      />
+
+                      {/* Question row */}
                       <button
                         onClick={() => setExpandedQuestion(isOpen ? null : faq.question)}
-                        className="w-full px-4 py-4 flex items-center justify-between text-left gap-3 hover:bg-muted/40 transition-colors"
+                        className="w-full px-4 py-4 flex items-center justify-between text-left gap-3"
                       >
-                        <span className="text-sm font-medium text-foreground leading-snug">{faq.question}</span>
+                        <span className="text-sm font-bold leading-snug flex-1" style={{ color: '#1a2b38' }}>
+                          {faq.question}
+                        </span>
                         <motion.div
                           animate={{ rotate: isOpen ? 180 : 0 }}
                           transition={{ duration: 0.2 }}
-                          className="shrink-0"
+                          className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
+                          style={{ background: isOpen ? meta.accentBg : 'rgba(143,163,177,0.1)' }}
                         >
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          <ChevronDown
+                            className="h-3.5 w-3.5"
+                            style={{ color: isOpen ? meta.accent : '#8fa3b1' }}
+                          />
                         </motion.div>
                       </button>
 
+                      {/* Answer */}
                       <AnimatePresence initial={false}>
                         {isOpen && (
                           <motion.div
@@ -205,15 +315,22 @@ export const HelpFAQ = ({ onClose }: HelpFAQProps) => {
                             transition={{ duration: 0.22, ease: 'easeInOut' }}
                             className="overflow-hidden"
                           >
-                            <div className={`mx-4 mb-4 mt-1 p-3 rounded-xl ${meta.color}`}>
-                              <p className="text-sm text-foreground/80 leading-relaxed">
+                            <div
+                              className="h-px mx-4"
+                              style={{ background: 'linear-gradient(90deg, rgba(57,168,155,0.15), transparent)' }}
+                            />
+                            <div
+                              className="mx-4 mb-4 mt-3 px-4 py-3 rounded-2xl"
+                              style={{ background: meta.accentBg }}
+                            >
+                              <p className="text-xs leading-relaxed" style={{ color: '#5f7585' }}>
                                 {faq.answer}
                               </p>
                             </div>
                           </motion.div>
                         )}
                       </AnimatePresence>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -221,16 +338,30 @@ export const HelpFAQ = ({ onClose }: HelpFAQProps) => {
           );
         })}
 
-        {/* Empty state */}
+        {/* ── Empty state ── */}
         {filteredFaqs.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-card rounded-2xl p-10 shadow-soft text-center"
+            className="rounded-3xl overflow-hidden"
+            style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
           >
-            <HelpCircle className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="font-medium text-foreground">No results found</p>
-            <p className="text-sm text-muted-foreground mt-1">Try a different search term or category</p>
+            <div
+              className="h-0.5 w-full"
+              style={{ background: 'linear-gradient(90deg, #8fa3b1, #8fa3b188)' }}
+            />
+            <div className="flex flex-col items-center justify-center py-16 gap-3 text-center px-6">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(143,163,177,0.1)' }}
+              >
+                <HelpCircle className="h-7 w-7" style={{ color: '#8fa3b1' }} />
+              </div>
+              <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>No results found</p>
+              <p className="text-xs leading-relaxed" style={{ color: '#8fa3b1' }}>
+                Try a different search term or category
+              </p>
+            </div>
           </motion.div>
         )}
 

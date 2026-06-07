@@ -1,69 +1,107 @@
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { 
-  ArrowLeft, 
-  Phone, 
-  MessageCircle, 
-  Globe, 
+import {
+  ArrowLeft,
+  Phone,
   Heart,
-  AlertTriangle,
-  ExternalLink,
   Siren,
+  Globe,
+  Wind,
+  PenLine,
+  Footprints,
+  Users,
+  Anchor,
 } from 'lucide-react';
 
 interface CrisisSupportProps {
   onClose: () => void;
 }
 
-const crisisResources = [
+const crisisResources: {
+  name: string;
+  number: string;
+  description: string;
+  accent: string;
+  accentBg: string;
+}[] = [
   {
     name: 'Emergency Services (Malaysia)',
     number: '999',
     description: 'Immediate emergency assistance',
-    type: 'call',
-    color: 'bg-destructive/10',
-    iconColor: 'text-destructive',
+    accent: '#ef4444',
+    accentBg: 'rgba(239,68,68,0.08)',
   },
   {
-    name: 'Befrienders (KL & Nationwide)',
+    name: 'Befrienders KL & Nationwide',
     number: '03-7627 2929',
     description: '24/7 emotional support and suicide prevention',
-    type: 'call',
-    color: 'bg-sky-light',
-    iconColor: 'text-sky',
+    accent: '#3b82f6',
+    accentBg: 'rgba(59,130,246,0.1)',
   },
   {
     name: 'Befrienders Penang',
     number: '04-291 0100',
     description: 'Emotional support helpline (Penang)',
-    type: 'call',
-    color: 'bg-sage-light',
-    iconColor: 'text-sage',
+    accent: '#39a89b',
+    accentBg: 'rgba(57,168,155,0.1)',
   },
   {
     name: 'Befrienders Johor Bahru',
     number: '07-762 7292',
     description: 'Support for Johor region',
-    type: 'call',
-    color: 'bg-lavender-light',
-    iconColor: 'text-lavender',
+    accent: '#7c6fa0',
+    accentBg: 'rgba(124,111,160,0.1)',
   },
   {
     name: 'Talian Kasih',
     number: '15999',
     description: 'Social and mental health crisis support',
-    type: 'call',
-    color: 'bg-coral-light',
-    iconColor: 'text-coral',
+    accent: '#e8735a',
+    accentBg: 'rgba(232,115,90,0.1)',
   },
 ];
 
-const copingStrategies = [
-  { title: 'Ground Yourself',  description: 'Use the 5-4-3-2-1 technique: Name 5 things you see, 4 you can touch, 3 you hear, 2 you smell, 1 you taste.', emoji: '🌍', color: 'bg-sky-light' },
-  { title: 'Breathe Deeply',   description: 'Take slow, deep breaths. Inhale for 4 counts, hold for 4, exhale for 6. Repeat several times.',                  emoji: '🌬️', color: 'bg-sage-light' },
-  { title: 'Reach Out',        description: 'Call or text someone you trust. You don\'t have to go through this alone.',                                      emoji: '📱', color: 'bg-lavender-light' },
-  { title: 'Move Your Body',   description: 'Take a short walk, stretch, or do some light movement to release tension.',                                      emoji: '🚶', color: 'bg-honey-light' },
-  { title: 'Write It Down',    description: 'Put your thoughts and feelings on paper. It can help process overwhelming emotions.',                             emoji: '✍️', color: 'bg-coral-light' },
+const copingStrategies: {
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  accent: string;
+  accentBg: string;
+}[] = [
+  {
+    title: 'Ground Yourself',
+    description: 'Use the 5-4-3-2-1 technique: Name 5 things you see, 4 you can touch, 3 you hear, 2 you smell, 1 you taste.',
+    icon: Anchor,
+    accent: '#3b82f6',
+    accentBg: 'rgba(59,130,246,0.1)',
+  },
+  {
+    title: 'Breathe Deeply',
+    description: 'Take slow, deep breaths. Inhale for 4 counts, hold for 4, exhale for 6. Repeat several times.',
+    icon: Wind,
+    accent: '#39a89b',
+    accentBg: 'rgba(57,168,155,0.1)',
+  },
+  {
+    title: 'Reach Out',
+    description: "Call or text someone you trust. You don't have to go through this alone.",
+    icon: Users,
+    accent: '#7c6fa0',
+    accentBg: 'rgba(124,111,160,0.1)',
+  },
+  {
+    title: 'Move Your Body',
+    description: 'Take a short walk, stretch, or do some light movement to release tension.',
+    icon: Footprints,
+    accent: '#d97706',
+    accentBg: 'rgba(251,191,36,0.12)',
+  },
+  {
+    title: 'Write It Down',
+    description: 'Put your thoughts and feelings on paper. It can help process overwhelming emotions.',
+    icon: PenLine,
+    accent: '#e8735a',
+    accentBg: 'rgba(232,115,90,0.1)',
+  },
 ];
 
 export const CrisisSupport = ({ onClose }: CrisisSupportProps) => {
@@ -73,149 +111,253 @@ export const CrisisSupport = ({ onClose }: CrisisSupportProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-10">
-
-      {/* Header */}
-      <header className="gradient-sage px-5 pt-safe-top pb-8 rounded-b-[2rem]">
-        <div className="pt-6">
-          <Button
-            variant="ghost"
-            size="icon"
+    <div
+      className="min-h-screen pb-28"
+      style={{ background: 'linear-gradient(180deg, #f0f7f5 0%, #f7faf9 60%, #ffffff 100%)' }}
+    >
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <header
+        className="sticky top-0 z-10 px-5 py-3.5"
+        style={{
+          background: 'rgba(240,247,245,0.96)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '0.5px solid rgba(57,168,155,0.15)',
+          paddingTop: 'max(env(safe-area-inset-top), 14px)',
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileTap={{ scale: 0.94 }}
             onClick={onClose}
-            className="mb-2 -ml-2 text-foreground"
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+            aria-label="Go back"
           >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <Heart className="h-6 w-6 text-coral" />
-              Crisis Support
-            </h1>
-            <p className="text-muted-foreground">You're not alone — help is available</p>
-          </motion.div>
+            <ArrowLeft className="h-4 w-4" style={{ color: '#5f7585' }} />
+          </motion.button>
+
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div
+              className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, #39a89b, #6bab9e)',
+                boxShadow: '0 2px 8px rgba(57,168,155,0.3)',
+              }}
+            >
+              <Heart className="h-4 w-4 text-white" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-sm truncate" style={{ color: '#1a2b38' }}>Crisis Support</p>
+              <p className="text-[11px] font-semibold" style={{ color: '#39a89b' }}>
+                You're not alone — help is available
+              </p>
+            </div>
+          </div>
         </div>
       </header>
 
-      <main className="px-5 py-6 space-y-6">
+      {/* ── Hero banner ─────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="relative overflow-hidden px-5 pt-8 pb-6"
+      >
+        <div
+          className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(57,168,155,0.13) 0%, transparent 70%)' }}
+        />
+        <div
+          className="pointer-events-none absolute top-8 -left-12 w-48 h-48 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(107,171,158,0.08) 0%, transparent 70%)' }}
+        />
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <h2
+            className="text-[1.75rem] font-bold leading-tight mb-1.5"
+            style={{ color: '#1a2b38', letterSpacing: '-0.02em' }}
+          >
+            We're here{'\n'}with you.
+          </h2>
+          <p className="text-[14px] leading-relaxed" style={{ color: '#5f7585' }}>
+            Reach out — support is just one call away.
+          </p>
+        </motion.div>
+      </motion.div>
 
-        {/* Emergency Banner */}
+      <main className="px-5 space-y-4 pb-6">
+
+        {/* ── Emergency banner ── */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="bg-destructive/10 rounded-2xl overflow-hidden shadow-soft"
+          transition={{ delay: 0.08, type: 'spring', stiffness: 280, damping: 26 }}
+          className="rounded-3xl overflow-hidden"
+          style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
         >
-          {/* Red top strip */}
-          <div className="bg-destructive px-5 py-3 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-destructive-foreground/20 flex items-center justify-center">
-              <Siren className="h-4 w-4 text-destructive-foreground" />
+          <div
+            className="h-0.5 w-full"
+            style={{ background: 'linear-gradient(90deg, #ef4444, #ef444488)' }}
+          />
+          <div className="p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(239,68,68,0.08)' }}
+              >
+                <Siren className="h-5 w-5" style={{ color: '#ef4444' }} strokeWidth={1.75} />
+              </div>
+              <div>
+                <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>If you're in immediate danger</p>
+                <p className="text-[11px] leading-relaxed mt-0.5" style={{ color: '#8fa3b1' }}>
+                  Call emergency services or go to the nearest hospital
+                </p>
+              </div>
             </div>
-            <p className="text-destructive-foreground font-semibold text-sm">
-              If you're in immediate danger
-            </p>
-          </div>
-          <div className="p-5">
-            <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-              Call emergency services or go to the nearest hospital emergency department immediately.
-            </p>
-            <Button
+
+            <div
+              className="h-px w-full mb-3"
+              style={{ background: 'linear-gradient(90deg, rgba(239,68,68,0.15), transparent)' }}
+            />
+
+            <motion.button
+              whileTap={{ scale: 0.96 }}
               onClick={() => handleCall('999')}
-              className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl gap-2 py-5"
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white"
+              style={{
+                background: 'linear-gradient(135deg, #ef4444, #ef4444cc)',
+                boxShadow: '0 3px 10px rgba(239,68,68,0.33)',
+              }}
             >
               <Phone className="h-4 w-4" />
               Call 999 — Emergency Services
-            </Button>
+            </motion.button>
           </div>
         </motion.div>
 
-        {/* Crisis Hotlines */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-1 mb-3">
+        {/* ── Crisis hotlines ── */}
+        <section className="space-y-3">
+          <p
+            className="text-[10px] font-semibold uppercase tracking-widest px-1"
+            style={{ color: '#8fa3b1' }}
+          >
             Crisis Hotlines
           </p>
 
-          <div className="bg-card rounded-2xl shadow-soft overflow-hidden divide-y divide-border">
-            {crisisResources.map((resource, index) => (
-              <motion.div
-                key={resource.name}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.12 + index * 0.06 }}
-                className="flex items-center gap-3 px-4 py-4 hover:bg-muted/40 transition-colors"
-              >
-                {/* Icon */}
-                <div className={`w-10 h-10 rounded-xl ${resource.color} ${resource.iconColor} flex items-center justify-center shrink-0`}>
-                  <Phone className="h-4 w-4" />
+          {crisisResources.map((resource, i) => (
+            <motion.div
+              key={resource.name}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 + i * 0.07, type: 'spring', stiffness: 280, damping: 26 }}
+              className="rounded-3xl overflow-hidden"
+              style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
+            >
+              <div
+                className="h-0.5 w-full"
+                style={{ background: `linear-gradient(90deg, ${resource.accent}, ${resource.accent}88)` }}
+              />
+              <div className="p-4">
+                <div className="flex items-start gap-3 mb-4">
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: resource.accentBg }}
+                  >
+                    <Phone className="h-5 w-5" style={{ color: resource.accent }} strokeWidth={1.75} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold leading-snug" style={{ color: '#1a2b38' }}>{resource.name}</p>
+                    <p className="text-xs font-bold mt-0.5" style={{ color: resource.accent }}>{resource.number}</p>
+                    <p className="text-[11px] mt-0.5 leading-relaxed" style={{ color: '#8fa3b1' }}>{resource.description}</p>
+                  </div>
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground leading-snug">{resource.name}</p>
-                  <p className={`text-xs font-bold ${resource.iconColor}`}>{resource.number}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{resource.description}</p>
+                <div
+                  className="h-px w-full mb-3"
+                  style={{ background: 'linear-gradient(90deg, rgba(57,168,155,0.15), transparent)' }}
+                />
+
+                <div className="flex gap-2">
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => handleCall(resource.number)}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white"
+                    style={{
+                      background: `linear-gradient(135deg, ${resource.accent}, ${resource.accent}cc)`,
+                      boxShadow: `0 3px 10px ${resource.accent}33`,
+                    }}
+                  >
+                    <Phone className="h-3.5 w-3.5" />
+                    Call Now
+                  </motion.button>
                 </div>
+              </div>
+            </motion.div>
+          ))}
+        </section>
 
-                {/* Call button */}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleCall(resource.number)}
-                  className="rounded-xl shrink-0 gap-1.5 text-xs"
-                >
-                  <Phone className="h-3 w-3" />
-                  Call
-                </Button>
-              </motion.div>
-            ))}
-          </div>
-        </motion.section>
-
-        {/* Coping Strategies */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest px-1 mb-3">
+        {/* ── Coping strategies ── */}
+        <section className="space-y-3">
+          <p
+            className="text-[10px] font-semibold uppercase tracking-widest px-1"
+            style={{ color: '#8fa3b1' }}
+          >
             Coping Strategies
           </p>
 
-          <div className="space-y-2">
-            {copingStrategies.map((strategy, index) => (
+          {copingStrategies.map((strategy, i) => {
+            const Icon = strategy.icon;
+            return (
               <motion.div
                 key={strategy.title}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35 + index * 0.06 }}
-                className="bg-card rounded-2xl p-4 shadow-soft flex items-start gap-3"
+                transition={{ delay: 0.45 + i * 0.07, type: 'spring', stiffness: 280, damping: 26 }}
+                className="rounded-3xl overflow-hidden"
+                style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
               >
-                <div className={`w-11 h-11 rounded-2xl ${strategy.color} flex items-center justify-center text-xl shrink-0`}>
-                  {strategy.emoji}
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-foreground text-sm">{strategy.title}</p>
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{strategy.description}</p>
+                <div
+                  className="h-0.5 w-full"
+                  style={{ background: `linear-gradient(90deg, ${strategy.accent}, ${strategy.accent}88)` }}
+                />
+                <div className="p-4 flex items-start gap-3">
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: strategy.accentBg }}
+                  >
+                    <Icon className="h-5 w-5" style={{ color: strategy.accent }} strokeWidth={1.75} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold leading-snug" style={{ color: '#1a2b38' }}>{strategy.title}</p>
+                    <p className="text-[11px] mt-1 leading-relaxed" style={{ color: '#5f7585' }}>{strategy.description}</p>
+                  </div>
                 </div>
               </motion.div>
-            ))}
-          </div>
-        </motion.section>
+            );
+          })}
+        </section>
 
-        {/* Footer note */}
+        {/* ── Footer note ── */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="bg-sage-light rounded-2xl p-4 flex items-start gap-3"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.85, type: 'spring', stiffness: 280, damping: 26 }}
+          className="rounded-3xl overflow-hidden"
+          style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
         >
-          <Heart className="h-4 w-4 text-sage shrink-0 mt-0.5" />
-          <p className="text-xs text-foreground/70 leading-relaxed">
-            Remember — reaching out is a sign of strength, not weakness. You deserve support and care. 💚
-          </p>
+          <div
+            className="h-0.5 w-full"
+            style={{ background: 'linear-gradient(90deg, #39a89b, #6bab9e)' }}
+          />
+          <div className="p-4 flex items-start gap-3">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(57,168,155,0.1)' }}
+            >
+              <Heart className="h-4 w-4" style={{ color: '#39a89b' }} strokeWidth={1.75} />
+            </div>
+            <p className="text-xs leading-relaxed pt-1" style={{ color: '#5f7585' }}>
+              Remember — reaching out is a sign of strength, not weakness. You deserve support and care. 💚
+            </p>
+          </div>
         </motion.div>
 
       </main>
