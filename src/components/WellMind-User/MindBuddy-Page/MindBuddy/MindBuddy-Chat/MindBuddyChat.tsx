@@ -25,11 +25,13 @@ const fallbackResponsesByMode: Record<ResponseMode, string[]> = {
     "Got you, wanna tell me more?",
     "Yeah I get you, what happened next?",
     "I'm here, keep going if you want 💚",
+    "That makes sense, I'm listening.",
   ],
   emotional_support: [
     "That sounds really heavy, I'm here with you.",
-    "Yeah, that can feel a lot sometimes, wanna talk it out a bit?",
+    "Feeling that alone can hurt a lot, I'm glad you said it out loud.",
     "I hear you, you're not alone in this.",
+    "Being left out hurts, and I want to stay with you in this moment.",
   ],
   high_risk_support: [
     "I'm really glad you told me this, I'm here with you right now.",
@@ -63,9 +65,54 @@ const getResponseMode = (detected: Partial<EmotionResult> | null): ResponseMode 
   return 'casual_support';
 };
 
+const shouldShowPeerSupportAlert = (detected: Partial<EmotionResult> | null): boolean => {
+  if (!detected) return false;
+
+  const safetyRisk = detected.safetyRisk ?? detected.riskScore ?? 0;
+  const decision = detected.decision ?? detected.crisisLevel;
+  const label = detected.label;
+
+  if (
+    label === 'crisis' ||
+    decision === 'crisis_escalation' ||
+    detected.selfHarmDetected ||
+    detected.directSelfHarmDetected
+  ) {
+    return false;
+  }
+
+  return (
+    label === 'severe' ||
+    decision === 'peer_support_suggestion' ||
+    detected.hopelessnessDetected === true ||
+    ((label === 'depress' || label === 'anxious' || label === 'stress') && safetyRisk >= 40) ||
+    safetyRisk >= 52
+  );
+};
+
 const getFallbackResponse = (mode: ResponseMode = 'casual_support'): string => {
   const bucket = fallbackResponsesByMode[mode];
   return bucket[Math.floor(Math.random() * bucket.length)];
+};
+
+const LONELINESS_PHRASES = [
+  'lonely',
+  'alone',
+  'no friends',
+  'friendless',
+  'left out',
+  'excluded',
+  'nobody wants to be my friend',
+  'nobody wants to be my friends',
+  'no one wants to be my friend',
+  'no one wants to be my friends',
+  'no one wanna be my friend',
+  'no one wanna be my friends',
+];
+
+const mentionsLoneliness = (text: string) => {
+  const lower = text.toLowerCase();
+  return LONELINESS_PHRASES.some((phrase) => lower.includes(phrase));
 };
 
 const getExpressionFromText = (message: string): BuddyExpression => {
@@ -271,8 +318,8 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
       if (result.label === 'crisis') {
         setShowCrisisAlert(true);
       }
-      // Show severe alert if severe emotion detected (counselor recommended)
-      if (result.label === 'severe') {
+      // Show severe alert when peer-support conditions are met
+      if (shouldShowPeerSupportAlert(result)) {
         setShowSevereAlert(true);
       }
       useMindBuddyChatStore.setState((state) => ({
@@ -293,7 +340,10 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
     try {
       const detectedEmotion = await detectedEmotionPromise;
       detectedEmotionResult = detectedEmotion;
-      const responseMode = getResponseMode(detectedEmotion);
+      const baseResponseMode = getResponseMode(detectedEmotion);
+      const responseMode = mentionsLoneliness(messageText) && baseResponseMode === 'casual_support'
+        ? 'emotional_support'
+        : baseResponseMode;
       const safetyRisk = detectedEmotion.safetyRisk ?? detectedEmotion.riskScore ?? 0;
       const riskLevel: 'low' | 'medium' | 'high' | 'crisis' =
         responseMode === 'crisis_support' ? 'crisis' :
@@ -320,7 +370,12 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
         { temperature: responseMode === 'casual_support' ? 0.92 : 0.55, maxTokens: responseMode === 'crisis_support' ? 90 : 72 }
       );
 
-      const text = reply || getFallbackResponse(responseMode);
+      const previousBuddyMessage = [...messages].reverse().find((message) => message.sender === 'buddy');
+      const normalizedReply = reply.trim().toLowerCase();
+      const normalizedPrevious = previousBuddyMessage?.content.trim().toLowerCase();
+      const text = !normalizedReply || normalizedReply === normalizedPrevious
+        ? getFallbackResponse(responseMode)
+        : reply;
       const responseExpression = getExpressionFromText(text);
 
       setIsTyping(false);
@@ -340,7 +395,8 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
         addCoins(2);
         addPetExperience(5);
       }
-    } catch {
+    } catch (error) {
+      console.error('MindBuddy reply failed; using fallback response.', error);
       const fallbackMode = getResponseMode(
         detectedEmotionResult ?? (lastEmotion ? { label: lastEmotion } : null)
       );
@@ -377,75 +433,61 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
       className="fixed inset-0 z-50 bg-background flex flex-col"
     >
       {/* Header */}
-      <div
-        className="gradient-sage px-4 pb-4 rounded-b-[1.5rem] shrink-0"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}
-      >
-        <div className="flex items-center justify-between">
-          {/* Left — avatar + name */}
-          <div className="flex items-center gap-3">
-            <motion.div
-              className="w-12 h-12 rounded-full bg-card/60 shadow-soft flex items-center justify-center text-2xl"
-              animate={{ scale: isTalking ? [1, 1.1, 1] : 1 }}
-              transition={{ duration: 0.3, repeat: isTalking ? Infinity : 0 }}
-            >
-              {buddyExpressions[expression].face}
-            </motion.div>
-            <div>
-              <h3 className="font-semibold text-foreground flex items-center gap-1.5">
-                {petName}
-                <Sparkles className="w-4 h-4 text-primary" />
-              </h3>
-              <p className="text-xs text-muted-foreground">Your MindBuddy</p>
-            </div>
-          </div>
+      <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-primary/10 to-accent/10" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}>
+        <div className="flex items-center gap-3">
+          <motion.div 
+            className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-2xl"
+            animate={{ scale: isTalking ? [1, 1.1, 1] : 1 }}
+            transition={{ duration: 0.3, repeat: isTalking ? Infinity : 0 }}
+          >
+            {buddyExpressions[expression].face}
+          </motion.div>
+          <div>
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
+              {petName}
+              <Sparkles className="w-4 h-4 text-primary" />
+            </h3>
 
-          {/* Right — actions */}
-          <div className="flex items-center gap-1">
-            {/* Emotion Dashboard */}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => { clearHistory(); }}
+            className="h-8 w-8"
+            title="Clear chat history"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+          <div className="relative h-8 w-8">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => navigate('/emotion-dashboard')}
-              className="h-9 w-9 rounded-xl bg-card/50 hover:bg-card/80 transition-colors relative overflow-hidden"
+              className="h-8 w-8 text-xl relative overflow-hidden"
               title="My Emotions"
             >
-              <Brain className="w-4 h-4 text-lavender" />
-              {/* subtle shimmer */}
+              🌈
               <motion.span
-                className="pointer-events-none absolute inset-0 rounded-xl"
+                className="pointer-events-none absolute inset-0 rounded-md"
                 style={{
-                  background: 'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.5) 50%, transparent 70%)',
+                  background:
+                    'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.65) 50%, transparent 70%)',
                   backgroundSize: '200% 100%',
                 }}
                 animate={{ backgroundPosition: ['200% 0', '-200% 0'] }}
-                transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+                transition={{ duration: 1.6, repeat: Infinity, repeatDelay: 2.5, ease: 'easeInOut' }}
               />
             </Button>
-
-            {/* Clear history */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => clearHistory()}
-              className="h-9 w-9 rounded-xl bg-card/50 hover:bg-card/80 transition-colors"
-              title="Clear chat history"
-            >
-              <Trash2 className="w-4 h-4 text-muted-foreground" />
-            </Button>
-
-            {/* Close */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-9 w-9 rounded-xl bg-card/50 hover:bg-card/80 transition-colors"
-            >
-              <X className="w-4 h-4 text-muted-foreground" />
-            </Button>
           </div>
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+            <X className="w-4 h-4" />
+          </Button>
         </div>
       </div>
+
+
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -466,9 +508,7 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
               >
                 {/* Red header band */}
                 <div className="bg-red-600 px-5 py-4 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-destructive-foreground/20 flex items-center justify-center shrink-0">
-                    <Siren className="w-5 h-5 text-destructive-foreground" />
-                  </div>
+                  <span className="text-3xl">🚨</span>
                   <div>
                     <p className="text-white font-bold text-base">You Matter. Help is Here.</p>
                     <p className="text-red-100 text-xs">Crisis Support — Available 24/7</p>
@@ -482,10 +522,7 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
 
                   {/* Primary hotline */}
                   <div className="bg-red-50 border border-red-200 rounded-2xl p-4 space-y-3">
-                    <p className="text-xs font-semibold text-red-700 uppercase tracking-wide flex items-center gap-1">
-                      <Phone className="w-4 h-4 text-red-700" />
-                      Call Now (Free, 24/7)
-                    </p>
+                    <p className="text-xs font-semibold text-red-700 uppercase tracking-wide">📞 Call Now (Free, 24/7)</p>
                     <Button
                       className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl flex flex-col h-auto py-3"
                       onClick={() => window.open('tel:0376272929')}
@@ -539,9 +576,7 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
               <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto" />
 
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 flex items-center">
-                  <Handshake className="w-6 h-6 text-current" />
-                </span>
+                <span className="text-3xl mt-0.5">🤝</span>
                 <div>
                   <h4 className="font-bold text-gray-900 text-base">You deserve real support</h4>
                   <p className="text-gray-500 text-sm mt-0.5">
@@ -552,8 +587,8 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
 
               {/* Counselor Support card */}
               <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                  <MessageCircle className="w-6 h-6 text-orange-600" />
+                <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center text-2xl flex-shrink-0">
+                  💬
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-orange-900 text-sm">UPM Counselling Service</p>
@@ -634,68 +669,44 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
       </div>
 
       {/* Quick Replies */}
-      <div className="px-4 py-2 flex gap-2 overflow-x-auto scrollbar-hide shrink-0">
-        {[
-          { text: "I'm feeling anxious", emoji: '😰' },
-          { text: "I'm happy today!", emoji: '😄' },
-          { text: 'Tell me something nice', emoji: '💚' },
-        ].map(({ text, emoji }, i) => (
-          <motion.div
+      <div className="px-4 py-2 flex gap-2 overflow-x-auto scrollbar-hide">
+        {['How are you?', "I'm feeling anxious", "I'm happy today!", 'Tell me something nice'].map((text) => (
+          <Button
             key={text}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.07 }}
+            variant="outline"
+            size="sm"
+            onClick={() => handleSend(text)}
+            className="whitespace-nowrap text-xs rounded-full"
           >
-            <button
-              onClick={() => void handleSend(text)}
-              className="whitespace-nowrap text-xs rounded-full px-3.5 py-2 bg-card shadow-soft border border-border text-foreground hover:bg-muted transition-colors flex items-center gap-1.5 shrink-0"
-            >
-              <span>{emoji}</span>
-              <span>{text}</span>
-            </button>
-          </motion.div>
+            {text}
+          </Button>
         ))}
       </div>
 
       {/* Input */}
-      <div
-        className="shrink-0 px-4 pt-3 pb-4 bg-background border-t border-border"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
-      >
-        <div className="flex items-center gap-2 bg-muted rounded-2xl px-3 py-2">
+      <div className="p-4 border-t border-border bg-background safe-area-bottom">
+        <div className="flex gap-2">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={`Talk to ${petName}...`}
-            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none py-1.5 px-1"
+            className="flex-1 px-4 py-3 bg-muted rounded-full text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
-
-          {/* Send button — inside the bar */}
-          <motion.div
-            animate={{ scale: input.trim() ? 1 : 0.85, opacity: input.trim() ? 1 : 0.4 }}
-            transition={{ duration: 0.15 }}
+          <Button
+            onClick={() => {
+              void handleSend();
+            }}
+            disabled={!input.trim() || isTyping}
+            size="icon"
+            className="rounded-full h-12 w-12"
           >
-            <Button
-              onClick={() => void handleSend()}
-              disabled={!input.trim() || isTyping}
-              size="icon"
-              className="rounded-xl h-9 w-9 shrink-0"
-            >
-              {isTyping ? (
-                <motion.div
-                  className="w-4 h-4 border-2 border-primary-foreground/60 border-t-primary-foreground rounded-full"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
-                />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-            </Button>
-          </motion.div>
+            <Send className="w-5 h-5" />
+          </Button>
         </div>
       </div>
     </motion.div>
   );
 };
+
