@@ -31,7 +31,7 @@ const EditProfilePage = ({
     style={{ background: 'linear-gradient(180deg,#f0f7f5 0%,#f7faf9 60%,#fff 100%)' }}
   >
     {/* Hero */}
-    <div className="relative overflow-hidden px-5 pt-10 pb-6">
+    <div className="relative overflow-hidden px-5 pb-6">
       <div className="pointer-events-none absolute -top-12 -right-12 w-52 h-52 rounded-full"
         style={{ background: 'radial-gradient(circle,rgba(57,168,155,.13) 0%,transparent 70%)' }} />
       <div className="pointer-events-none absolute top-4 -left-10 w-40 h-40 rounded-full"
