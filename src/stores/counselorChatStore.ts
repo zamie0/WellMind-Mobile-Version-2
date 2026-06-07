@@ -24,6 +24,8 @@ export interface CounsellorAppointment {
   notes?: string;
   persistence: 'local-mock';
   createdAt: string;
+  clientId?: string;
+  clientName?: string;
 }
 
 interface CounselorChatState {

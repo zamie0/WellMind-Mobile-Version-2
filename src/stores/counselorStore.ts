@@ -219,15 +219,28 @@ export const useCounselorStore = create<CounselorStore>()(
 
         if (status === 'confirmed') {
           const appointment = get().appointments.find((a) => a.id === appointmentId);
-          const client = appointment ? get().getClientById(appointment.counselorId) : undefined;
-          if (appointment && client) {
-            const alreadyActive = get()
-              .getActiveSessions()
-              .some((session) => session.clientId === client.id && session.type === appointment.consultationType);
+          if (!appointment || !appointment.clientId) return;
 
-            if (!alreadyActive) {
-              get().startSession(client.id, client.displayName, appointment.consultationType);
-            }
+          let client = get().getClientById(appointment.clientId);
+          if (!client) {
+            client = {
+              id: appointment.clientId,
+              displayName: appointment.clientName ?? 'Client',
+              isAnonymous: true,
+              lastInteraction: new Date(),
+              appointmentCount: 0,
+            };
+            set((state) => ({
+              clients: [...state.clients, client],
+            }));
+          }
+
+          const alreadyActive = get()
+            .getActiveSessions()
+            .some((session) => session.clientId === client!.id && session.type === appointment.consultationType);
+
+          if (!alreadyActive) {
+            get().startSession(client.id, client.displayName, appointment.consultationType);
           }
         }
       },
