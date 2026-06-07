@@ -1,27 +1,28 @@
 import { motion } from 'framer-motion';
-import { ArrowLeft, Users, MessageCircle, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Users, MessageCircle, TrendingUp, Leaf, GraduationCap, Brain, Moon, Palette } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { BottomNav } from '@/components/WellMind-User/BottomNav';
 import { useCommunityStore } from '@/stores/communityStore';
 import { toast } from 'sonner';
+import type { LucideIcon } from 'lucide-react';
 
-import {
-  Leaf,
-  GraduationCap,
-  Brain,
-  Moon,
-  Palette,
-} from 'lucide-react';
-
-const groups = [
+const groups: {
+  id: string;
+  name: string;
+  members: number;
+  desc: string;
+  icon: LucideIcon;
+  accent: string;
+  accentBg: string;
+}[] = [
   {
     id: 'anxiety',
     name: 'Anxiety Allies',
     members: 1284,
     desc: 'A safe space to share and cope with anxiety together.',
     icon: Leaf,
-    color: 'bg-sage-light',
+    accent: '#39a89b',
+    accentBg: 'rgba(57,168,155,0.1)',
   },
   {
     id: 'students',
@@ -29,7 +30,8 @@ const groups = [
     members: 892,
     desc: 'For students balancing studies and mental wellness.',
     icon: GraduationCap,
-    color: 'bg-honey-light',
+    accent: '#d97706',
+    accentBg: 'rgba(251,191,36,0.12)',
   },
   {
     id: 'mindful',
@@ -37,7 +39,8 @@ const groups = [
     members: 2156,
     desc: 'Daily mindfulness practice and meditation group.',
     icon: Brain,
-    color: 'bg-lavender-light',
+    accent: '#7c6fa0',
+    accentBg: 'rgba(124,111,160,0.1)',
   },
   {
     id: 'sleep',
@@ -45,7 +48,8 @@ const groups = [
     members: 643,
     desc: 'Tips and support for restful nights.',
     icon: Moon,
-    color: 'bg-sky-light',
+    accent: '#3b82f6',
+    accentBg: 'rgba(59,130,246,0.1)',
   },
   {
     id: 'creative',
@@ -53,7 +57,8 @@ const groups = [
     members: 421,
     desc: 'Express feelings through art, writing, and music.',
     icon: Palette,
-    color: 'bg-coral-light',
+    accent: '#e8735a',
+    accentBg: 'rgba(232,115,90,0.1)',
   },
 ];
 
@@ -63,104 +68,199 @@ export default function Community() {
   const joinedCount = joinedCommunities.length;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <header className="gradient-sage px-5 pt-safe-top pb-8 rounded-b-[2rem]">
-        <div className="pt-6">
-          <Button
-            variant="ghost"
-            size="icon"
+    <div
+      className="min-h-screen pb-28"
+      style={{ background: 'linear-gradient(180deg, #f0f7f5 0%, #f7faf9 60%, #ffffff 100%)' }}
+    >
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <header
+        className="sticky top-0 z-10 px-5 py-3.5"
+        style={{
+          background: 'rgba(240,247,245,0.96)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '0.5px solid rgba(57,168,155,0.15)',
+          paddingTop: 'max(env(safe-area-inset-top), 14px)',
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileTap={{ scale: 0.94 }}
             onClick={() => navigate(-1)}
-            className="mb-2 -ml-2 text-foreground"
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+            aria-label="Go back"
           >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="text-2xl font-bold text-foreground">Community</h1>
-            <p className="text-muted-foreground">Connect with others on the same journey</p>
-          </motion.div>
+            <ArrowLeft className="h-4 w-4" style={{ color: '#5f7585' }} />
+          </motion.button>
+
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div
+              className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, #39a89b, #6bab9e)',
+                boxShadow: '0 2px 8px rgba(57,168,155,0.3)',
+              }}
+            >
+              <Users className="h-4 w-4 text-white" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-sm truncate" style={{ color: '#1a2b38' }}>Community</p>
+              <p className="text-[11px] font-semibold" style={{ color: '#39a89b' }}>
+                Connect with others on the same journey
+              </p>
+            </div>
+          </div>
         </div>
       </header>
 
-      <main className="px-5 py-6 space-y-5">
-        {/* Stats bar */}
+      {/* ── Hero banner ─────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="relative overflow-hidden px-5 pt-8 pb-6"
+      >
+        <div
+          className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(57,168,155,0.13) 0%, transparent 70%)' }}
+        />
+        <div
+          className="pointer-events-none absolute top-8 -left-12 w-48 h-48 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(107,171,158,0.08) 0%, transparent 70%)' }}
+        />
+
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <h2
+            className="text-[1.75rem] font-bold leading-tight mb-1.5"
+            style={{ color: '#1a2b38', letterSpacing: '-0.02em' }}
+          >
+            You belong{'\n'}here.
+          </h2>
+          <p className="text-[14px] leading-relaxed" style={{ color: '#5f7585' }}>
+            Find your people — every journey is worth sharing.
+          </p>
+        </motion.div>
+      </motion.div>
+
+      <main className="px-5 space-y-4 pb-6">
+
+        {/* ── Joined stats banner ── */}
         {joinedCount > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-card rounded-2xl p-4 shadow-soft flex items-center gap-3"
+            className="flex items-center gap-3 rounded-2xl px-4 py-3"
+            style={{ background: 'rgba(57,168,155,0.07)', border: '0.5px solid rgba(57,168,155,0.2)' }}
           >
-            <div className="w-10 h-10 rounded-xl bg-sage-light flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-sage" />
+            <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(57,168,155,0.12)' }}
+            >
+              <TrendingUp className="h-5 w-5" style={{ color: '#39a89b' }} />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">
+              <p className="text-sm font-semibold" style={{ color: '#1a2b38' }}>
                 You've joined {joinedCount} {joinedCount === 1 ? 'group' : 'groups'}
               </p>
-              <p className="text-xs text-muted-foreground">Keep engaging with your communities</p>
+              <p className="text-[11px]" style={{ color: '#8fa3b1' }}>Keep engaging with your communities</p>
             </div>
           </motion.div>
         )}
 
-        {/* Group Cards */}
+        {/* ── Group cards ── */}
         <section className="space-y-3">
           {groups.map((g, i) => {
             const joined = joinedCommunities.includes(g.id);
+            const Icon = g.icon;
+
             return (
               <motion.div
                 key={g.id}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.07 }}
-                className="bg-card rounded-2xl p-4 shadow-soft"
+                transition={{ delay: 0.08 + i * 0.07, type: 'spring', stiffness: 280, damping: 26 }}
+                className="rounded-3xl overflow-hidden"
+                style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
               >
-                <div className="flex items-start gap-3">
-                  {/* Emoji badge */}
-                  <div className={`w-12 h-12 rounded-2xl ${g.color} flex items-center justify-center shrink-0`}>
-                    <g.icon className="w-6 h-6 text-foreground stroke-[1.5]" />
-                  </div>
+                {/* Accent line */}
+                <div
+                  className="h-0.5 w-full"
+                  style={{ background: `linear-gradient(90deg, ${g.accent}, ${g.accent}88)` }}
+                />
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <h3 className="font-semibold text-foreground truncate">{g.name}</h3>
-                      {joined && (
-                        <span className="text-xs font-medium text-sage bg-sage-light px-2 py-0.5 rounded-full shrink-0">
-                          Joined
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 mt-0.5 mb-2">
-                      <Users className="h-3 w-3 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">{g.members.toLocaleString()} members</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-snug">{g.desc}</p>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-2 mt-4">
-                  <Button
-                    size="sm"
-                    variant={joined ? 'outline' : 'sage'}
-                    className="flex-1 rounded-xl"
-                    onClick={() => {
-                      toggle('joinedCommunities', g.id);
-                      toast.success(joined ? `Left ${g.name}` : `Joined ${g.name}!`);
-                    }}
-                  >
-                    {joined ? 'Leave Group' : 'Join Group'}
-                  </Button>
-                  {joined && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="rounded-xl gap-1.5"
-                      onClick={() => toast.info('Group chat coming soon')}
+                <div className="p-4">
+                  <div className="flex items-start gap-3 mb-4">
+                    {/* Icon badge */}
+                    <div
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: g.accentBg }}
                     >
-                      <MessageCircle className="h-4 w-4" />
-                      Chat
-                    </Button>
-                  )}
+                      <Icon className="w-5 h-5" style={{ color: g.accent }} strokeWidth={1.75} />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <h3 className="font-bold text-sm" style={{ color: '#1a2b38' }}>{g.name}</h3>
+                        {joined && (
+                          <span
+                            className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                            style={{ background: 'rgba(57,168,155,0.12)', color: '#39a89b' }}
+                          >
+                            Joined
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 mb-1.5">
+                        <Users className="h-3 w-3" style={{ color: '#8fa3b1' }} />
+                        <p className="text-[11px]" style={{ color: '#8fa3b1' }}>
+                          {g.members.toLocaleString()} members
+                        </p>
+                      </div>
+                      <p className="text-xs leading-relaxed" style={{ color: '#5f7585' }}>{g.desc}</p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <motion.button
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => {
+                        toggle('joinedCommunities', g.id);
+                        toast.success(joined ? `Left ${g.name}` : `Joined ${g.name}!`);
+                      }}
+                      className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all"
+                      style={
+                        joined
+                          ? {
+                              background: 'white',
+                              border: '1.5px solid rgba(57,168,155,0.25)',
+                              color: '#39a89b',
+                            }
+                          : {
+                              background: `linear-gradient(135deg, ${g.accent}, ${g.accent}cc)`,
+                              boxShadow: `0 3px 10px ${g.accent}33`,
+                              color: 'white',
+                            }
+                      }
+                    >
+                      {joined ? 'Leave Group' : 'Join Group'}
+                    </motion.button>
+
+                    {joined && (
+                      <motion.button
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => toast.info('Group chat coming soon')}
+                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold"
+                        style={{
+                          background: 'rgba(57,168,155,0.07)',
+                          border: '1.5px solid rgba(57,168,155,0.2)',
+                          color: '#39a89b',
+                        }}
+                      >
+                        <MessageCircle className="h-3.5 w-3.5" />
+                        Chat
+                      </motion.button>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             );
