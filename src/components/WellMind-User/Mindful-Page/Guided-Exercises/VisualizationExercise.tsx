@@ -1,20 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X,
-  Play,
-  Pause,
-  SkipForward,
-  Check,
-  Sunrise,
-  Umbrella,
-  Waves,
-  Sun,
-  Wind,
-  Feather,
-  Sparkles,
+  X, Play, Pause, SkipForward, Check,
+  Sunrise, Umbrella, Waves, Sun, Wind, Feather, Sparkles, ChevronRight,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface VisualizationExerciseProps {
   onClose: () => void;
@@ -23,179 +12,368 @@ interface VisualizationExerciseProps {
 const scenes = [
   {
     title: 'Preparation',
-    instruction: 'Close your eyes. Take three deep breaths. Let your body relax completely.',
+    label: 'Settle',
     icon: Sunrise,
-    background: 'from-sky-light to-background',
+    hint: 'Close your eyes. Take three deep breaths. Let your body relax completely.',
+    accent: '#a78bfa',
+    bg: '#3b0764',
+    rootBg: '#1a0a2e',
     duration: 15,
   },
   {
-    title: 'A Peaceful Beach',
-    instruction: 'Imagine yourself on a warm, sandy beach. Feel the soft sand beneath your feet.',
+    title: 'A peaceful beach',
+    label: 'Beach',
     icon: Umbrella,
-    background: 'from-honey-light to-background',
+    hint: 'Imagine yourself on a warm, sandy beach. Feel the soft sand beneath your feet.',
+    accent: '#fbbf24',
+    bg: '#78350f',
+    rootBg: '#1c1500',
     duration: 20,
   },
   {
-    title: 'The Gentle Waves',
-    instruction: 'Watch the crystal-clear waves rolling in and out. Hear their soothing rhythm.',
+    title: 'Gentle waves',
+    label: 'Waves',
     icon: Waves,
-    background: 'from-sky-light to-background',
+    hint: 'Watch crystal-clear waves rolling in and out. Hear their soothing rhythm.',
+    accent: '#38bdf8',
+    bg: '#075985',
+    rootBg: '#061629',
     duration: 20,
   },
   {
-    title: 'Warm Sunlight',
-    instruction: 'Feel the warm sun on your skin. It fills you with golden, healing energy.',
+    title: 'Warm sunlight',
+    label: 'Sun',
     icon: Sun,
-    background: 'from-honey-light to-background',
+    hint: 'Feel warm sun on your skin. It fills you with golden, healing energy.',
+    accent: '#fb923c',
+    bg: '#7c2d12',
+    rootBg: '#1e0c05',
     duration: 20,
   },
   {
-    title: 'A Gentle Breeze',
-    instruction: 'A soft, cool breeze brushes your face. It carries away all your worries.',
+    title: 'A gentle breeze',
+    label: 'Breeze',
     icon: Wind,
-    background: 'from-sage-light to-background',
+    hint: 'A soft, cool breeze brushes your face. It carries away all your worries.',
+    accent: '#6ee7b7',
+    bg: '#064e3b',
+    rootBg: '#031a13',
     duration: 20,
   },
   {
-    title: 'Peace Within',
-    instruction: 'Feel a deep sense of peace washing over you. You are safe. You are calm.',
+    title: 'Peace within',
+    label: 'Peace',
     icon: Feather,
-    background: 'from-lavender-light to-background',
+    hint: 'Feel a deep sense of peace washing over you. You are safe. You are calm.',
+    accent: '#c4b5fd',
+    bg: '#4c1d95',
+    rootBg: '#160b30',
     duration: 20,
   },
   {
-    title: 'Carrying Peace',
-    instruction: 'Slowly bring your awareness back. This peace stays with you always.',
+    title: 'Carrying peace',
+    label: 'Return',
     icon: Sparkles,
-    background: 'from-primary-light to-background',
+    hint: 'Slowly bring awareness back. This peace stays with you always.',
+    accent: '#f9a8d4',
+    bg: '#881337',
+    rootBg: '#1f0515',
     duration: 15,
   },
 ];
 
+const FLOATER_COUNT = 18;
+const floaters = Array.from({ length: FLOATER_COUNT }, (_, i) => ({
+  id: i,
+  size: 40 + Math.random() * 120,
+  x: Math.random() * 100,
+  y: Math.random() * 100,
+  dur: 5 + Math.random() * 8,
+  delay: Math.random() * 4,
+  tx: (Math.random() - 0.5) * 60,
+  ty: (Math.random() - 0.5) * 40,
+  colorIdx: i % 2,
+}));
+
 export const VisualizationExercise = ({ onClose }: VisualizationExerciseProps) => {
-  const [currentScene, setCurrentScene] = useState(0);
+  const [sceneIdx, setSceneIdx] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    if (isPaused || isComplete) return;
+  const scene = scenes[sceneIdx];
+  const Icon = scene.icon;
 
-    const duration = scenes[currentScene].duration;
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          if (currentScene < scenes.length - 1) {
-            setCurrentScene((s) => s + 1);
-            return 0;
-          } else {
-            setIsComplete(true);
-            return 100;
-          }
-        }
-        return prev + (100 / (duration * 10));
-      });
-    }, 100);
-
-    return () => clearInterval(interval);
-  }, [currentScene, isPaused, isComplete]);
-
-  const handleSkip = () => {
-    if (currentScene < scenes.length - 1) {
-      setCurrentScene((s) => s + 1);
+  const goNext = () => {
+    clearInterval(timerRef.current!);
+    if (sceneIdx < scenes.length - 1) {
+      setSceneIdx((s) => s + 1);
       setProgress(0);
     } else {
       setIsComplete(true);
     }
   };
 
-  const scene = scenes[currentScene];
-  const Icon = scene.icon;
+  useEffect(() => {
+    if (isPaused || isComplete) return;
+    timerRef.current = setInterval(() => {
+      setProgress((prev) => {
+        const next = prev + 100 / (scenes[sceneIdx].duration * 10);
+        if (next >= 100) {
+          clearInterval(timerRef.current!);
+          setTimeout(goNext, 300);
+          return 100;
+        }
+        return next;
+      });
+    }, 100);
+    return () => clearInterval(timerRef.current!);
+  }, [sceneIdx, isPaused, isComplete]);
+
+  const handleRestart = () => {
+    setSceneIdx(0);
+    setProgress(0);
+    setIsPaused(false);
+    setIsComplete(false);
+  };
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className={`fixed inset-0 z-50 bg-gradient-to-b ${scene.background} flex flex-col transition-all duration-1000`}
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 40 }}
+      transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+      className="fixed inset-0 z-50 flex flex-col overflow-hidden"
+      style={{ background: scene.rootBg, transition: 'background 1.2s ease' }}
     >
-      {/* Header */}
-      <div className="flex justify-between items-center p-5">
-        <span className="text-foreground/80 font-medium">Peaceful Visualization</span>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-6 w-6" />
-        </Button>
+      {/* Ambient floaters */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {floaters.map((f) => (
+          <motion.div
+            key={f.id}
+            className="absolute rounded-full"
+            style={{
+              width: f.size,
+              height: f.size,
+              background: f.colorIdx === 0 ? scene.accent : '#ffffff',
+              left: `${f.x}%`,
+              top: `${f.y}%`,
+              opacity: 0.18,
+            }}
+            animate={{
+              x: [0, f.tx, 0],
+              y: [0, f.ty, 0],
+              scale: [1, 1.15, 1],
+            }}
+            transition={{ duration: f.dur, repeat: Infinity, delay: f.delay, ease: 'easeInOut' }}
+          />
+        ))}
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-8">
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-5 pt-12 pb-3.5 relative z-10">
+        <div className="flex items-center gap-2.5">
+          <motion.div
+            animate={{ background: scene.bg + '55' }}
+            transition={{ duration: 0.6 }}
+            className="w-9 h-9 rounded-xl flex items-center justify-center"
+          >
+            <Icon className="h-4 w-4" style={{ color: scene.accent, transition: 'color 0.6s' }} />
+          </motion.div>
+          <div>
+            <motion.p
+              animate={{ color: scene.accent }}
+              transition={{ duration: 0.6 }}
+              className="text-[10px] font-bold uppercase tracking-widest"
+            >
+              Visualisation
+            </motion.p>
+            <p className="text-[13px] font-bold text-white leading-tight">Peaceful Journey</p>
+          </div>
+        </div>
+        <motion.button
+          whileTap={{ scale: 0.92 }}
+          onClick={onClose}
+          className="w-9 h-9 rounded-full flex items-center justify-center"
+          style={{ background: 'rgba(255,255,255,0.08)' }}
+          aria-label="Close"
+        >
+          <X className="h-4 w-4 text-white/70" />
+        </motion.button>
+      </div>
+
+      {/* Segmented progress bar */}
+      <div className="flex gap-1 px-5 relative z-10">
+        {scenes.map((s, i) => (
+          <div key={i} className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+            <motion.div
+              className="h-full rounded-full"
+              style={{ background: s.accent }}
+              animate={{
+                width: i < sceneIdx ? '100%' : i === sceneIdx ? `${progress}%` : '0%',
+              }}
+              transition={{ duration: 0.12, ease: 'linear' }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Scene dot indicators */}
+      <div className="flex justify-center gap-2 px-5 mt-4 relative z-10">
+        {scenes.map((s, i) => {
+          const SIcon = s.icon;
+          const isDone = i < sceneIdx;
+          const isActive = i === sceneIdx && !isComplete;
+          return (
+            <motion.div
+              key={i}
+              animate={{
+                scale: isActive ? 1.1 : 1,
+                background: isDone ? s.bg + '99' : isActive ? s.bg : 'rgba(255,255,255,0.05)',
+              }}
+              transition={{ duration: 0.3 }}
+              className="w-10 h-10 rounded-[12px] flex flex-col items-center justify-center gap-0.5"
+            >
+              {isDone ? (
+                <Check className="h-3.5 w-3.5 text-white" />
+              ) : (
+                <>
+                  <SIcon className="h-3.5 w-3.5" style={{ color: isActive ? 'white' : 'rgba(255,255,255,0.25)' }} />
+                  <span
+                    className="text-[7px] font-bold uppercase tracking-wide leading-none"
+                    style={{ color: isActive ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.2)' }}
+                  >
+                    {s.label}
+                  </span>
+                </>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
         <AnimatePresence mode="wait">
           {!isComplete ? (
             <motion.div
-              key={currentScene}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.1 }}
-              transition={{ duration: 0.8 }}
-              className="text-center"
+              key={sceneIdx}
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -40 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="flex flex-col items-center w-full max-w-sm"
             >
-              {/* Visual */}
-              <motion.div
-                animate={{
-                  y: [0, -10, 0],
-                  rotate: [0, 2, -2, 0],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                }}
-                className="mb-8 flex justify-center"
-              >
-                <Icon className="h-20 w-20 text-foreground/70" />
-              </motion.div>
+              {/* Orb */}
+              <div className="relative flex items-center justify-center mb-7" style={{ width: 200, height: 200 }}>
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1], background: scene.accent + '1c' }}
+                  transition={{ scale: { duration: 3.5, repeat: Infinity, ease: 'easeInOut' }, background: { duration: 0.7 } }}
+                  className="absolute rounded-full"
+                  style={{ width: 185, height: 185 }}
+                />
+                <motion.div
+                  animate={{ borderColor: scene.accent + '2e' }}
+                  transition={{ duration: 0.7 }}
+                  className="absolute rounded-full border"
+                  style={{ width: 142, height: 142 }}
+                />
+                <motion.div
+                  animate={{ background: scene.bg, y: [0, -8, 0], rotate: [0, 2, -2, 0] }}
+                  transition={{
+                    background: { duration: 0.7 },
+                    y: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
+                    rotate: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
+                  }}
+                  className="w-24 h-24 rounded-[28px] flex items-center justify-center"
+                >
+                  <Icon className="h-10 w-10 text-white" />
+                </motion.div>
+              </div>
 
-              <h2 className="text-2xl font-bold text-foreground mb-4">{scene.title}</h2>
-              <p className="text-lg text-muted-foreground mb-8 max-w-sm mx-auto leading-relaxed">
-                {scene.instruction}
+              <motion.span
+                animate={{ color: scene.accent }}
+                transition={{ duration: 0.6 }}
+                className="text-[10px] font-bold uppercase tracking-widest mb-1.5"
+              >
+                {scene.label}
+              </motion.span>
+
+              <h3
+                className="text-[22px] font-bold text-center text-white mb-2.5"
+                style={{ letterSpacing: '-0.02em', lineHeight: 1.25 }}
+              >
+                {scene.title}
+              </h3>
+              <p
+                className="text-[13px] text-center leading-relaxed mb-8"
+                style={{ color: 'rgba(255,255,255,0.5)', maxWidth: 276, fontStyle: 'italic' }}
+              >
+                {scene.hint}
               </p>
 
-              {/* Scene indicators */}
-              <div className="flex justify-center gap-2 mb-4">
-                {scenes.map((_, idx) => (
-                  <div
-                    key={idx}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      idx === currentScene ? 'bg-primary w-6' : idx < currentScene ? 'bg-primary/60' : 'bg-muted'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              {/* Progress bar */}
-              <div className="w-64 h-2 bg-muted/50 rounded-full overflow-hidden mx-auto">
-                <motion.div
-                  className="h-full bg-primary/80"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={goNext}
+                className="flex items-center justify-center gap-2 w-full py-4 rounded-[18px] font-bold text-[15px] text-white border-none"
+                style={{
+                  background: scene.bg,
+                  boxShadow: `0 8px 28px ${scene.accent}22`,
+                  transition: 'background 0.6s, box-shadow 0.6s',
+                }}
+              >
+                Continue
+                <ChevronRight className="h-5 w-5" />
+              </motion.button>
             </motion.div>
           ) : (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              key="complete"
+              initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-center"
+              className="flex flex-col items-center text-center px-4"
             >
-              <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6">
-                <Check className="w-12 h-12 text-primary" />
-              </div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">Journey Complete</h2>
-              <p className="text-muted-foreground mb-6">
+              <motion.div
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                className="w-[92px] h-[92px] rounded-[28px] flex items-center justify-center mb-6"
+                style={{ background: scenes[scenes.length - 1].bg + '88' }}
+              >
+                <Sparkles className="h-11 w-11" style={{ color: scenes[scenes.length - 1].accent }} />
+              </motion.div>
+
+              <h2 className="text-[26px] font-bold text-white mb-2" style={{ letterSpacing: '-0.02em' }}>
+                Journey complete
+              </h2>
+              <p className="text-[13px] leading-relaxed mb-1.5 max-w-[262px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
                 You've returned from your peaceful place, refreshed and calm.
               </p>
-              <Button onClick={onClose}>
-                Finish
-              </Button>
+              <p
+                className="text-[10px] font-bold uppercase tracking-widest mb-9"
+                style={{ color: scenes[scenes.length - 1].accent }}
+              >
+                This peace stays with you always
+              </p>
+
+              <div className="flex gap-3 w-full">
+                <motion.button
+                  whileTap={{ scale: 0.94 }}
+                  onClick={handleRestart}
+                  className="flex-1 py-4 rounded-[18px] font-bold text-[15px] border-none"
+                  style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.75)' }}
+                >
+                  Again
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={onClose}
+                  className="flex-1 py-4 rounded-[18px] font-bold text-[15px] text-white border-none"
+                  style={{ background: scenes[scenes.length - 1].bg }}
+                >
+                  Done
+                </motion.button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -203,23 +381,25 @@ export const VisualizationExercise = ({ onClose }: VisualizationExerciseProps) =
 
       {/* Controls */}
       {!isComplete && (
-        <div className="flex justify-center gap-4 p-8">
-          <Button
-            variant="outline"
-            size="icon"
-            className="w-14 h-14 rounded-full bg-white/50"
-            onClick={() => setIsPaused(!isPaused)}
+        <div className="flex justify-center gap-3.5 px-6 pb-8 relative z-10">
+          <motion.button
+            whileTap={{ scale: 0.93 }}
+            onClick={() => setIsPaused((p) => !p)}
+            className="w-[54px] h-[54px] rounded-full flex items-center justify-center"
+            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+            aria-label={isPaused ? 'Resume' : 'Pause'}
           >
-            {isPaused ? <Play className="h-6 w-6" /> : <Pause className="h-6 w-6" />}
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="w-14 h-14 rounded-full bg-white/50"
-            onClick={handleSkip}
+            {isPaused ? <Play className="h-5 w-5 text-white/70" /> : <Pause className="h-5 w-5 text-white/70" />}
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.93 }}
+            onClick={goNext}
+            className="w-[54px] h-[54px] rounded-full flex items-center justify-center"
+            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
+            aria-label="Skip"
           >
-            <SkipForward className="h-6 w-6" />
-          </Button>
+            <SkipForward className="h-5 w-5 text-white/70" />
+          </motion.button>
         </div>
       )}
     </motion.div>
