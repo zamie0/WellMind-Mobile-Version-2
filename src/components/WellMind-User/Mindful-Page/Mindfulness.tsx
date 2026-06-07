@@ -153,7 +153,7 @@ export const Mindfulness = () => {
           {/* Badge */}
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#39a89b' }}>
-              <Leaf className="h-4 w-4 text-white" />
+              <Wind className="h-4 w-4 text-white" />
             </div>
             <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#39a89b' }}>
               Mindfulness

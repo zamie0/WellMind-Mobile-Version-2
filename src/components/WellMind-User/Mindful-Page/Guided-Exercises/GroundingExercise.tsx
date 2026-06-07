@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { X, Eye, Hand, Ear, Wind, Heart, ChevronRight, Check } from 'lucide-react';
+import { X, Eye, Hand, Ear, Wind, Smile, ChevronRight, Sun, Check } from 'lucide-react';
 
 interface GroundingExerciseProps {
   onClose: () => void;
@@ -10,48 +9,48 @@ interface GroundingExerciseProps {
 const steps = [
   {
     count: 5,
-    sense: 'SEE',
+    sense: 'See',
     icon: Eye,
-    instruction: 'Name 5 things you can SEE',
-    color: 'text-sky',
-    bgColor: 'bg-sky-light',
-    examples: 'Look around and notice colors, shapes, or objects',
+    instruction: 'Name 5 things you can see',
+    hint: 'Look around — colors, shapes, objects near and far.',
+    accent: '#39a89b',
+    bg: '#e8f5f3',
   },
   {
     count: 4,
-    sense: 'TOUCH',
+    sense: 'Touch',
     icon: Hand,
-    instruction: 'Name 4 things you can TOUCH',
-    color: 'text-sage',
-    bgColor: 'bg-sage-light',
-    examples: 'Feel textures around you - your clothes, chair, or skin',
+    instruction: 'Name 4 things you can touch',
+    hint: 'Feel textures — your clothes, chair, skin, or the air.',
+    accent: '#6bab9e',
+    bg: '#edf7f5',
   },
   {
     count: 3,
-    sense: 'HEAR',
+    sense: 'Hear',
     icon: Ear,
-    instruction: 'Name 3 things you can HEAR',
-    color: 'text-honey',
-    bgColor: 'bg-honey-light',
-    examples: 'Listen for sounds nearby or in the distance',
+    instruction: 'Name 3 things you can hear',
+    hint: 'Listen for nearby sounds, distant sounds, or silence.',
+    accent: '#f59e0b',
+    bg: '#fef9ec',
   },
   {
     count: 2,
-    sense: 'SMELL',
+    sense: 'Smell',
     icon: Wind,
-    instruction: 'Name 2 things you can SMELL',
-    color: 'text-coral',
-    bgColor: 'bg-coral-light',
-    examples: 'Notice any scents in your environment',
+    instruction: 'Name 2 things you can smell',
+    hint: 'Notice any scents in the air or on your skin.',
+    accent: '#e8735a',
+    bg: '#fdf0ec',
   },
   {
     count: 1,
-    sense: 'TASTE',
-    icon: Heart,
-    instruction: 'Name 1 thing you can TASTE',
-    color: 'text-lavender',
-    bgColor: 'bg-lavender-light',
-    examples: 'Notice any taste in your mouth right now',
+    sense: 'Taste',
+    icon: Smile,
+    instruction: 'Name 1 thing you can taste',
+    hint: 'Notice any flavour in your mouth right now.',
+    accent: '#8fa3b1',
+    bg: '#f0f4f7',
   },
 ];
 
@@ -61,15 +60,11 @@ export const GroundingExercise = ({ onClose }: GroundingExerciseProps) => {
   const [isFinished, setIsFinished] = useState(false);
 
   const handleNext = () => {
-    const newCompleted = [...completed];
-    newCompleted[currentStep] = true;
-    setCompleted(newCompleted);
-
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      setIsFinished(true);
-    }
+    const next = [...completed];
+    next[currentStep] = true;
+    setCompleted(next);
+    if (currentStep < steps.length - 1) setCurrentStep(currentStep + 1);
+    else setIsFinished(true);
   };
 
   const step = steps[currentStep];
@@ -77,119 +72,208 @@ export const GroundingExercise = ({ onClose }: GroundingExerciseProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-background flex flex-col"
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 40 }}
+      transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+      className="fixed inset-0 z-50 flex flex-col"
+      style={{
+        background: isFinished
+          ? 'linear-gradient(180deg, #e8f5f3 0%, #f4faf9 60%, #ffffff 100%)'
+          : `linear-gradient(180deg, ${step.bg} 0%, #fafafa 60%, #ffffff 100%)`,
+        transition: 'background 0.6s ease',
+      }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between p-4">
-        <h2 className="text-lg font-semibold text-foreground">5-4-3-2-1 Grounding</h2>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-5 w-5" />
-        </Button>
-      </div>
-
-      {/* Progress Indicators */}
-      <div className="flex justify-center gap-2 px-4 mb-6">
-        {steps.map((s, index) => (
+      {/* ── Top bar ── */}
+      <div className="flex items-center justify-between px-5 pt-12 pb-4">
+        <div className="flex items-center gap-2.5">
           <motion.div
-            key={index}
-            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-              index === currentStep
-                ? `${s.bgColor} ${s.color} ring-2 ring-offset-2 ring-primary`
-                : completed[index]
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground'
-            }`}
-            animate={{ scale: index === currentStep ? 1.1 : 1 }}
+            animate={{ background: step.accent }}
+            transition={{ duration: 0.4 }}
+            className="w-9 h-9 rounded-xl flex items-center justify-center"
           >
-            {completed[index] ? <Check className="h-4 w-4" /> : s.count}
+            <Sun className="h-4 w-4 text-white" />
           </motion.div>
-        ))}
+          <div>
+            <p
+              className="text-xs font-semibold uppercase tracking-widest"
+              style={{ color: step.accent, transition: 'color 0.4s' }}
+            >
+              Grounding
+            </p>
+            <p className="text-[13px] font-bold leading-tight" style={{ color: '#1a2b38' }}>
+              5 · 4 · 3 · 2 · 1 Technique
+            </p>
+          </div>
+        </div>
+        <motion.button
+          whileTap={{ scale: 0.92 }}
+          onClick={onClose}
+          className="w-9 h-9 rounded-full flex items-center justify-center"
+          style={{ background: 'rgba(26,43,56,0.07)' }}
+          aria-label="Close"
+        >
+          <X className="h-4 w-4" style={{ color: '#1a2b38' }} />
+        </motion.button>
       </div>
 
-      {/* Main Content */}
+      {/* ── Step indicator row ── */}
+      <div className="flex justify-center gap-3 px-5 mb-8">
+        {steps.map((s, i) => {
+          const SIcon = s.icon;
+          const isDone = completed[i];
+          const isActive = i === currentStep && !isFinished;
+          return (
+            <motion.div
+              key={i}
+              animate={{
+                scale: isActive ? 1.08 : 1,
+                background: isDone ? s.accent : isActive ? s.accent : 'rgba(26,43,56,0.06)',
+              }}
+              transition={{ duration: 0.3 }}
+              className="w-12 h-12 rounded-2xl flex flex-col items-center justify-center gap-0.5"
+            >
+              {isDone ? (
+                <Check className="h-5 w-5 text-white" />
+              ) : (
+                <>
+                  <SIcon
+                    className="h-4 w-4"
+                    style={{ color: isActive ? 'white' : '#8fa3b1' }}
+                  />
+                  <span
+                    className="text-[10px] font-bold leading-none"
+                    style={{ color: isActive ? 'white' : '#8fa3b1' }}
+                  >
+                    {s.count}
+                  </span>
+                </>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* ── Main ── */}
       <div className="flex-1 flex flex-col items-center justify-center px-6">
         <AnimatePresence mode="wait">
           {!isFinished ? (
             <motion.div
               key={currentStep}
-              initial={{ opacity: 0, x: 50 }}
+              initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              className="text-center w-full max-w-sm"
+              exit={{ opacity: 0, x: -40 }}
+              transition={{ duration: 0.3 }}
+              className="flex flex-col items-center w-full max-w-sm"
             >
-              {/* Icon */}
-              <motion.div
-                className={`w-24 h-24 ${step.bgColor} rounded-full mx-auto mb-6 flex items-center justify-center`}
-                animate={{ 
-                  scale: [1, 1.05, 1],
-                }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                <Icon className={`h-12 w-12 ${step.color}`} />
-              </motion.div>
+              {/* Large icon orb */}
+              <div className="relative flex items-center justify-center mb-8" style={{ width: 180, height: 180 }}>
+                <motion.div
+                  animate={{
+                    scale: [1, 1.06, 1],
+                    background: `radial-gradient(circle, ${step.accent}28 0%, transparent 70%)`,
+                  }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                  className="absolute rounded-full"
+                  style={{ width: 170, height: 170 }}
+                />
+                <motion.div
+                  animate={{ background: `${step.accent}18`, borderColor: `${step.accent}40` }}
+                  transition={{ duration: 0.4 }}
+                  className="absolute rounded-full border"
+                  style={{ width: 130, height: 130 }}
+                />
+                <motion.div
+                  animate={{ background: step.accent }}
+                  transition={{ duration: 0.4 }}
+                  className="w-24 h-24 rounded-3xl flex flex-col items-center justify-center gap-1"
+                >
+                  <Icon className="h-9 w-9 text-white" />
+                  <motion.span
+                    key={currentStep}
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', bounce: 0.5, delay: 0.1 }}
+                    className="text-2xl font-bold text-white leading-none"
+                  >
+                    {step.count}
+                  </motion.span>
+                </motion.div>
+              </div>
 
-              {/* Count */}
-              <motion.div
-                className={`text-6xl font-bold ${step.color} mb-4`}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", bounce: 0.5 }}
+              {/* Sense label */}
+              <motion.span
+                animate={{ color: step.accent }}
+                className="text-xs font-bold uppercase tracking-widest mb-2"
               >
-                {step.count}
-              </motion.div>
+                {step.sense}
+              </motion.span>
 
-              {/* Instruction */}
-              <h3 className="text-xl font-semibold text-foreground mb-2">
+              <h3 className="text-xl font-bold text-center mb-3" style={{ color: '#1a2b38', letterSpacing: '-0.02em' }}>
                 {step.instruction}
               </h3>
-
-              {/* Examples */}
-              <p className="text-muted-foreground text-sm mb-8">
-                {step.examples}
+              <p className="text-sm text-center leading-relaxed mb-10" style={{ color: '#5f7585' }}>
+                {step.hint}
               </p>
 
-              {/* Next Button */}
-              <Button
-                size="lg"
-                className="w-full"
+              {/* CTA */}
+              <motion.button
+                whileTap={{ scale: 0.96 }}
                 onClick={handleNext}
+                className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold text-[15px] text-white"
+                style={{
+                  background: `linear-gradient(135deg, ${step.accent}, ${step.accent}cc)`,
+                  boxShadow: `0 6px 24px ${step.accent}44`,
+                }}
               >
-                I've done this
-                <ChevronRight className="h-5 w-5 ml-2" />
-              </Button>
+                Done — Next
+                <ChevronRight className="h-5 w-5" />
+              </motion.button>
             </motion.div>
           ) : (
+            /* ── Complete ── */
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              key="complete"
+              initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-center"
+              className="flex flex-col items-center text-center px-4"
             >
               <motion.div
-                className="w-24 h-24 bg-primary/20 rounded-full mx-auto mb-6 flex items-center justify-center"
                 animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 1, repeat: 2 }}
+                transition={{ duration: 0.8, repeat: 2 }}
+                className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6"
+                style={{ background: 'rgba(57,168,155,0.15)' }}
               >
-                <Check className="h-12 w-12 text-primary" />
+                <Check className="h-9 w-9" style={{ color: '#39a89b' }} />
               </motion.div>
-
-              <h3 className="text-2xl font-bold text-foreground mb-2">
-                Well done!
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                You've grounded yourself in the present moment.
-                Take a deep breath and notice how you feel.
+              <h2 className="text-2xl font-bold mb-2" style={{ color: '#1a2b38', letterSpacing: '-0.02em' }}>
+                You're grounded
+              </h2>
+              <p className="text-sm leading-relaxed mb-1" style={{ color: '#5f7585' }}>
+                You've anchored yourself in the present moment.
+              </p>
+              <p className="text-xs font-semibold uppercase tracking-widest mb-10" style={{ color: '#39a89b' }}>
+                Take a slow breath and notice how you feel
               </p>
 
-              <Button size="lg" onClick={onClose}>
-                Finish
-              </Button>
+              <div className="flex items-center gap-3 w-full">
+                <motion.button
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => { setCurrentStep(0); setCompleted(new Array(5).fill(false)); setIsFinished(false); }}
+                  className="flex-1 py-4 rounded-2xl font-bold text-[15px]"
+                  style={{ background: 'rgba(26,43,56,0.06)', color: '#1a2b38' }}
+                >
+                  Again
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={onClose}
+                  className="flex-1 py-4 rounded-2xl font-bold text-[15px] text-white"
+                  style={{ background: 'linear-gradient(135deg, #39a89b, rgba(57,168,155,0.8))', boxShadow: '0 6px 24px rgba(57,168,155,0.4)' }}
+                >
+                  Done
+                </motion.button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

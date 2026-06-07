@@ -88,7 +88,7 @@ export const HealthMetricsCalendar = ({ history, loading }: HealthMetricsCalenda
 
       {loading ? <p className="text-sm text-muted-foreground mb-3">Loading calendar…</p> : null}
 
-      <div className="flex justify-center rounded-xl bg-background p-2">
+      <div className="flex justify-center rounded-2xl border border-border/50 bg-background/80 p-4 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <Calendar
           mode="single"
           selected={selected}
@@ -98,8 +98,7 @@ export const HealthMetricsCalendar = ({ history, loading }: HealthMetricsCalenda
           disabled={(date) => date > today || date < oldest}
           modifiers={{ hasData: datesWithData }}
           modifiersClassNames={{
-            hasData:
-              'relative font-semibold after:absolute after:bottom-0.5 after:left-1/2 after:h-1 after:w-1 after:-translate-x-1/2 after:rounded-full after:bg-primary',
+            hasData: 'has-data-day',
           }}
           className="pointer-events-auto"
         />

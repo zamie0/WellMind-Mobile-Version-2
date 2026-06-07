@@ -8,7 +8,7 @@ import { filterMoodEntriesByPeriod, computeMoodStressIndex } from './insights/pe
 import SmartwatchInsights, { type SmartwatchHealthController } from './Smartwatch/SmartwatchInsights';
 import { useSmartwatchHealth } from './Smartwatch/useSmartwatchHealth';
 import type { Emotion } from '@/types/wellmind';
-import { Activity, Brain, Target, TrendingUp, Sparkles, Watch } from 'lucide-react';
+import { Activity, Brain, Target, TrendingUp, BarChart2, Watch } from 'lucide-react';
 
 /* ── Emotion labels ─────────────────────────────────────────────── */
 const emotionLabels: Record<Emotion, string> = {
@@ -146,7 +146,7 @@ export const Insights = () => {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#39a89b' }}>
-              <Sparkles className="h-4 w-4 text-white" />
+              <BarChart2 className="h-4 w-4 text-white" />
             </div>
             <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#39a89b' }}>
               Insights
@@ -213,10 +213,7 @@ export const Insights = () => {
             className="rounded-3xl overflow-hidden"
             style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
           >
-            <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #39a89b, #6bab9e)' }} />
-            <div className="p-4">
-              <MoodChart />
-            </div>
+            <MoodChart />
           </div>
         </motion.div>
 
