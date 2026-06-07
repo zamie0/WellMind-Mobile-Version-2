@@ -1,13 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle, X, Phone, Heart, Wind, Eye, Volume2, VolumeX } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { AlertCircle, X, Phone, Heart, Wind, Eye, Volume2, VolumeX, ChevronRight } from 'lucide-react';
 
-type PanicPhase = 'idle' | 'breathing' | 'grounding' | 'affirmation' | 'complete';
+type PanicPhase = 'idle' | 'breathing' | 'grounding' | 'affirmation';
 
 const BREATHING_DURATION = 60;
 
-// Simple icon components for senses
 const Hand = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" />
@@ -34,11 +32,11 @@ const Tongue = ({ className }: { className?: string }) => (
 );
 
 const GROUNDING_STEPS = [
-  { sense: 'see', count: 5, icon: Eye, instruction: 'Name 5 things you can SEE' },
-  { sense: 'touch', count: 4, icon: Hand, instruction: 'Name 4 things you can TOUCH' },
-  { sense: 'hear', count: 3, icon: Ear, instruction: 'Name 3 things you can HEAR' },
-  { sense: 'smell', count: 2, icon: Nose, instruction: 'Name 2 things you can SMELL' },
-  { sense: 'taste', count: 1, icon: Tongue, instruction: 'Name 1 thing you can TASTE' },
+  { sense: 'see',   count: 5, icon: Eye,    instruction: 'Name 5 things you can', highlight: 'SEE',   color: 'from-sky/80 to-blue-400/80' },
+  { sense: 'touch', count: 4, icon: Hand,   instruction: 'Name 4 things you can', highlight: 'TOUCH', color: 'from-sage/80 to-green-400/80' },
+  { sense: 'hear',  count: 3, icon: Ear,    instruction: 'Name 3 things you can', highlight: 'HEAR',  color: 'from-lavender/80 to-purple-400/80' },
+  { sense: 'smell', count: 2, icon: Nose,   instruction: 'Name 2 things you can', highlight: 'SMELL', color: 'from-honey/80 to-yellow-400/80' },
+  { sense: 'taste', count: 1, icon: Tongue, instruction: 'Name 1 thing you can',  highlight: 'TASTE', color: 'from-coral/80 to-red-400/80' },
 ];
 
 const AFFIRMATIONS = [
@@ -64,47 +62,32 @@ export const PanicButton = ({ variant = 'fab' }: PanicButtonProps) => {
   const [affirmationIndex, setAffirmationIndex] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
-  // Breathing cycle
   useEffect(() => {
     if (phase !== 'breathing') return;
-    
-    const breathCycle = () => {
-      setBreathPhase(prev => {
-        if (prev === 'inhale') return 'hold';
-        if (prev === 'hold') return 'exhale';
-        return 'inhale';
-      });
-    };
-
-    const interval = setInterval(breathCycle, 4000);
+    const interval = setInterval(() => {
+      setBreathPhase(prev =>
+        prev === 'inhale' ? 'hold' : prev === 'hold' ? 'exhale' : 'inhale'
+      );
+    }, 4000);
     return () => clearInterval(interval);
   }, [phase]);
 
-  // Breath timer countdown
   useEffect(() => {
     if (phase !== 'breathing' || breathTimer <= 0) return;
-    
     const timer = setInterval(() => {
       setBreathTimer(prev => {
-        if (prev <= 1) {
-          setPhase('grounding');
-          return BREATHING_DURATION;
-        }
+        if (prev <= 1) { setPhase('grounding'); return BREATHING_DURATION; }
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(timer);
   }, [phase, breathTimer]);
 
-  // Affirmation rotation
   useEffect(() => {
     if (phase !== 'affirmation') return;
-    
     const interval = setInterval(() => {
       setAffirmationIndex(prev => (prev + 1) % AFFIRMATIONS.length);
     }, 5000);
-
     return () => clearInterval(interval);
   }, [phase]);
 
@@ -130,15 +113,22 @@ export const PanicButton = ({ variant = 'fab' }: PanicButtonProps) => {
     }
   }, [groundingStep]);
 
-  const skipToAffirmation = useCallback(() => {
-    setPhase('affirmation');
-  }, []);
-
   const breathScale = breathPhase === 'inhale' ? 1.3 : breathPhase === 'hold' ? 1.3 : 1;
+  const breathLabel =
+    breathPhase === 'inhale' ? 'Breathe In...' :
+    breathPhase === 'hold'   ? 'Hold...' :
+                               'Breathe Out...';
+  const breathHint =
+    breathPhase === 'inhale' ? '4 counts' :
+    breathPhase === 'hold'   ? 'hold steady' : '6 counts';
+
+  const phaseProgress =
+    phase === 'breathing'   ? 1 :
+    phase === 'grounding'   ? 2 : 3;
 
   return (
     <>
-      {/* Floating Action Button */}
+      {/* FAB */}
       {variant === 'fab' && (
         <motion.button
           whileHover={{ scale: 1.1 }}
@@ -150,20 +140,21 @@ export const PanicButton = ({ variant = 'fab' }: PanicButtonProps) => {
         </motion.button>
       )}
 
-      {/* Inline Button */}
+      {/* Inline */}
       {variant === 'inline' && (
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={startPanicMode}
-          className="w-full p-4 rounded-2xl bg-destructive/10 border border-destructive/30 flex items-center gap-3"
+          className="w-full bg-card rounded-2xl p-4 shadow-soft flex items-center gap-3 text-left hover:shadow-card transition-all"
         >
-          <div className="w-12 h-12 rounded-full bg-destructive flex items-center justify-center">
-            <AlertCircle className="w-6 h-6 text-destructive-foreground" />
+          <div className="w-12 h-12 rounded-2xl bg-destructive/10 flex items-center justify-center shrink-0">
+            <AlertCircle className="w-6 h-6 text-destructive" />
           </div>
-          <div className="text-left">
-            <p className="font-semibold text-destructive">Panic Support</p>
-            <p className="text-sm text-muted-foreground">Tap for instant calm</p>
+          <div className="flex-1">
+            <p className="font-semibold text-foreground text-sm">Panic Support</p>
+            <p className="text-xs text-muted-foreground">Tap for instant calm</p>
           </div>
+          <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
         </motion.button>
       )}
 
@@ -174,31 +165,56 @@ export const PanicButton = ({ variant = 'fab' }: PanicButtonProps) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-gradient-to-b from-sky/95 to-primary/95 flex flex-col"
+            className="fixed inset-0 z-50 flex flex-col"
+            style={{ background: 'linear-gradient(160deg, #4a9b8e 0%, #3b7dbf 50%, #6b5ea8 100%)' }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSoundEnabled(!soundEnabled)}
-                className="text-white/80 hover:text-white hover:bg-white/10"
-              >
-                {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={closePanicMode}
-                className="text-white/80 hover:text-white hover:bg-white/10"
-              >
-                <X className="w-5 h-5" />
-              </Button>
+            <div
+              className="flex items-center justify-between px-5 pb-3"
+              style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}
+            >
+              {/* Progress steps */}
+              <div className="flex items-center gap-2">
+                {['Breathe', 'Ground', 'Affirm'].map((label, i) => (
+                  <div key={label} className="flex items-center gap-1.5">
+                    <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                      i + 1 === phaseProgress
+                        ? 'bg-white text-primary'
+                        : i + 1 < phaseProgress
+                        ? 'bg-white/30 text-white'
+                        : 'bg-white/10 text-white/40'
+                    }`}>
+                      <span>{i + 1}</span>
+                      <span>{label}</span>
+                    </div>
+                    {i < 2 && (
+                      <div className={`w-3 h-px ${i + 1 < phaseProgress ? 'bg-white/50' : 'bg-white/20'}`} />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Controls */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setSoundEnabled(!soundEnabled)}
+                  className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors"
+                >
+                  {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={closePanicMode}
+                  className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            {/* Content */}
+            {/* Main Content */}
             <div className="flex-1 flex flex-col items-center justify-center px-6">
               <AnimatePresence mode="wait">
+
                 {/* Breathing Phase */}
                 {phase === 'breathing' && (
                   <motion.div
@@ -206,43 +222,48 @@ export const PanicButton = ({ variant = 'fab' }: PanicButtonProps) => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
-                    className="flex flex-col items-center text-center"
+                    className="flex flex-col items-center text-center w-full"
                   >
-                    <p className="text-white/80 text-lg mb-8">
-                      {breathTimer} seconds remaining
-                    </p>
-                    
-                    <motion.div
-                      animate={{ scale: breathScale }}
-                      transition={{ duration: 4, ease: "easeInOut" }}
-                      className="w-48 h-48 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-8"
-                    >
+                    <p className="text-white/60 text-xs mb-1 uppercase tracking-widest">Breathing Exercise</p>
+                    <p className="text-white/80 text-sm mb-10">{breathTimer}s remaining</p>
+
+                    {/* Orb */}
+                    <div className="relative flex items-center justify-center mb-10">
                       <motion.div
-                        animate={{ scale: breathScale * 0.8 }}
-                        transition={{ duration: 4, ease: "easeInOut" }}
-                        className="w-32 h-32 rounded-full bg-white/30 flex items-center justify-center"
+                        animate={{ scale: breathScale * 1.15, opacity: breathPhase === 'exhale' ? 0.2 : 0.4 }}
+                        transition={{ duration: 4, ease: 'easeInOut' }}
+                        className="absolute w-56 h-56 rounded-full bg-white/10"
+                      />
+                      <motion.div
+                        animate={{ scale: breathScale }}
+                        transition={{ duration: 4, ease: 'easeInOut' }}
+                        className="absolute w-44 h-44 rounded-full bg-white/15 backdrop-blur-sm"
+                      />
+                      <motion.div
+                        animate={{ scale: breathScale * 0.75 }}
+                        transition={{ duration: 4, ease: 'easeInOut' }}
+                        className="w-32 h-32 rounded-full bg-white/25 backdrop-blur flex items-center justify-center shadow-lg"
                       >
-                        <Wind className="w-12 h-12 text-white" />
+                        <Wind className="w-10 h-10 text-white" />
                       </motion.div>
-                    </motion.div>
+                    </div>
 
                     <motion.p
                       key={breathPhase}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-3xl font-medium text-white capitalize"
+                      className="text-3xl font-semibold text-white mb-1"
                     >
-                      {breathPhase === 'inhale' ? 'Breathe In...' : 
-                       breathPhase === 'hold' ? 'Hold...' : 'Breathe Out...'}
+                      {breathLabel}
                     </motion.p>
+                    <p className="text-white/50 text-sm mb-10">{breathHint}</p>
 
-                    <Button
-                      variant="ghost"
-                      onClick={skipToAffirmation}
-                      className="mt-8 text-white/60 hover:text-white hover:bg-white/10"
+                    <button
+                      onClick={() => setPhase('affirmation')}
+                      className="text-white/50 text-sm hover:text-white/80 transition-colors underline underline-offset-4"
                     >
                       Skip to affirmations
-                    </Button>
+                    </button>
                   </motion.div>
                 )}
 
@@ -253,35 +274,48 @@ export const PanicButton = ({ variant = 'fab' }: PanicButtonProps) => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
-                    className="flex flex-col items-center text-center"
+                    className="flex flex-col items-center text-center w-full"
                   >
-                    <p className="text-white/60 text-sm mb-4">5-4-3-2-1 Grounding</p>
-                    
+                    <p className="text-white/60 text-xs mb-1 uppercase tracking-widest">5-4-3-2-1 Grounding</p>
+
+                    {/* Step dots */}
+                    <div className="flex gap-2 mb-10">
+                      {GROUNDING_STEPS.map((_, i) => (
+                        <div
+                          key={i}
+                          className={`h-1.5 rounded-full transition-all duration-300 ${
+                            i === groundingStep ? 'w-6 bg-white' :
+                            i < groundingStep   ? 'w-3 bg-white/50' :
+                                                  'w-3 bg-white/20'
+                          }`}
+                        />
+                      ))}
+                    </div>
+
                     {(() => {
                       const step = GROUNDING_STEPS[groundingStep];
                       const Icon = step.icon;
                       return (
                         <motion.div
                           key={groundingStep}
-                          initial={{ opacity: 0, x: 20 }}
+                          initial={{ opacity: 0, x: 30 }}
                           animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -30 }}
                           className="flex flex-col items-center"
                         >
-                          <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center mb-6">
-                            <Icon className="w-10 h-10 text-white" />
+                          <div className={`w-24 h-24 rounded-full bg-gradient-to-br ${step.color} flex items-center justify-center mb-6 shadow-lg`}>
+                            <Icon className="w-12 h-12 text-white" />
                           </div>
-                          <p className="text-2xl font-medium text-white mb-2">
-                            {step.instruction}
-                          </p>
-                          <p className="text-white/60 mb-8">
-                            Take your time to notice them
-                          </p>
-                          <Button
+                          <p className="text-xl text-white/80 mb-1">{step.instruction}</p>
+                          <p className="text-4xl font-bold text-white mb-2">{step.highlight}</p>
+                          <p className="text-white/50 text-sm mb-10">Take your time to notice them</p>
+                          <button
                             onClick={nextGroundingStep}
-                            className="bg-white/20 text-white hover:bg-white/30 px-8"
+                            className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-medium px-8 py-3 rounded-full transition-colors"
                           >
-                            {groundingStep < GROUNDING_STEPS.length - 1 ? 'Next' : 'Continue'}
-                          </Button>
+                            {groundingStep < GROUNDING_STEPS.length - 1 ? 'Next sense' : 'Continue'}
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
                         </motion.div>
                       );
                     })()}
@@ -295,58 +329,81 @@ export const PanicButton = ({ variant = 'fab' }: PanicButtonProps) => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
-                    className="flex flex-col items-center text-center"
+                    className="flex flex-col items-center text-center w-full"
                   >
+                    <p className="text-white/60 text-xs mb-8 uppercase tracking-widest">You've got this</p>
+
                     <motion.div
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                      className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center mb-8"
+                      animate={{ scale: [1, 1.08, 1] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                      className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center mb-8 shadow-lg"
                     >
-                      <Heart className="w-10 h-10 text-white" />
+                      <Heart className="w-10 h-10 text-white fill-white/50" />
                     </motion.div>
+
+                    {/* Affirmation dots */}
+                    <div className="flex gap-1.5 mb-6">
+                      {AFFIRMATIONS.map((_, i) => (
+                        <div
+                          key={i}
+                          className={`h-1.5 rounded-full transition-all duration-500 ${
+                            i === affirmationIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/30'
+                          }`}
+                        />
+                      ))}
+                    </div>
 
                     <AnimatePresence mode="wait">
                       <motion.p
                         key={affirmationIndex}
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="text-2xl font-medium text-white max-w-xs mb-8"
+                        exit={{ opacity: 0, y: -16 }}
+                        className="text-2xl font-semibold text-white max-w-xs leading-snug mb-10"
                       >
                         {AFFIRMATIONS[affirmationIndex]}
                       </motion.p>
                     </AnimatePresence>
 
-                    <div className="space-y-3">
-                      <Button
+                    <div className="w-full space-y-3">
+                      <button
                         onClick={closePanicMode}
-                        className="w-full bg-white text-primary hover:bg-white/90"
+                        className="w-full bg-white text-primary font-semibold py-4 rounded-2xl hover:bg-white/90 transition-colors"
                       >
-                        I'm feeling better
-                      </Button>
-                      <Button
-                        variant="ghost"
+                        I'm feeling better 💚
+                      </button>
+                      <button
                         onClick={() => setPhase('breathing')}
-                        className="w-full text-white/80 hover:text-white hover:bg-white/10"
+                        className="w-full bg-white/10 text-white font-medium py-4 rounded-2xl hover:bg-white/20 transition-colors"
                       >
                         Restart breathing
-                      </Button>
+                      </button>
                     </div>
                   </motion.div>
                 )}
+
               </AnimatePresence>
             </div>
 
             {/* Crisis Hotline */}
-            <div className="p-6">
+            <div
+              className="px-5"
+              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
+            >
               <a
                 href="tel:999"
-                className="flex items-center justify-center gap-2 p-4 rounded-xl bg-white/10 text-white"
+                className="flex items-center gap-3 py-4 px-5 rounded-2xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors"
               >
-                <Phone className="w-5 h-5" />
-                <span>Crisis Hotline: 999</span>
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                  <Phone className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold">Crisis Hotline</p>
+                  <p className="text-xs text-white/60">Call 999 — available 24/7</p>
+                </div>
               </a>
             </div>
+
           </motion.div>
         )}
       </AnimatePresence>
