@@ -1,12 +1,12 @@
 import { motion } from 'framer-motion';
-import { BarChart3, CalendarDays, FileText, Home, User, Users } from 'lucide-react';
+import { BarChart3, CalendarDays, FileText, Home, Inbox, User, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { icon: Home, label: 'Home', path: 'home' },
+  { icon: Inbox, label: 'Inbox', path: 'inbox' },
   { icon: CalendarDays, label: 'Appts', path: 'appointments' },
   { icon: Users, label: 'Clients', path: 'clients' },
-  { icon: FileText, label: 'Notes', path: 'notes' },
   { icon: BarChart3, label: 'Reports', path: 'reports' },
   { icon: User, label: 'Profile', path: 'profile' },
 ];

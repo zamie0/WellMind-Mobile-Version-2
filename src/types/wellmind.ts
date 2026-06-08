@@ -46,6 +46,9 @@ export interface CounselorMessage {
   /** Plaintext is never persisted. `content` holds the AES-GCM ciphertext. */
   content: EncryptedPayload | string;
   timestamp: Date;
+  isRead?: boolean;
+  optimistic?: boolean;
+  failed?: boolean;
 }
 
 export interface CounselorChat {
@@ -55,6 +58,9 @@ export interface CounselorChat {
   messages: CounselorMessage[];
   createdAt: Date;
   lastMessageAt: Date;
+  lastMessage?: string;
+  unreadForUser?: number;
+  unreadForCounselor?: number;
 }
 
 export type ConsultationType = 'chat' | 'video';

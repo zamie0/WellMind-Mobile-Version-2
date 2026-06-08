@@ -1,12 +1,24 @@
 import express from "express";
+import http from "http";
+import { Server } from "socket.io";
 import userRoutes from "./user/user.routes.js";
 import counselorRoutes from "./counselor/counselor.routes.js";
+import chatRoutes from "./chat/chat.routes.js";
 import { loadEnv } from "./utils/loadEnv.js";
 
 loadEnv();
 
 const app = express();
 const port = process.env.PORT || 5001;
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CLIENT_ORIGIN || "*",
+    methods: ["GET", "POST", "PATCH"],
+  },
+});
+
+app.set("io", io);
 
 app.use(express.json());
 
@@ -25,8 +37,25 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/user", userRoutes);
 app.use("/api/counselor", counselorRoutes);
+app.use("/api/chat", chatRoutes);
 
-const server = app.listen(port, () => {
+io.on("connection", (socket) => {
+  socket.on("chat:identify", ({ role, participantId } = {}) => {
+    if ((role === "user" || role === "counselor") && participantId) {
+      socket.join(`${role}:${participantId}`);
+    }
+  });
+
+  socket.on("conversation:join", ({ conversationId } = {}) => {
+    if (conversationId) socket.join(`conversation:${conversationId}`);
+  });
+
+  socket.on("conversation:leave", ({ conversationId } = {}) => {
+    if (conversationId) socket.leave(`conversation:${conversationId}`);
+  });
+});
+
+server.listen(port, () => {
   console.log(`WellMind Mobile API running on http://localhost:${port}`);
 });
 

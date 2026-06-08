@@ -2,6 +2,7 @@
 import { toast } from 'sonner';
 import { useCounselorChatStore } from '@/stores/counselorChatStore';
 import { useWellMindStore } from '@/stores/wellmindStore';
+import { useAuthStore } from '@/stores/authStore';
 import { CounselorBrowseView } from './CounselorBrowseView';
 import { CounselorChatView } from './CounselorChatView';
 import { CounselorSetupView } from './CounselorSetupView';
@@ -16,6 +17,7 @@ type View = 'setup' | 'counselors' | 'chat';
 
 export const CounselorSupportChat = ({ onClose: _onClose, embedded = false }: CounselorSupportChatProps) => {
   const user = useWellMindStore((state) => state.user);
+  const authUser = useAuthStore((state) => state.getCurrentUser());
   const {
     counselorProfile,
     availableCounselors,
@@ -25,6 +27,8 @@ export const CounselorSupportChat = ({ onClose: _onClose, embedded = false }: Co
     createCounselorProfile,
     updateCounselorProfile,
     loadAvailableCounselors,
+    loadUserConversations,
+    subscribeRealtime,
     startChat,
     sendMessage,
     getChat,
@@ -45,6 +49,20 @@ export const CounselorSupportChat = ({ onClose: _onClose, embedded = false }: Co
   }, [loadAvailableCounselors]);
 
   useEffect(() => {
+    if (!counselorProfile && authUser?.id) {
+      createCounselorProfile(user?.name || authUser.email?.split('@')[0] || 'Anonymous', true, undefined, undefined, authUser.id);
+    }
+  }, [authUser?.id, authUser?.email, counselorProfile, createCounselorProfile, user?.name]);
+
+  useEffect(() => {
+    if (!counselorProfile) return;
+    void loadUserConversations().catch((error) => {
+      toast.error(error instanceof Error ? error.message : 'Could not load chats');
+    });
+    return subscribeRealtime();
+  }, [counselorProfile, loadUserConversations, subscribeRealtime]);
+
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeChatId, chats]);
 
@@ -56,7 +74,7 @@ export const CounselorSupportChat = ({ onClose: _onClose, embedded = false }: Co
 
     const preferredName = displayName.trim() || user?.name || 'Anonymous';
     if (!counselorProfile) {
-      createCounselorProfile(preferredName, isAnonymous, bio);
+      createCounselorProfile(preferredName, isAnonymous, bio, undefined, authUser?.id);
     } else {
       updateCounselorProfile({
         isAnonymous,
@@ -69,23 +87,32 @@ export const CounselorSupportChat = ({ onClose: _onClose, embedded = false }: Co
     setView('counselors');
   };
 
-  const handleStartChat = (counselor: CounselorUser) => {
+  const handleStartChat = async (counselor: CounselorUser) => {
     if (!counselorProfile) {
       const fallbackName = user?.name || 'Anonymous';
-      createCounselorProfile(fallbackName, true);
+      createCounselorProfile(fallbackName, true, undefined, undefined, authUser?.id);
     }
 
-    const chatId = startChat(counselor.id);
-    if (chatId) {
-      setActiveChatId(chatId);
-      setView('chat');
+    try {
+      const chatId = await startChat(counselor.id);
+      if (chatId) {
+        setActiveChatId(chatId);
+        setView('chat');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not start chat');
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!messageInput.trim() || !activeChatId) return;
-    sendMessage(activeChatId, messageInput);
+    const nextMessage = messageInput;
     setMessageInput('');
+    try {
+      await sendMessage(activeChatId, nextMessage);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Message could not be sent');
+    }
   };
 
   const activeChat = activeChatId ? getChat(activeChatId) : null;

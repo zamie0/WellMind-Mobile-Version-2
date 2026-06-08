@@ -7,6 +7,7 @@ import CounselorClients from './Clients-Page/CounselorClients';
 import CounselorNotes from './Notes-Page/CounselorNotes';
 import CounselorReports from './Reports-Page/CounselorReports';
 import CounselorProfile from './Profile-Page/CounselorProfile';
+import CounselorInbox from './Inbox-Page/CounselorInbox';
 import { BottomNav } from './BottomNav';
 import Onboarding from '../../pages/Onboarding';
 import Auth from '../../pages/Auth';
@@ -19,8 +20,9 @@ const Index = () => {
   const { currentSession, hasPin, logout } = useAuthStore();
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [activeView, setActiveView] = useState<
-    'home' | 'appointments' | 'clients' | 'notes' | 'reports' | 'profile'
+    'home' | 'inbox' | 'appointments' | 'clients' | 'notes' | 'reports' | 'profile'
   >('home');
+  const [openingConversationId, setOpeningConversationId] = useState<string | null>(null);
 
   if (!currentSession.isAuthenticated) return <Auth />;
 
@@ -47,7 +49,10 @@ const Index = () => {
     setShowPinSetup(true);
   }
 
-  const handleOpenChat = (_chatId: string) => {};
+  const handleOpenChat = (chatId: string) => {
+    setOpeningConversationId(chatId);
+    setActiveView('inbox');
+  };
 
   const isHome = activeView === 'home';
 
@@ -67,6 +72,13 @@ const Index = () => {
               key="home"
               onOpenChat={handleOpenChat}
               onViewChange={setActiveView}
+            />
+          )}
+          {activeView === 'inbox' && (
+            <CounselorInbox
+              key="inbox"
+              initialConversationId={openingConversationId}
+              onChatOpened={() => setOpeningConversationId(null)}
             />
           )}
           {activeView === 'appointments' && (

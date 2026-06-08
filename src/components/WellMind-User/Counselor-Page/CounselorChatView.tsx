@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { Send, ArrowLeft, Video, Info } from 'lucide-react';
 import { CounselorAvatar, getStatusColor } from './CounselorAvatar';
 import { CounselorProfileView } from './CounselorProfileView';
@@ -14,7 +14,7 @@ interface CounselorChatViewProps {
   counselorProfile: CounselorUser | null;
   messageInput: string;
   setMessageInput: (value: string) => void;
-  handleSendMessage: () => void;
+  handleSendMessage: () => void | Promise<void>;
   onBack: () => void;
   messagesEndRef: RefObject<HTMLDivElement>;
 }
@@ -31,6 +31,24 @@ export const CounselorChatView = ({
 }: CounselorChatViewProps) => {
   const [showProfile, setShowProfile] = useState(false);
   const isOnline = chatCounselor.status === 'online';
+  const visibleMessages = useMemo(
+    () => activeChat.messages.slice(Math.max(activeChat.messages.length - 220, 0)),
+    [activeChat.messages],
+  );
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messagesEndRef, visibleMessages.length]);
+
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const scrollToLatest = () => {
+      window.setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 80);
+    };
+    viewport.addEventListener('resize', scrollToLatest);
+    return () => viewport.removeEventListener('resize', scrollToLatest);
+  }, [messagesEndRef]);
 
   return (
     <motion.div
@@ -128,46 +146,15 @@ export const CounselorChatView = ({
 
         {/* Message bubbles */}
         <AnimatePresence>
-          {activeChat.messages.map((message, index) => {
+          {visibleMessages.map((message, index) => {
             const isOwn = message.senderId === counselorProfile?.id;
             return (
-              <motion.div
+              <MessageBubble
                 key={message.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.04 }}
-                className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className="max-w-[78%] px-4 py-3 rounded-2xl"
-                  style={
-                    isOwn
-                      ? {
-                          background: 'linear-gradient(135deg, #39a89b, #6bab9e)',
-                          borderBottomRightRadius: 5,
-                          boxShadow: '0 2px 10px rgba(57,168,155,0.25)',
-                        }
-                      : {
-                          background: 'white',
-                          borderBottomLeftRadius: 5,
-                          boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
-                        }
-                  }
-                >
-                  <p className="text-sm leading-relaxed" style={{ color: isOwn ? 'white' : '#1a2b38' }}>
-                    {formatMessageContent(message.content)}
-                  </p>
-                  <p
-                    className="text-[10px] mt-1"
-                    style={{
-                      color: isOwn ? 'rgba(255,255,255,0.65)' : '#8fa3b1',
-                      textAlign: isOwn ? 'right' : 'left',
-                    }}
-                  >
-                    {formatTime(message.timestamp)}
-                  </p>
-                </div>
-              </motion.div>
+                message={message}
+                isOwn={isOwn}
+                index={index}
+              />
             );
           })}
         </AnimatePresence>
@@ -229,3 +216,51 @@ export const CounselorChatView = ({
     </motion.div>
   );
 };
+
+const MessageBubble = memo(({
+  message,
+  isOwn,
+  index,
+}: {
+  message: CounselorChat['messages'][number];
+  isOwn: boolean;
+  index: number;
+}) => (
+  <motion.div
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: Math.min(index * 0.01, 0.12) }}
+    className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+  >
+    <div
+      className="max-w-[78%] px-4 py-3 rounded-2xl"
+      style={
+        isOwn
+          ? {
+              background: message.failed ? '#c0502f' : 'linear-gradient(135deg, #39a89b, #6bab9e)',
+              borderBottomRightRadius: 5,
+              boxShadow: '0 2px 10px rgba(57,168,155,0.25)',
+              opacity: message.optimistic ? 0.78 : 1,
+            }
+          : {
+              background: 'white',
+              borderBottomLeftRadius: 5,
+              boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
+            }
+      }
+    >
+      <p className="text-sm leading-relaxed" style={{ color: isOwn ? 'white' : '#1a2b38' }}>
+        {formatMessageContent(message.content)}
+      </p>
+      <p
+        className="text-[10px] mt-1"
+        style={{
+          color: isOwn ? 'rgba(255,255,255,0.7)' : '#8fa3b1',
+          textAlign: isOwn ? 'right' : 'left',
+        }}
+      >
+        {message.failed ? 'Failed' : message.optimistic ? 'Sending...' : formatTime(message.timestamp)}
+      </p>
+    </div>
+  </motion.div>
+));
