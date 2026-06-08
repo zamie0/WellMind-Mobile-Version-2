@@ -1,20 +1,23 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Brain, Sparkles, TrendingUp, MessageCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft, Brain, Sparkles, TrendingUp, MessageCircle, Heart } from 'lucide-react';
 import { useMindBuddyChatStore } from '@/stores/mindBuddyChatStore';
 import type { MindBuddyMessage } from '@/stores/mindBuddyChatStore';
 import type { EmotionLabel } from '@/lib/azureOpenAI';
 
-const emotionMeta: Record<EmotionLabel, { emoji: string; label: string; bg: string; text: string; bar: string; glow: string }> = {
-  happy:   { emoji: '😄', label: 'Happy',      bg: 'bg-honey-light',    text: 'text-honey',       bar: 'bg-honey',       glow: 'shadow-honey/30' },
-  calm:    { emoji: '😌', label: 'Calm',        bg: 'bg-sky-light',      text: 'text-sky',         bar: 'bg-sky',         glow: 'shadow-sky/30' },
-  stress:  { emoji: '😤', label: 'Stressed',    bg: 'bg-coral-light',    text: 'text-coral',       bar: 'bg-coral',       glow: 'shadow-coral/30' },
-  anxious: { emoji: '😰', label: 'Anxious',     bg: 'bg-lavender-light', text: 'text-lavender',    bar: 'bg-lavender',    glow: 'shadow-lavender/30' },
-  depress: { emoji: '😔', label: 'Low',         bg: 'bg-muted',          text: 'text-muted-foreground', bar: 'bg-slate-400', glow: 'shadow-slate/20' },
-  severe:  { emoji: '⚠️', label: 'Overwhelmed', bg: 'bg-coral-light',    text: 'text-coral',       bar: 'bg-coral',       glow: 'shadow-coral/30' },
-  crisis:  { emoji: '🚨', label: 'In Crisis',   bg: 'bg-destructive/10', text: 'text-destructive', bar: 'bg-destructive', glow: 'shadow-destructive/30' },
-  neutral: { emoji: '😐', label: 'Neutral',     bg: 'bg-muted',          text: 'text-muted-foreground', bar: 'bg-slate-300', glow: 'shadow-slate/20' },
+const emotionMeta: Record<EmotionLabel, {
+  emoji: string; label: string;
+  accent: string; accentBg: string; accentText: string;
+  barColor: string;
+}> = {
+  happy:   { emoji: '😄', label: 'Happy',       accent: '#d97706', accentBg: 'rgba(251,191,36,0.12)',  accentText: '#92600a', barColor: '#d97706' },
+  calm:    { emoji: '😌', label: 'Calm',         accent: '#39a89b', accentBg: 'rgba(57,168,155,0.12)',  accentText: '#1d6b61', barColor: '#39a89b' },
+  stress:  { emoji: '😤', label: 'Stressed',     accent: '#e8735a', accentBg: 'rgba(232,115,90,0.12)',  accentText: '#993c1d', barColor: '#e8735a' },
+  anxious: { emoji: '😰', label: 'Anxious',      accent: '#7c6fa0', accentBg: 'rgba(124,111,160,0.12)', accentText: '#4a3a7a', barColor: '#7c6fa0' },
+  depress: { emoji: '😔', label: 'Low',          accent: '#8fa3b1', accentBg: 'rgba(143,163,177,0.12)', accentText: '#5f7585', barColor: '#8fa3b1' },
+  severe:  { emoji: '⚠️', label: 'Overwhelmed',  accent: '#e8735a', accentBg: 'rgba(232,115,90,0.12)',  accentText: '#993c1d', barColor: '#e8735a' },
+  crisis:  { emoji: '🚨', label: 'In Crisis',    accent: '#dc2626', accentBg: 'rgba(220,38,38,0.1)',    accentText: '#991b1b', barColor: '#dc2626' },
+  neutral: { emoji: '😐', label: 'Neutral',      accent: '#8fa3b1', accentBg: 'rgba(143,163,177,0.12)', accentText: '#5f7585', barColor: '#8fa3b1' },
 };
 
 const POSITIVE_EMOTIONS: EmotionLabel[] = ['happy', 'calm'];
@@ -53,197 +56,383 @@ export const EmotionDashboard = () => {
     .sort((a, b) => (counts[b[0]] ?? 0) - (counts[a[0]] ?? 0));
 
   return (
-    <div className="min-h-screen bg-background" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-
-      {/* Header */}
-      <header className="gradient-sage px-5 pt-safe-top pb-10 rounded-b-[2.5rem]">
-        <div className="pt-6">
-          <Button
-            variant="ghost"
-            size="icon"
+    <div
+      className="min-h-screen pb-28"
+      style={{ background: 'linear-gradient(180deg, #f0f7f5 0%, #f7faf9 60%, #ffffff 100%)' }}
+    >
+      {/* ── Header ── */}
+      <header
+        className="sticky top-0 z-10 px-5 py-3.5"
+        style={{
+          background: 'rgba(240,247,245,0.96)',
+          backdropFilter: 'blur(12px)',
+          borderBottom: '0.5px solid rgba(57,168,155,0.15)',
+          paddingTop: 'max(env(safe-area-inset-top), 14px)',
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <motion.button
+            whileTap={{ scale: 0.94 }}
             onClick={() => navigate(-1)}
-            className="mb-2 -ml-2 text-foreground"
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+            aria-label="Go back"
           >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="text-2xl font-bold text-foreground">My Emotions</h1>
-            <p className="text-muted-foreground">AI-tracked from your MindBuddy chats</p>
-          </motion.div>
-        </div>
+            <ArrowLeft className="h-4 w-4" style={{ color: '#5f7585' }} />
+          </motion.button>
 
-        {/* Floating mood card inside header */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.1 }}
-          className="mt-5 bg-card rounded-2xl p-4 shadow-card flex items-center gap-4"
-        >
-          <div className={`w-14 h-14 rounded-2xl ${todayMeta.bg} flex items-center justify-center text-3xl shadow-sm`}>
-            {todayMeta.emoji}
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div
+              className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, #39a89b, #6bab9e)',
+                boxShadow: '0 2px 8px rgba(57,168,155,0.3)',
+              }}
+            >
+              <Brain className="h-4 w-4 text-white" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-sm truncate" style={{ color: '#1a2b38' }}>My Emotions</p>
+              <p className="text-[11px] font-semibold" style={{ color: '#39a89b' }}>
+                AI-tracked from your MindBuddy chats
+              </p>
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="text-xs text-muted-foreground mb-0.5">Last detected mood</p>
-            <p className={`text-xl font-bold ${todayMeta.text}`}>{todayMeta.label}</p>
-          </div>
-          <div className={`px-3 py-1.5 rounded-xl ${todayMeta.bg}`}>
-            <Brain className={`h-5 w-5 ${todayMeta.text}`} />
-          </div>
-        </motion.div>
+        </div>
       </header>
 
-      <div className="px-5 py-6 space-y-5 pb-10">
+      {/* ── Hero ── */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="relative overflow-hidden px-5 pt-8 pb-6"
+      >
+        <div
+          className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(57,168,155,0.13) 0%, transparent 70%)' }}
+        />
+        <div
+          className="pointer-events-none absolute top-8 -left-12 w-48 h-48 rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(107,171,158,0.08) 0%, transparent 70%)' }}
+        />
 
-        {/* Insight Banner */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <h2
+            className="text-[1.75rem] font-bold leading-tight mb-1.5"
+            style={{ color: '#1a2b38', letterSpacing: '-0.02em' }}
+          >
+            Know how{'\n'}you feel.
+          </h2>
+          <p className="text-[14px] leading-relaxed mb-5" style={{ color: '#5f7585' }}>
+            Your emotional patterns, beautifully tracked.
+          </p>
+        </motion.div>
+
+        {/* Last detected mood card */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-card rounded-2xl p-4 shadow-soft flex items-start gap-3"
+          transition={{ delay: 0.1, type: 'spring', stiffness: 280, damping: 26 }}
+          className="rounded-3xl overflow-hidden"
+          style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
         >
-          <div className="w-9 h-9 rounded-xl bg-sage-light flex items-center justify-center shrink-0 mt-0.5">
-            <Sparkles className="h-4 w-4 text-sage" />
+          <div
+            className="h-0.5 w-full"
+            style={{ background: `linear-gradient(90deg, ${todayMeta.accent}, ${todayMeta.accent}88)` }}
+          />
+          <div className="p-4 flex items-center gap-3">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0"
+              style={{ background: todayMeta.accentBg }}
+            >
+              {todayMeta.emoji}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px]" style={{ color: '#8fa3b1' }}>Last detected mood</p>
+              <p className="text-xl font-bold" style={{ color: todayMeta.accent }}>{todayMeta.label}</p>
+            </div>
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: todayMeta.accentBg }}
+            >
+              <Brain className="h-5 w-5" style={{ color: todayMeta.accent }} strokeWidth={1.75} />
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-semibold text-foreground mb-1">MindBuddy Insight</p>
-            <p className="text-sm text-muted-foreground leading-relaxed">{insight}</p>
+        </motion.div>
+      </motion.div>
+
+      <main className="px-5 space-y-4 pb-6">
+
+        {/* ── Insight banner ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, type: 'spring', stiffness: 280, damping: 26 }}
+          className="rounded-3xl overflow-hidden"
+          style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
+        >
+          <div
+            className="h-0.5 w-full"
+            style={{ background: 'linear-gradient(90deg, #7c6fa0, #7c6fa088)' }}
+          />
+          <div className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(124,111,160,0.1)' }}
+              >
+                <Sparkles className="h-4 w-4" style={{ color: '#7c6fa0' }} strokeWidth={1.75} />
+              </div>
+              <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>MindBuddy Insight</p>
+            </div>
+            <p className="text-[13px] leading-relaxed" style={{ color: '#5f7585' }}>{insight}</p>
           </div>
         </motion.div>
 
-        {/* Stats row */}
+        {/* ── Stats row ── */}
         {total > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="grid grid-cols-2 gap-3"
-          >
-            <div className="bg-card rounded-2xl p-4 shadow-soft text-center">
-              <p className="text-2xl font-bold text-foreground">{total}</p>
-              <p className="text-xs text-muted-foreground mt-1">Messages tracked</p>
+          <>
+            <p
+              className="text-[10px] font-semibold uppercase tracking-widest px-1"
+              style={{ color: '#8fa3b1' }}
+            >
+              Overview
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: 'Messages tracked', value: total, accent: '#39a89b' },
+                { label: 'Emotions detected', value: sortedEmotions.length, accent: '#e8735a' },
+              ].map((stat, i) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 + i * 0.06, type: 'spring', stiffness: 280, damping: 26 }}
+                  className="rounded-3xl overflow-hidden"
+                  style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
+                >
+                  <div
+                    className="h-0.5 w-full"
+                    style={{ background: `linear-gradient(90deg, ${stat.accent}, ${stat.accent}88)` }}
+                  />
+                  <div className="p-4 text-center">
+                    <p className="text-3xl font-bold" style={{ color: '#1a2b38' }}>{stat.value}</p>
+                    <p className="text-[11px] mt-1" style={{ color: '#8fa3b1' }}>{stat.label}</p>
+                  </div>
+                </motion.div>
+              ))}
             </div>
-            <div className="bg-card rounded-2xl p-4 shadow-soft text-center">
-              <p className="text-2xl font-bold text-foreground">{sortedEmotions.length}</p>
-              <p className="text-xs text-muted-foreground mt-1">Emotions detected</p>
-            </div>
-          </motion.div>
+          </>
         )}
 
-        {/* Emotion Breakdown */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="bg-card rounded-2xl p-5 shadow-soft"
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-lavender-light flex items-center justify-center">
-              <TrendingUp className="h-4 w-4 text-lavender" />
-            </div>
-            <h2 className="text-sm font-semibold text-foreground">Emotion Breakdown</h2>
-          </div>
+        {/* ── Emotion breakdown ── */}
+        <section>
+          <p
+            className="text-[10px] font-semibold uppercase tracking-widest px-1 mb-3"
+            style={{ color: '#8fa3b1' }}
+          >
+            Emotion Breakdown
+          </p>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28, type: 'spring', stiffness: 280, damping: 26 }}
+            className="rounded-3xl overflow-hidden"
+            style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
+          >
+            <div
+              className="h-0.5 w-full"
+              style={{ background: 'linear-gradient(90deg, #3b82f6, #3b82f688)' }}
+            />
+            <div className="p-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'rgba(59,130,246,0.1)' }}
+                >
+                  <TrendingUp className="h-5 w-5" style={{ color: '#3b82f6' }} strokeWidth={1.75} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>Breakdown</p>
+                  <p className="text-[11px]" style={{ color: '#8fa3b1' }}>
+                    Based on {total} message{total !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
 
-          {total === 0 ? (
-            <div className="text-center py-6">
-              <p className="text-3xl mb-2">💬</p>
-              <p className="text-sm text-muted-foreground">No data yet.</p>
-              <p className="text-xs text-muted-foreground">Start chatting to see your patterns!</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {sortedEmotions.map(([key, meta], i) => {
-                const count = counts[key] ?? 0;
-                const pct = Math.round((count / total) * 100);
-                return (
-                  <motion.div
-                    key={key}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + i * 0.05 }}
-                    className="space-y-1.5"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${meta.bg} ${meta.text}`}>
-                          {meta.emoji} {meta.label}
-                        </span>
-                      </div>
-                      <span className="text-xs text-muted-foreground font-medium">{pct}%</span>
-                    </div>
-                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-px w-full mb-4"
+                style={{ background: 'linear-gradient(90deg, rgba(57,168,155,0.15), transparent)' }}
+              />
+
+              {total === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-3xl mb-2">💬</p>
+                  <p className="text-sm" style={{ color: '#8fa3b1' }}>No data yet.</p>
+                  <p className="text-xs mt-1" style={{ color: '#8fa3b1' }}>Start chatting to see your patterns!</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {sortedEmotions.map(([key, meta], i) => {
+                    const count = counts[key] ?? 0;
+                    const pct = Math.round((count / total) * 100);
+                    return (
                       <motion.div
-                        className={`h-full rounded-full ${meta.bar}`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.7, ease: 'easeOut', delay: 0.3 + i * 0.05 }}
-                      />
-                    </div>
-                  </motion.div>
-                );
-              })}
+                        key={key}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.32 + i * 0.05 }}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span
+                            className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+                            style={{ background: meta.accentBg, color: meta.accentText }}
+                          >
+                            {meta.emoji} {meta.label}
+                          </span>
+                          <span className="text-[11px] font-semibold" style={{ color: '#8fa3b1' }}>{pct}%</span>
+                        </div>
+                        <div
+                          className="h-2 w-full rounded-full overflow-hidden"
+                          style={{ background: 'rgba(0,0,0,0.06)' }}
+                        >
+                          <motion.div
+                            className="h-full rounded-full"
+                            style={{ background: meta.barColor }}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.32 + i * 0.05 }}
+                          />
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
-        </motion.div>
+          </motion.div>
+        </section>
 
-        {/* Recent Timeline */}
+        {/* ── Recent timeline ── */}
+        <section>
+          <p
+            className="text-[10px] font-semibold uppercase tracking-widest px-1 mb-3"
+            style={{ color: '#8fa3b1' }}
+          >
+            Recent Messages
+          </p>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, type: 'spring', stiffness: 280, damping: 26 }}
+            className="rounded-3xl overflow-hidden"
+            style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
+          >
+            <div
+              className="h-0.5 w-full"
+              style={{ background: 'linear-gradient(90deg, #d97706, #d9770688)' }}
+            />
+            <div className="p-4">
+              <div className="flex items-center gap-3 mb-4">
+                <div
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: 'rgba(217,119,6,0.1)' }}
+                >
+                  <MessageCircle className="h-5 w-5" style={{ color: '#d97706' }} strokeWidth={1.75} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>Recent Messages</p>
+                  <p className="text-[11px]" style={{ color: '#8fa3b1' }}>Last 10 tracked entries</p>
+                </div>
+              </div>
+
+              <div
+                className="h-px w-full mb-4"
+                style={{ background: 'linear-gradient(90deg, rgba(57,168,155,0.15), transparent)' }}
+              />
+
+              {timeline.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-3xl mb-2">🌱</p>
+                  <p className="text-sm" style={{ color: '#8fa3b1' }}>No messages yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {timeline.map((m, i) => {
+                    const meta = emotionMeta[m.emotion!];
+                    const confidence = m.emotionConfidence ?? null;
+                    return (
+                      <motion.div
+                        key={m.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.38 + i * 0.04 }}
+                        className="flex items-start gap-3 rounded-2xl p-3"
+                        style={{ background: 'rgba(57,168,155,0.04)' }}
+                      >
+                        {/* Pill + confidence */}
+                        <div className="flex flex-col items-center gap-1 flex-shrink-0 pt-0.5">
+                          <span
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
+                            style={{ background: meta.accentBg, color: meta.accentText }}
+                          >
+                            {meta.emoji} {meta.label}
+                          </span>
+                          {confidence !== null && (
+                            <span className="text-[10px]" style={{ color: '#8fa3b1' }}>
+                              {Math.round(confidence * 100)}%
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Divider */}
+                        <div
+                          className="w-px self-stretch flex-shrink-0"
+                          style={{ background: 'rgba(57,168,155,0.2)' }}
+                        />
+
+                        {/* Message */}
+                        <p
+                          className="text-xs leading-relaxed flex-1 line-clamp-2"
+                          style={{ color: '#5f7585' }}
+                        >
+                          {m.content}
+                        </p>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </section>
+
+        {/* ── Tip card ── */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-card rounded-2xl p-5 shadow-soft"
+          transition={{ delay: 0.5, type: 'spring', stiffness: 280, damping: 26 }}
+          className="rounded-3xl overflow-hidden"
+          style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
         >
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-honey-light flex items-center justify-center">
-              <MessageCircle className="h-4 w-4 text-honey" />
+          <div
+            className="h-0.5 w-full"
+            style={{ background: 'linear-gradient(90deg, #39a89b, #39a89b88)' }}
+          />
+          <div className="p-4 flex items-start gap-3">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(57,168,155,0.1)' }}
+            >
+              <Heart className="h-4 w-4" style={{ color: '#39a89b' }} strokeWidth={1.75} />
             </div>
-            <h2 className="text-sm font-semibold text-foreground">Recent Messages</h2>
+            <p className="text-xs leading-relaxed pt-1" style={{ color: '#5f7585' }}>
+              Checking in regularly helps you spot emotional patterns before they grow. MindBuddy is always here to listen. 💚
+            </p>
           </div>
-
-          {timeline.length === 0 ? (
-            <div className="text-center py-6">
-              <p className="text-3xl mb-2">🌱</p>
-              <p className="text-sm text-muted-foreground">No messages yet.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {timeline.map((m, i) => {
-                const meta = emotionMeta[m.emotion!];
-                const confidence = m.emotionConfidence ?? null;
-                return (
-                  <motion.div
-                    key={m.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.35 + i * 0.04 }}
-                    className="flex items-start gap-3 bg-muted/40 rounded-xl p-3"
-                  >
-                    {/* Emotion pill + confidence */}
-                    <div className="flex flex-col items-center gap-1 shrink-0 pt-0.5">
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${meta.bg} ${meta.text}`}>
-                        {meta.emoji} {meta.label}
-                      </span>
-                      {confidence !== null && (
-                        <span className="text-[10px] text-muted-foreground">
-                          {Math.round(confidence * 100)}%
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Vertical divider */}
-                    <div className="w-px self-stretch bg-border shrink-0" />
-
-                    {/* Message */}
-                    <p className="text-xs text-muted-foreground line-clamp-2 flex-1 leading-relaxed">
-                      {m.content}
-                    </p>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
         </motion.div>
 
-      </div>
+      </main>
     </div>
   );
 };
