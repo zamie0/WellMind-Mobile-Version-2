@@ -43,8 +43,6 @@ export const CounselorAppointments = ({ onOpenChat }: CounselorAppointmentsProps
     appointments,
     getClientById,
     updateAppointmentStatus,
-    getActiveSessions,
-    startSession,
   } = useCounselorStore();
 
   const sortedAppointments = [...appointments].sort(
@@ -72,13 +70,11 @@ export const CounselorAppointments = ({ onOpenChat }: CounselorAppointmentsProps
       : undefined;
     if (!client) { toast.error('Client not found.'); return; }
 
-    const existing = getActiveSessions().find(
-      (s) => s.clientId === client.id && s.type === appointment.consultationType
-    );
-    const sessionId =
-      existing?.id ||
-      startSession(client.id, client.displayName, appointment.consultationType);
-    onOpenChat(sessionId);
+    if (!client.conversationId) {
+      toast.error('No chat conversation exists for this client yet.');
+      return;
+    }
+    onOpenChat(client.conversationId);
   };
 
   const metrics = [

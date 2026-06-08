@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import userRoutes from "./user/user.routes.js";
 import counselorRoutes from "./counselor/counselor.routes.js";
 import chatRoutes from "./chat/chat.routes.js";
+import appointmentRoutes from "./appointment/appointment.routes.js";
 import { loadEnv } from "./utils/loadEnv.js";
 
 loadEnv();
@@ -40,6 +41,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/user", userRoutes);
 app.use("/api/counselor", counselorRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/appointments", appointmentRoutes);
 
 const broadcastCounselorPresence = () => {
   io.emit("counselor:presence", {

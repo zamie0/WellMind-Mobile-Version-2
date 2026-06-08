@@ -19,7 +19,7 @@ interface CounselorClientsProps {
 
 export const CounselorClients = ({ onOpenChat }: CounselorClientsProps) => {
   const [query, setQuery] = useState('');
-  const { getAllClients, removeClient, startSession, getActiveSessions } = useCounselorStore();
+  const { getAllClients, removeClient } = useCounselorStore();
 
   const allClients = getAllClients();
   const clients = allClients.filter((c) =>
@@ -28,12 +28,12 @@ export const CounselorClients = ({ onOpenChat }: CounselorClientsProps) => {
   const anonymousCount = allClients.filter((c) => c.isAnonymous).length;
   const notedCount     = allClients.filter((c) => !!c.notes?.trim()).length;
 
-  const openSession = (clientId: string, clientName: string, type: 'chat' | 'video') => {
-    const existing = getActiveSessions().find(
-      (s) => s.clientId === clientId && s.type === type
-    );
-    const sessionId = existing?.id || startSession(clientId, clientName, type);
-    onOpenChat(sessionId);
+  const openSession = (conversationId?: string) => {
+    if (!conversationId) {
+      toast.error('No conversation exists for this client yet.');
+      return;
+    }
+    onOpenChat(conversationId);
   };
 
   const metrics = [
@@ -248,7 +248,7 @@ export const CounselorClients = ({ onOpenChat }: CounselorClientsProps) => {
                 <div className="mt-3 flex flex-wrap gap-2">
                   <motion.button
                     whileTap={{ scale: 0.96 }}
-                    onClick={() => openSession(client.id, client.displayName, 'chat')}
+                    onClick={() => openSession(client.conversationId)}
                     className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-full"
                     style={{
                       background: 'linear-gradient(135deg, #e8735a, #e89b7a)',
@@ -262,7 +262,7 @@ export const CounselorClients = ({ onOpenChat }: CounselorClientsProps) => {
 
                   <motion.button
                     whileTap={{ scale: 0.96 }}
-                    onClick={() => openSession(client.id, client.displayName, 'video')}
+                    onClick={() => toast.info('Video sessions are not connected yet. Use chat for now.')}
                     className="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-full"
                     style={{ background: 'rgba(143,163,177,0.12)', color: '#6b87a0' }}
                   >

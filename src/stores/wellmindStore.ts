@@ -50,7 +50,8 @@ interface WellMindState {
   // Actions
   setUser: (user: UserProfile) => void;
   updateUser: (data: Partial<UserProfile>) => void;
-  completeOnboarding: (name: string) => void;
+  completeOnboarding: (name: string, userId?: string, email?: string) => void;
+  clearUser: () => void;
   addMoodEntry: (emotion: Emotion, note?: string, triggers?: string[]) => void;
   getMoodHistory: (days?: number) => MoodEntry[];
   getTodaysMood: () => MoodEntry | undefined;
@@ -254,11 +255,12 @@ export const useWellMindStore = create<WellMindState>()(
           user: state.user ? { ...state.user, ...data } : state.user,
       })),
 
-      completeOnboarding: (name) => {
+      completeOnboarding: (name, userId, email) => {
         set({
           user: {
-            id: crypto.randomUUID(),
+            id: userId || crypto.randomUUID(),
             name,
+            email,
             notificationsEnabled: true,
             onboardingCompleted: true,
             streak: 0,
@@ -266,6 +268,8 @@ export const useWellMindStore = create<WellMindState>()(
         });
         get().addCoins(50);
       },
+
+      clearUser: () => set({ user: null }),
 
       addMoodEntry: (emotion, note, triggers) => {
         const entry: MoodEntry = {

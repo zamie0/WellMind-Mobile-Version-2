@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useWellMindStore } from '@/stores/wellmindStore';
 import { useAuthStore } from '@/stores/authStore';
 import CounselorHome from './Home-Page/CounselorHome';
 import CounselorAppointments from './Appoinments-Page/CounselorAppointments';
@@ -9,16 +8,23 @@ import CounselorReports from './Reports-Page/CounselorReports';
 import CounselorProfile from './Profile-Page/CounselorProfile';
 import CounselorInbox from './Inbox-Page/CounselorInbox';
 import { BottomNav } from './BottomNav';
-import Onboarding from '../../pages/Onboarding';
 import Auth from '../../pages/Auth';
 import PinSetup from '@/components/WellMind-User/Profile-Page/PinSetup';
 import PinVerify from '@/pages/PinVerify';
 import { AnimatePresence } from 'framer-motion';
-import { identifyChatParticipant } from '@/lib/realtimeCounselorChat';
+import {
+  getChatSocket,
+  identifyChatParticipant,
+  listConversations,
+  type ChatConversation,
+} from '@/lib/realtimeCounselorChat';
+import { useCounselorStore } from '@/stores/counselorStore';
 
 const Index = () => {
-  const user = useWellMindStore((state) => state.user);
   const { currentSession, hasPin, logout } = useAuthStore();
+  const upsertClientsFromConversations = useCounselorStore((state) => state.upsertClientsFromConversations);
+  const loadAppointments = useCounselorStore((state) => state.loadAppointments);
+  const upsertAppointments = useCounselorStore((state) => state.upsertAppointments);
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [activeView, setActiveView] = useState<
     'home' | 'inbox' | 'appointments' | 'clients' | 'notes' | 'reports' | 'profile'
@@ -31,6 +37,43 @@ const Index = () => {
     }
   }, [currentSession.currentUserId, currentSession.isAuthenticated, currentSession.userRole]);
 
+  useEffect(() => {
+    if (!currentSession.isAuthenticated || currentSession.userRole !== 'counselor' || !currentSession.currentUserId) return;
+
+    const counselorId = currentSession.currentUserId;
+    const loadWorkspace = async () => {
+      const { conversations } = await listConversations('counselor', counselorId);
+      upsertClientsFromConversations(conversations);
+      await loadAppointments(counselorId);
+    };
+
+    void loadWorkspace().catch(() => {});
+
+    const socket = getChatSocket();
+    const onConversationUpdated = (conversation: ChatConversation) => {
+      if (conversation.counselorId !== counselorId) return;
+      upsertClientsFromConversations([conversation]);
+    };
+    const onAppointmentUpdated = (appointment: any) => {
+      if (appointment.counselorId !== counselorId) return;
+      upsertAppointments([appointment]);
+    };
+
+    socket.on('conversation:updated', onConversationUpdated);
+    socket.on('appointment:updated', onAppointmentUpdated);
+    return () => {
+      socket.off('conversation:updated', onConversationUpdated);
+      socket.off('appointment:updated', onAppointmentUpdated);
+    };
+  }, [
+    currentSession.currentUserId,
+    currentSession.isAuthenticated,
+    currentSession.userRole,
+    loadAppointments,
+    upsertAppointments,
+    upsertClientsFromConversations,
+  ]);
+
   if (!currentSession.isAuthenticated) return <Auth />;
 
   if (currentSession.isAuthenticated && hasPin() && !currentSession.isPinVerified)
@@ -39,8 +82,7 @@ const Index = () => {
   if (
     currentSession.isAuthenticated &&
     !hasPin() &&
-    showPinSetup === false &&
-    !user?.onboardingCompleted
+    showPinSetup === false
   ) {
     return (
       <PinSetup
@@ -48,12 +90,6 @@ const Index = () => {
         onSkip={() => setShowPinSetup(true)}
       />
     );
-  }
-
-  if (!user?.onboardingCompleted) return <Onboarding />;
-
-  if (currentSession.isAuthenticated && !hasPin() && !showPinSetup) {
-    setShowPinSetup(true);
   }
 
   const handleOpenChat = (chatId: string) => {

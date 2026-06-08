@@ -13,6 +13,9 @@ const simpleHash = (str: string): string => {
   return hash.toString(36);
 };
 
+const existingNameForEmail = (users: LocalUser[], email: string) =>
+  users.find((user) => user.email === email)?.name;
+
 interface AuthStore {
   users: LocalUser[];
   currentSession: AuthState;
@@ -21,6 +24,7 @@ interface AuthStore {
   quickRegister: () => void;
   quickLogin: () => void;
   updateCounselorProfile: (updates: Partial<CounselorProfile>) => void;
+  updateCurrentUserProfile: (updates: { name?: string; onboardingCompleted?: boolean }) => void;
   logout: () => void;
   setupPin: (pin: string) => boolean;
   verifyPin: (pin: string) => boolean;
@@ -75,12 +79,13 @@ export const useAuthStore = create<AuthStore>()(
             body: JSON.stringify({ email: normalizedEmail, password }),
           });
 
-          const newUser: LocalUser = {
-            id: response.user.id,
-            email: response.user.email,
-            passwordHash: '',
-            role: 'user',
-            createdAt: new Date(response.user.createdAt),
+            const newUser: LocalUser = {
+              id: response.user.id,
+              email: response.user.email,
+              name: existingNameForEmail(get().users, response.user.email),
+              passwordHash: '',
+              role: 'user',
+              createdAt: new Date(response.user.createdAt),
           };
 
           set((state) => ({
@@ -150,6 +155,8 @@ export const useAuthStore = create<AuthStore>()(
           const localUser: LocalUser = {
             id: user.id,
             email: user.email,
+            name: existing?.name,
+            onboardingCompleted: existing?.onboardingCompleted,
             passwordHash: '',
             role: 'user',
             createdAt: new Date(user.createdAt),
@@ -178,6 +185,8 @@ export const useAuthStore = create<AuthStore>()(
         const newUser: LocalUser = {
           id: crypto.randomUUID(),
           email: `user_${Date.now()}@wellmind.local`,
+          name: 'WellMind User',
+          onboardingCompleted: false,
           passwordHash: '',
           role: 'user',
           createdAt: new Date(),
@@ -290,6 +299,19 @@ export const useAuthStore = create<AuthStore>()(
                   availability: updates.availability ?? u.availability,
                   isVerified: updates.isVerified ?? u.isVerified,
                 }
+              : u,
+          ),
+        });
+      },
+
+      updateCurrentUserProfile: (updates) => {
+        const { currentSession, users } = get();
+        if (!currentSession.currentUserId) return;
+
+        set({
+          users: users.map((u) =>
+            u.id === currentSession.currentUserId
+              ? { ...u, ...updates }
               : u,
           ),
         });

@@ -15,6 +15,11 @@ import {
   type ChatConversation,
   type ChatMessage,
 } from '@/lib/realtimeCounselorChat';
+import {
+  createAppointment,
+  listAppointments,
+  type RemoteAppointment,
+} from '@/lib/appointmentsApi';
 
 export type AppointmentStatus = 'requested' | 'confirmed' | 'completed' | 'cancelled' | 'missed';
 export type ConsultationType = 'chat' | 'video';
@@ -34,7 +39,7 @@ export interface CounsellorAppointment {
   reminders: ReminderPreferences;
   status: AppointmentStatus;
   notes?: string;
-  persistence: 'local-mock';
+  persistence: 'local-mock' | 'remote';
   createdAt: string;
   clientId?: string;
   clientName?: string;
@@ -53,6 +58,7 @@ interface CounselorChatState {
   loadAvailableCounselors: () => Promise<void>;
   subscribeRealtime: () => () => void;
   loadUserConversations: () => Promise<void>;
+  loadUserAppointments: () => Promise<void>;
 
   startChat: (counselorId: string) => Promise<string>;
   sendMessage: (chatId: string, content: string) => Promise<void>;
@@ -71,7 +77,7 @@ interface CounselorChatState {
     consultationType: ConsultationType,
     reminders: ReminderPreferences,
     notes?: string,
-  ) => string | null;
+  ) => Promise<string | null>;
   getAppointmentsForCounselor: (counselorId: string) => CounsellorAppointment[];
   getLatestAppointmentForCounselor: (counselorId: string) => CounsellorAppointment | undefined;
 
@@ -117,6 +123,21 @@ const mergeChat = (chats: CounselorChat[], next: CounselorChat) => {
   merged[index] = { ...merged[index], ...next, messages: next.messages.length ? next.messages : merged[index].messages };
   return merged.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
 };
+
+const toLocalAppointment = (appointment: RemoteAppointment): CounsellorAppointment => ({
+  id: appointment.id,
+  counselorId: appointment.counselorId,
+  appointmentDate: appointment.appointmentDate,
+  slot: appointment.slot,
+  consultationType: appointment.consultationType,
+  reminders: appointment.reminders,
+  status: appointment.status,
+  notes: appointment.notes,
+  persistence: 'remote',
+  createdAt: appointment.createdAt,
+  clientId: appointment.clientId,
+  clientName: appointment.clientName,
+});
 
 export const useCounselorChatStore = create<CounselorChatState>()(
   persist(
@@ -247,6 +268,13 @@ export const useCounselorChatStore = create<CounselorChatState>()(
         set({ chats: hydrated });
       },
 
+      loadUserAppointments: async () => {
+        const profile = get().counselorProfile;
+        if (!profile) return;
+        const { appointments } = await listAppointments('user', profile.id);
+        set({ appointments: appointments.map(toLocalAppointment) });
+      },
+
       startChat: async (counselorId) => {
         const profile = get().counselorProfile;
         if (!profile) return '';
@@ -357,30 +385,28 @@ export const useCounselorChatStore = create<CounselorChatState>()(
         return DEFAULT_SLOTS.filter((slot) => !booked.has(slot));
       },
 
-      bookSession: (counselorId, date, slot, consultationType, reminders, notes) => {
+      bookSession: async (counselorId, date, slot, consultationType, reminders, notes) => {
         if (!get().getAvailableSlots(counselorId, date).includes(slot)) return null;
         const profile = get().counselorProfile;
-        const appointment: CounsellorAppointment = {
-          id: `appt-${crypto.randomUUID()}`,
+        if (!profile) return null;
+
+        const { appointment } = await createAppointment({
+          userId: profile.id,
+          userName: profile.displayName,
           counselorId,
           appointmentDate: date,
           slot,
           consultationType,
           reminders,
           notes,
-          status: 'requested',
-          persistence: 'local-mock',
-          createdAt: new Date().toISOString(),
-          clientId: profile?.id,
-          clientName: profile?.displayName,
-        };
+        });
 
         set((state) => ({
-          appointments: [appointment, ...state.appointments],
+          appointments: [toLocalAppointment(appointment), ...state.appointments.filter((item) => item.id !== appointment.id)],
           sessionStatuses: { ...state.sessionStatuses, [counselorId]: 'requested' },
         }));
 
-        if (profile) get().registerClientWithCounselor(profile.id, profile.displayName);
+        get().registerClientWithCounselor(profile.id, profile.displayName);
         return appointment.id;
       },
 

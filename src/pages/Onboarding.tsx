@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useWellMindStore } from '@/stores/wellmindStore';
+import { useAuthStore } from '@/stores/authStore';
 import { Heart, Shield, Sparkles, ArrowRight, Leaf } from 'lucide-react';
 
 const slides = [
@@ -40,6 +41,8 @@ export const Onboarding = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const completeOnboarding = useWellMindStore((s) => s.completeOnboarding);
+  const currentUser = useAuthStore((s) => s.getCurrentUser());
+  const updateCurrentUserProfile = useAuthStore((s) => s.updateCurrentUserProfile);
 
   const handleNext = () => {
     if (step < slides.length - 1) setStep(step + 1);
@@ -49,7 +52,9 @@ export const Onboarding = () => {
   const handleComplete = () => {
     if (!name.trim()) { setError('Please enter your name'); return; }
     setError('');
-    completeOnboarding(name.trim());
+    const cleanName = name.trim();
+    updateCurrentUserProfile({ name: cleanName, onboardingCompleted: true });
+    completeOnboarding(cleanName, currentUser?.id, currentUser?.email);
     navigate('/');
   };
 

@@ -48,7 +48,7 @@ export const CounselorReports = () => {
 
   const workload = [
     { icon: MessageSquare,  text: `${totalSessions} total live or completed sessions.` },
-    { icon: CalendarCheck2, text: `${appointments.length} appointments tracked locally.` },
+    { icon: CalendarCheck2, text: `${appointments.length} appointments tracked from the database.` },
     { icon: FileText,       text: `${clientsWithNotes} clients have saved notes.` },
   ];
 

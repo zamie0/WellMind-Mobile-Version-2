@@ -1,15 +1,23 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CounsellorAppointment } from './counselorChatStore';
+import {
+  listAppointments,
+  updateAppointmentStatus as updateRemoteAppointmentStatus,
+  type RemoteAppointment,
+} from '@/lib/appointmentsApi';
 
 export interface CounselorClient {
   id: string;
+  conversationId?: string;
   displayName: string;
   isAnonymous: boolean;
   recentMood?: string;
   lastInteraction: Date;
   appointmentCount: number;
   notes?: string;
+  lastMessage?: string;
+  unreadCount?: number;
 }
 
 export interface CounselorAvailabilitySlot {
@@ -63,7 +71,32 @@ interface CounselorStore {
   addAppointment: (appointment: CounsellorAppointment) => void;
   updateAppointmentStatus: (appointmentId: string, status: 'requested' | 'confirmed' | 'completed' | 'cancelled') => void;
   getUpcomingAppointments: () => CounsellorAppointment[];
+  loadAppointments: (counselorId: string) => Promise<void>;
+  upsertClientsFromConversations: (conversations: Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    lastMessage?: string;
+    lastMessageAt?: string;
+    unreadForCounselor?: number;
+  }>) => void;
+  upsertAppointments: (appointments: RemoteAppointment[]) => void;
 }
+
+const toLocalAppointment = (appointment: RemoteAppointment): CounsellorAppointment => ({
+  id: appointment.id,
+  counselorId: appointment.counselorId,
+  appointmentDate: appointment.appointmentDate,
+  slot: appointment.slot,
+  consultationType: appointment.consultationType,
+  reminders: appointment.reminders,
+  status: appointment.status,
+  notes: appointment.notes,
+  persistence: 'remote',
+  createdAt: appointment.createdAt,
+  clientId: appointment.clientId,
+  clientName: appointment.clientName,
+});
 
 export const useCounselorStore = create<CounselorStore>()(
   persist(
@@ -76,7 +109,9 @@ export const useCounselorStore = create<CounselorStore>()(
 
       addClient: (client) => {
         set((state) => ({
-          clients: [...state.clients, client],
+          clients: state.clients.some((item) => item.id === client.id)
+            ? state.clients.map((item) => item.id === client.id ? { ...item, ...client, notes: item.notes ?? client.notes } : item)
+            : [...state.clients, client],
         }));
       },
 
@@ -217,6 +252,10 @@ export const useCounselorStore = create<CounselorStore>()(
           ),
         }));
 
+        void updateRemoteAppointmentStatus(appointmentId, status).then(({ appointment }) => {
+          get().upsertAppointments([appointment]);
+        }).catch(() => {});
+
         if (status === 'confirmed') {
           const appointment = get().appointments.find((a) => a.id === appointmentId);
           if (!appointment || !appointment.clientId) return;
@@ -255,6 +294,72 @@ export const useCounselorStore = create<CounselorStore>()(
           .sort((a, b) => new Date(a.appointmentDate).getTime() - new Date(b.appointmentDate).getTime());
 
         return upcomingAppointments;
+      },
+
+      loadAppointments: async (counselorId) => {
+        const { appointments } = await listAppointments('counselor', counselorId);
+        get().upsertAppointments(appointments);
+      },
+
+      upsertAppointments: (appointments) => {
+        set((state) => {
+          const byId = new Map(state.appointments.map((appointment) => [appointment.id, appointment]));
+          const clientsById = new Map(state.clients.map((client) => [client.id, client]));
+
+          appointments.forEach((appointment) => {
+            byId.set(appointment.id, toLocalAppointment(appointment));
+            const existing = clientsById.get(appointment.clientId);
+            clientsById.set(appointment.clientId, {
+              id: appointment.clientId,
+              conversationId: existing?.conversationId,
+              displayName: appointment.clientName || existing?.displayName || 'Anonymous client',
+              isAnonymous: !appointment.clientName || appointment.clientName.toLowerCase().includes('anonymous'),
+              recentMood: existing?.recentMood,
+              lastInteraction: existing?.lastInteraction || new Date(appointment.createdAt),
+              appointmentCount: Math.max(existing?.appointmentCount || 0, 1),
+              notes: existing?.notes,
+              lastMessage: existing?.lastMessage,
+              unreadCount: existing?.unreadCount || 0,
+            });
+          });
+
+          return {
+            appointments: Array.from(byId.values()).sort(
+              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+            ),
+            clients: Array.from(clientsById.values()).sort(
+              (a, b) => new Date(b.lastInteraction).getTime() - new Date(a.lastInteraction).getTime(),
+            ),
+          };
+        });
+      },
+
+      upsertClientsFromConversations: (conversations) => {
+        set((state) => {
+          const byId = new Map(state.clients.map((client) => [client.id, client]));
+
+          conversations.forEach((conversation) => {
+            const existing = byId.get(conversation.userId);
+            byId.set(conversation.userId, {
+              id: conversation.userId,
+              conversationId: conversation.id,
+              displayName: conversation.userName || existing?.displayName || 'Anonymous client',
+              isAnonymous: !conversation.userName || conversation.userName.toLowerCase().includes('anonymous'),
+              recentMood: existing?.recentMood,
+              lastInteraction: conversation.lastMessageAt ? new Date(conversation.lastMessageAt) : existing?.lastInteraction || new Date(),
+              appointmentCount: existing?.appointmentCount || 0,
+              notes: existing?.notes,
+              lastMessage: conversation.lastMessage || existing?.lastMessage,
+              unreadCount: conversation.unreadForCounselor || 0,
+            });
+          });
+
+          return {
+            clients: Array.from(byId.values()).sort(
+              (a, b) => new Date(b.lastInteraction).getTime() - new Date(a.lastInteraction).getTime(),
+            ),
+          };
+        });
       },
     }),
     {

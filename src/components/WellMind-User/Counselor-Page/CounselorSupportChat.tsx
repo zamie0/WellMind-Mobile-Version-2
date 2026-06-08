@@ -28,6 +28,7 @@ export const CounselorSupportChat = ({ onClose: _onClose, embedded = false }: Co
     updateCounselorProfile,
     loadAvailableCounselors,
     loadUserConversations,
+    loadUserAppointments,
     subscribeRealtime,
     startChat,
     sendMessage,
@@ -59,8 +60,9 @@ export const CounselorSupportChat = ({ onClose: _onClose, embedded = false }: Co
     void loadUserConversations().catch((error) => {
       toast.error(error instanceof Error ? error.message : 'Could not load chats');
     });
+    void loadUserAppointments().catch(() => {});
     return subscribeRealtime();
-  }, [counselorProfile, loadUserConversations, subscribeRealtime]);
+  }, [counselorProfile, loadUserAppointments, loadUserConversations, subscribeRealtime]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

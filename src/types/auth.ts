@@ -3,10 +3,12 @@ export type UserRole = 'user' | 'counselor';
 export interface LocalUser {
   id: string;
   email: string;
+  name?: string;
   passwordHash: string; // Simple hash for demo
   pin?: string;
   role: UserRole; // 'user' or 'counselor'
   createdAt: Date;
+  onboardingCompleted?: boolean;
   counselorProfile?: CounselorProfile;
   // Counselor specific fields
   counselorName?: string;

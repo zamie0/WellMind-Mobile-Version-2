@@ -46,19 +46,23 @@ export const BookingModal = ({ counselor, onClose, onBooked }: BookingModalProps
     else handleSubmit();
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!date || !slot) {
       toast.error('Please select a date and time slot.');
       return;
     }
-    const id = bookSession(counselor.id, date, slot, consultationType, reminders, notes);
-    if (!id) {
-      toast.error('That slot is no longer available.');
-      return;
+    try {
+      const id = await bookSession(counselor.id, date, slot, consultationType, reminders, notes);
+      if (!id) {
+        toast.error('That slot is no longer available.');
+        return;
+      }
+      toast.success(`Session requested with ${counselor.displayName}`);
+      onBooked();
+      onClose();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not request session.');
     }
-    toast.success(`Session requested with ${counselor.displayName}`);
-    onBooked();
-    onClose();
   };
 
   const formatDisplayDate = (iso: string) =>
