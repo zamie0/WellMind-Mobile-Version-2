@@ -2,7 +2,7 @@ import connectDB from "../../config/db.js";
 import Counselor from "../models/Counselor.js";
 import { verifyPassword } from "../utils/password.js";
 
-const publicCounselor = (counselor) => ({
+const publicCounselor = (counselor, isOnline = false) => ({
   id: counselor._id.toString(),
   email: counselor.email,
   role: "counselor",
@@ -12,16 +12,22 @@ const publicCounselor = (counselor) => ({
   bio: counselor.bio,
   availability: counselor.availability,
   isVerified: counselor.isVerified,
-  status: counselor.status,
+  accountStatus: counselor.status,
+  status: isOnline ? "online" : "away",
   createdAt: counselor.createdAt,
 });
 
-export async function listCounselors(_req, res) {
+export async function listCounselors(req, res) {
   try {
     await connectDB();
     const counselors = await Counselor.find({ status: "approved" }).sort({ rating: -1 });
+    const onlineCounselors = req.app.locals.onlineCounselors || new Set();
 
-    return res.status(200).json({ counselors: counselors.map(publicCounselor) });
+    return res.status(200).json({
+      counselors: counselors.map((counselor) =>
+        publicCounselor(counselor, onlineCounselors.has(counselor._id.toString())),
+      ),
+    });
   } catch (error) {
     console.error("Failed to list counselors:", error);
     return res.status(500).json({ message: "Failed to list counselors" });

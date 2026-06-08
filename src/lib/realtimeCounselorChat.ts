@@ -31,6 +31,7 @@ export interface ChatMessage {
 }
 
 let socket: Socket | null = null;
+let lastIdentity: { role: ChatRole; participantId: string } | null = null;
 
 export const getChatSocket = () => {
   if (!socket) {
@@ -38,12 +39,18 @@ export const getChatSocket = () => {
       transports: ['websocket', 'polling'],
       autoConnect: true,
     });
+    socket.on('connect', () => {
+      if (lastIdentity) {
+        socket?.emit('chat:identify', lastIdentity);
+      }
+    });
   }
   return socket;
 };
 
 export const identifyChatParticipant = (role: ChatRole, participantId: string) => {
-  getChatSocket().emit('chat:identify', { role, participantId });
+  lastIdentity = { role, participantId };
+  getChatSocket().emit('chat:identify', lastIdentity);
 };
 
 export const joinConversationRoom = (conversationId: string) => {

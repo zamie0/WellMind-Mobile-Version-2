@@ -209,14 +209,26 @@ export const useCounselorChatStore = create<CounselorChatState>()(
           }));
         };
 
+        const onPresence = ({ onlineCounselorIds = [] }: { onlineCounselorIds?: string[] }) => {
+          const online = new Set(onlineCounselorIds);
+          set((state) => ({
+            availableCounselors: state.availableCounselors.map((counselor) => ({
+              ...counselor,
+              status: online.has(counselor.id) ? 'online' : 'away',
+            })),
+          }));
+        };
+
         socket.on('conversation:updated', onConversationUpdated);
         socket.on('message:new', onMessageNew);
+        socket.on('counselor:presence', onPresence);
 
         get().chats.forEach((chat) => joinConversationRoom(chat.id));
 
         return () => {
           socket.off('conversation:updated', onConversationUpdated);
           socket.off('message:new', onMessageNew);
+          socket.off('counselor:presence', onPresence);
         };
       },
 

@@ -19,6 +19,8 @@ const io = new Server(server, {
 });
 
 app.set("io", io);
+app.locals.onlineCounselors = new Set();
+app.locals.counselorSocketCounts = new Map();
 
 app.use(express.json());
 
@@ -39,10 +41,60 @@ app.use("/api/user", userRoutes);
 app.use("/api/counselor", counselorRoutes);
 app.use("/api/chat", chatRoutes);
 
+const broadcastCounselorPresence = () => {
+  io.emit("counselor:presence", {
+    onlineCounselorIds: Array.from(app.locals.onlineCounselors),
+  });
+};
+
+const addCounselorSocket = (counselorId) => {
+  const id = String(counselorId);
+  const currentCount = app.locals.counselorSocketCounts.get(id) || 0;
+  app.locals.counselorSocketCounts.set(id, currentCount + 1);
+  app.locals.onlineCounselors.add(id);
+};
+
+const removeCounselorSocket = (counselorId) => {
+  const id = String(counselorId);
+  const nextCount = Math.max((app.locals.counselorSocketCounts.get(id) || 1) - 1, 0);
+  if (nextCount === 0) {
+    app.locals.counselorSocketCounts.delete(id);
+    app.locals.onlineCounselors.delete(id);
+  } else {
+    app.locals.counselorSocketCounts.set(id, nextCount);
+  }
+};
+
 io.on("connection", (socket) => {
   socket.on("chat:identify", ({ role, participantId } = {}) => {
     if ((role === "user" || role === "counselor") && participantId) {
       socket.join(`${role}:${participantId}`);
+
+      if (
+        socket.data.role === role &&
+        socket.data.participantId === String(participantId)
+      ) {
+        socket.emit("counselor:presence", {
+          onlineCounselorIds: Array.from(app.locals.onlineCounselors),
+        });
+        return;
+      }
+
+      if (socket.data.role === "counselor" && socket.data.participantId) {
+        removeCounselorSocket(socket.data.participantId);
+      }
+
+      socket.data.role = role;
+      socket.data.participantId = String(participantId);
+
+      if (role === "counselor") {
+        addCounselorSocket(participantId);
+        broadcastCounselorPresence();
+      } else {
+        socket.emit("counselor:presence", {
+          onlineCounselorIds: Array.from(app.locals.onlineCounselors),
+        });
+      }
     }
   });
 
@@ -52,6 +104,13 @@ io.on("connection", (socket) => {
 
   socket.on("conversation:leave", ({ conversationId } = {}) => {
     if (conversationId) socket.leave(`conversation:${conversationId}`);
+  });
+
+  socket.on("disconnect", () => {
+    if (socket.data.role !== "counselor" || !socket.data.participantId) return;
+
+    removeCounselorSocket(socket.data.participantId);
+    broadcastCounselorPresence();
   });
 });
 

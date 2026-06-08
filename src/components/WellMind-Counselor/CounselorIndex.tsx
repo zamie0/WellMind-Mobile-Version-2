@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useWellMindStore } from '@/stores/wellmindStore';
 import { useAuthStore } from '@/stores/authStore';
 import CounselorHome from './Home-Page/CounselorHome';
@@ -14,6 +14,7 @@ import Auth from '../../pages/Auth';
 import PinSetup from '@/components/WellMind-User/Profile-Page/PinSetup';
 import PinVerify from '@/pages/PinVerify';
 import { AnimatePresence } from 'framer-motion';
+import { identifyChatParticipant } from '@/lib/realtimeCounselorChat';
 
 const Index = () => {
   const user = useWellMindStore((state) => state.user);
@@ -23,6 +24,12 @@ const Index = () => {
     'home' | 'inbox' | 'appointments' | 'clients' | 'notes' | 'reports' | 'profile'
   >('home');
   const [openingConversationId, setOpeningConversationId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentSession.isAuthenticated && currentSession.userRole === 'counselor' && currentSession.currentUserId) {
+      identifyChatParticipant('counselor', currentSession.currentUserId);
+    }
+  }, [currentSession.currentUserId, currentSession.isAuthenticated, currentSession.userRole]);
 
   if (!currentSession.isAuthenticated) return <Auth />;
 

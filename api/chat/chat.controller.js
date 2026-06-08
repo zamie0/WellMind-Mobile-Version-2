@@ -68,15 +68,13 @@ export async function getOrCreateConversation(req, res) {
         $setOnInsert: {
           userId,
           counselorId,
-          userName: safeUserName,
-          counselorName: counselor.displayName,
         },
         $set: {
           userName: safeUserName,
           counselorName: counselor.displayName,
         },
       },
-      { new: true, upsert: true },
+      { returnDocument: "after", upsert: true },
     );
 
     emitConversationUpdate(req, conversation);
