@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { useAppPermissions } from "@/hooks/useAppPermissions";
+import { useGlobalCallListener } from "@/hooks/useGlobalCallListener";
 import { PermissionRequestModal } from "@/components/PermissionRequestModal";
 import { IncomingCallNotification } from "@/components/IncomingCallNotification";
 import Community from "./components/WellMind-User/Home-Page/Quick Actions/Community";
@@ -83,6 +84,9 @@ const RootNavigator = () => {
 const App = () => {
   const { isFirstLaunch, requestPermissions } = useAppPermissions();
   const [showPermissionModal, setShowPermissionModal] = useState(isFirstLaunch);
+
+  // Listen for incoming calls globally, regardless of which screen the user is on
+  useGlobalCallListener();
 
   useEffect(() => {
     startNotificationScheduler();

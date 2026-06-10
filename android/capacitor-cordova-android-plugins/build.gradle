@@ -33,14 +33,6 @@ android {
     }
 }
 
-tasks.withType(JavaCompile).configureEach {
-    javaCompiler.set(
-        javaToolchains.compilerFor {
-            languageVersion.set(JavaLanguageVersion.of(21))
-        }
-    )
-}
-
 repositories {
     google()
     mavenCentral()

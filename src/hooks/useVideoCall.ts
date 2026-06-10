@@ -152,10 +152,12 @@ export const useVideoCall = ({
   const createLocalStream = useCallback(
     async (mode: CallMode = 'video') => {
       const isNative = Capacitor.isNativePlatform();
+      console.log('📹 Creating local stream:', { mode, isNative });
 
       // For native Android/iOS, request permissions first
       if (isNative) {
         try {
+          console.log('📹 Requesting native Android permissions...');
           const permResult = await Camera.requestPermissions({
             permissions: ['camera', 'photos'],
           });
@@ -165,8 +167,9 @@ export const useVideoCall = ({
               'Camera permission denied. Please enable it in your phone settings (Settings > Apps > WellMind > Permissions > Camera).',
             );
           }
+          console.log('📹 Permissions granted:', permResult);
         } catch (error) {
-          console.error('Permission request failed:', error);
+          console.error('📹 Permission request failed:', error);
           throw new Error(
             'Unable to access camera. Please enable camera permission in your phone settings.',
           );
@@ -179,14 +182,20 @@ export const useVideoCall = ({
       };
 
       try {
+        console.log('📹 Calling getUserMedia with constraints:', constraints);
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        console.log('📹 Stream obtained:', { videoTracks: stream.getVideoTracks().length, audioTracks: stream.getAudioTracks().length });
+        
         setLocalStream(stream);
         setIsVideoEnabled(mode === 'video');
         const pc = preparePeerConnection();
         stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+        console.log('📹 Tracks added to peer connection');
         return stream;
       } catch (error) {
         const err = error as DOMException;
+        console.error('📹 getUserMedia failed:', { name: err.name, message: err.message });
+        
         if (err.name === 'NotAllowedError') {
           throw new Error(
             'Camera/Microphone permissions denied. Please enable them in Settings > Apps > WellMind > Permissions.',
@@ -274,17 +283,26 @@ export const useVideoCall = ({
       if (!localUserName) throw new Error('Unable to start call: local user is missing a name');
 
       try {
+        console.log('📞 Starting call:', { remoteId, remoteName, mode, conversationId });
         isCallInitiatorRef.current = true;
+        
+        console.log('📞 Requesting local stream...');
         await createLocalStream(mode);
+        console.log('📞 Local stream obtained');
+        
         setRemoteUserId(remoteId);
         setRemoteUserName(remoteName);
         setConnectionState('connecting');
+        console.log('📞 Setting isActive to true');
         setIsActive(true);
         setIsMinimized(false);
 
         const pc = preparePeerConnection();
+        console.log('📞 Peer connection prepared');
+        
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
+        console.log('📞 Offer created and set as local description');
 
         const offerPayload: WebRTCCallOffer = {
           conversationId,
@@ -294,8 +312,11 @@ export const useVideoCall = ({
           type: offer.type,
           mode,
         };
+        console.log('📞 Sending call offer via socket');
         sendCallOffer(offerPayload);
+        console.log('📞 Call initiated successfully');
       } catch (error) {
+        console.error('❌ Error in startCall:', error);
         const err = error instanceof Error ? error : new Error('Failed to start video call');
         onError?.(err);
         cleanupCall();
@@ -354,20 +375,20 @@ export const useVideoCall = ({
     joinConversationRoom(conversationId);
     const socket = getChatSocket();
 
-    socket.on('call:offer', handleIncomingOffer);
+    // Note: call:offer is handled globally by useGlobalCallListener
+    // to ensure notifications work regardless of which conversation is open
     socket.on('call:answer', handleIncomingAnswer);
     socket.on('call:candidate', handleIncomingCandidate);
     socket.on('call:end', handleIncomingCallEnd);
 
     return () => {
       if (conversationId) leaveConversationRoom(conversationId);
-      socket.off('call:offer', handleIncomingOffer);
       socket.off('call:answer', handleIncomingAnswer);
       socket.off('call:candidate', handleIncomingCandidate);
       socket.off('call:end', handleIncomingCallEnd);
       cleanupCall();
     };
-  }, [conversationId, handleIncomingAnswer, handleIncomingCallEnd, handleIncomingCandidate, handleIncomingOffer, cleanupCall]);
+  }, [conversationId, handleIncomingAnswer, handleIncomingCallEnd, handleIncomingCandidate, cleanupCall]);
 
   return {
     isActive,
