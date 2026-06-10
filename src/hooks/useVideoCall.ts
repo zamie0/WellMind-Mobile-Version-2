@@ -13,6 +13,7 @@ import {
   type WebRTCCandidate,
   type WebRTCCallEnd,
 } from '@/lib/realtimeCounselorChat';
+import { useIncomingCallStore } from '@/stores/incomingCallStore';
 
 interface UseVideoCallOptions {
   conversationId?: string;
@@ -20,6 +21,7 @@ interface UseVideoCallOptions {
   localUserName?: string;
   localRole: ChatRole;
   onError?: (error: Error) => void;
+  onIncomingCall?: (call: any) => void;
 }
 
 type CallMode = 'video' | 'audio';
@@ -151,12 +153,26 @@ export const useVideoCall = ({
         audio: true,
         video: mode === 'video' ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false,
       };
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      setLocalStream(stream);
-      setIsVideoEnabled(mode === 'video');
-      const pc = preparePeerConnection();
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-      return stream;
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        setLocalStream(stream);
+        setIsVideoEnabled(mode === 'video');
+        const pc = preparePeerConnection();
+        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+        return stream;
+      } catch (error) {
+        const err = error as DOMException;
+        if (err.name === 'NotAllowedError') {
+          throw new Error(
+            'Camera and/or microphone permissions are denied. Please enable them in your phone settings to make calls.',
+          );
+        }
+        if (err.name === 'NotFoundError') {
+          throw new Error('Camera or microphone device not found on your device.');
+        }
+        throw error;
+      }
     },
     [preparePeerConnection],
   );
@@ -166,37 +182,21 @@ export const useVideoCall = ({
       if (!conversationId || payload.conversationId !== conversationId) return;
       if (payload.callerId === localUserId) return;
 
-      try {
-        const stream = await createLocalStream(payload.mode);
-        setRemoteUserId(payload.callerId);
-        setRemoteUserName(payload.callerName);
-        setConnectionState('connecting');
-        setIsActive(true);
-        setIsMinimized(false);
-
-        const pc = preparePeerConnection();
-        await pc.setRemoteDescription({ type: payload.type, sdp: payload.sdp });
-        await flushPendingCandidates();
-
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-
-        const answerPayload: WebRTCCallAnswer = {
-          conversationId,
-          responderId: localUserId ?? '',
-          responderName: localUserName ?? 'User',
-          sdp: answer.sdp ?? '',
-          type: answer.type,
+      // Store incoming call and wait for user acceptance via UI
+      const incomingCallId = `call-${payload.conversationId}-${payload.callerId}-${Date.now()}`;
+      useIncomingCallStore.setState({
+        incomingCall: {
+          id: incomingCallId,
+          conversationId: payload.conversationId,
+          callerId: payload.callerId,
+          callerName: payload.callerName,
           mode: payload.mode,
-        };
-        sendCallAnswer(answerPayload);
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error('Could not answer incoming call');
-        onError?.(err);
-        cleanupCall();
-      }
+          offer: { sdp: payload.sdp, type: payload.type },
+          receivedAt: new Date(),
+        },
+      });
     },
-    [conversationId, createLocalStream, flushPendingCandidates, localUserId, localUserName, onError, preparePeerConnection, cleanupCall],
+    [conversationId, localUserId],
   );
 
   const handleIncomingAnswer = useCallback(
@@ -280,7 +280,44 @@ export const useVideoCall = ({
     [conversationId, createLocalStream, cleanupCall, localUserId, localUserName, onError, preparePeerConnection],
   );
 
+  const acceptIncomingCall = useCallback(async () => {
+    const { incomingCall } = useIncomingCallStore.getState();
+    if (!incomingCall || !conversationId || !localUserId || !localUserName) return;
+
+    try {
+      const stream = await createLocalStream(incomingCall.mode);
+      setRemoteUserId(incomingCall.callerId);
+      setRemoteUserName(incomingCall.callerName);
+      setConnectionState('connecting');
+      setIsActive(true);
+      setIsMinimized(false);
+
+      const pc = preparePeerConnection();
+      await pc.setRemoteDescription({ type: incomingCall.offer.type, sdp: incomingCall.offer.sdp });
+      await flushPendingCandidates();
+
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      const answerPayload: WebRTCCallAnswer = {
+        conversationId,
+        responderId: localUserId,
+        responderName: localUserName,
+        sdp: answer.sdp ?? '',
+        type: answer.type,
+        mode: incomingCall.mode,
+      };
+      sendCallAnswer(answerPayload);
+      useIncomingCallStore.setState({ acceptedCall: incomingCall, incomingCall: null });
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('Failed to accept incoming call');
+      onError?.(err);
+      cleanupCall();
+    }
+  }, [conversationId, localUserId, localUserName, createLocalStream, preparePeerConnection, flushPendingCandidates, onError, cleanupCall]);
+
   const endCall = useCallback(() => {
+
     if (conversationId) {
       sendCallEnd({ conversationId });
     }
@@ -320,6 +357,7 @@ export const useVideoCall = ({
     connectionState,
     startCall,
     endCall,
+    acceptIncomingCall,
     toggleMinimize: useCallback(() => {
       setIsMinimized((prev) => !prev);
     }, []),

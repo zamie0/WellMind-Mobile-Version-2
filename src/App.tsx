@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { useAppPermissions } from "@/hooks/useAppPermissions";
 import { PermissionRequestModal } from "@/components/PermissionRequestModal";
+import { IncomingCallNotification } from "@/components/IncomingCallNotification";
 import Community from "./components/WellMind-User/Home-Page/Quick Actions/Community";
 import Volunteering from "./components/WellMind-User/Home-Page/Quick Actions/Volunteering";
 import Programs from "./components/WellMind-User/Home-Page/Quick Actions/Programs";
@@ -101,6 +102,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner position="top-center" />
+        <IncomingCallNotification />
         <PermissionRequestModal
           isOpen={showPermissionModal}
           onRequestPermissions={handleRequestPermissions}
