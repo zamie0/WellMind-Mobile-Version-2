@@ -1,9 +1,13 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { memo, useEffect, useMemo, useState } from 'react';
-import { Send, ArrowLeft, Video, Info } from 'lucide-react';
+import { Send, ArrowLeft, Video, Phone, Info } from 'lucide-react';
+import { toast } from 'sonner';
 import { CounselorAvatar, getStatusColor } from './CounselorAvatar';
 import { CounselorProfileView } from './CounselorProfileView';
 import { formatMessageContent, formatTime } from './CounselorSupportChat.utils';
+import { CounselorVideoCall } from '@/components/WellMind-Counselor/Inbox-Page/CounselorVideoCall';
+import { useVideoCall } from '@/hooks/useVideoCall';
+import { sendChatMessage } from '@/lib/realtimeCounselorChat';
 import type { CounselorChat, CounselorUser } from '@/types/wellmind';
 import type { RefObject } from 'react';
 
@@ -31,6 +35,70 @@ export const CounselorChatView = ({
 }: CounselorChatViewProps) => {
   const [showProfile, setShowProfile] = useState(false);
   const isOnline = chatCounselor.status === 'online';
+
+  const {
+    isActive: isVideoCallActive,
+    isMinimized: isVideoCallMinimized,
+    localStream: userLocalStream,
+    remoteStream: userRemoteStream,
+    remoteUserName: userRemoteUserName,
+    isAudioEnabled: isUserAudioEnabled,
+    isVideoEnabled: isUserVideoEnabled,
+    connectionState: userConnectionState,
+    startCall: startUserCall,
+    endCall: endUserCall,
+    toggleMinimize: toggleUserMinimize,
+    toggleAudio: toggleUserAudio,
+    toggleVideo: toggleUserVideo,
+  } = useVideoCall({
+    conversationId: activeChat.id,
+    localUserId: counselorProfile?.id ?? undefined,
+    localUserName: counselorProfile?.displayName ?? 'You',
+    localRole: 'user',
+    onError: (error) => {
+      console.error(error);
+    },
+  });
+
+  const logUserCallEvent = async (label: string) => {
+    if (!activeChat.id || !counselorProfile) return;
+    try {
+      await sendChatMessage(activeChat.id, {
+        senderId: counselorProfile.id,
+        senderRole: 'user',
+        senderName: counselorProfile.displayName,
+        text: label,
+      });
+    } catch (error) {
+      console.error('Failed to save call history:', error);
+    }
+  };
+
+  const handleStartVideoCall = async () => {
+    try {
+      await startUserCall(chatCounselor.id, chatCounselor.displayName, 'video');
+      await logUserCallEvent(`Started video call with ${chatCounselor.displayName}`);
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Unable to start video call');
+    }
+  };
+
+  const handleStartAudioCall = async () => {
+    try {
+      await startUserCall(chatCounselor.id, chatCounselor.displayName, 'audio');
+      await logUserCallEvent(`Started audio call with ${chatCounselor.displayName}`);
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Unable to start audio call');
+    }
+  };
+
+  const handleEndCall = async () => {
+    endUserCall();
+    await logUserCallEvent(`Ended call with ${chatCounselor.displayName}`);
+  };
+
   const visibleMessages = useMemo(
     () => activeChat.messages.slice(Math.max(activeChat.messages.length - 220, 0)),
     [activeChat.messages],
@@ -114,6 +182,16 @@ export const CounselorChatView = ({
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.94 }}
+            onClick={handleStartAudioCall}
+            className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+            aria-label="Audio call"
+          >
+            <Phone className="h-4 w-4" style={{ color: '#39a89b' }} />
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.94 }}
+            onClick={handleStartVideoCall}
             className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
             style={{ background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
             aria-label="Video call"
@@ -213,6 +291,24 @@ export const CounselorChatView = ({
       </AnimatePresence>
 
       {/* BottomNav intentionally removed — chat is a full-page experience */}
+
+      <AnimatePresence>
+        {isVideoCallActive && (
+          <CounselorVideoCall
+            remoteUserName={userRemoteUserName || chatCounselor.displayName}
+            localStream={userLocalStream}
+            remoteStream={userRemoteStream}
+            isAudioEnabled={isUserAudioEnabled}
+            isVideoEnabled={isUserVideoEnabled}
+            connectionState={userConnectionState}
+            onHangup={handleEndCall}
+            onMinimize={toggleUserMinimize}
+            isMinimized={isVideoCallMinimized}
+            onToggleAudio={toggleUserAudio}
+            onToggleVideo={toggleUserVideo}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

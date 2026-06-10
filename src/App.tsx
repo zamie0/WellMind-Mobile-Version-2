@@ -2,8 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { useAppPermissions } from "@/hooks/useAppPermissions";
+import { PermissionRequestModal } from "@/components/PermissionRequestModal";
 import Community from "./components/WellMind-User/Home-Page/Quick Actions/Community";
 import Volunteering from "./components/WellMind-User/Home-Page/Quick Actions/Volunteering";
 import Programs from "./components/WellMind-User/Home-Page/Quick Actions/Programs";
@@ -78,15 +80,32 @@ const RootNavigator = () => {
 };
 
 const App = () => {
+  const { isFirstLaunch, requestPermissions } = useAppPermissions();
+  const [showPermissionModal, setShowPermissionModal] = useState(isFirstLaunch);
+
   useEffect(() => {
     startNotificationScheduler();
   }, []);
+
+  useEffect(() => {
+    setShowPermissionModal(isFirstLaunch);
+  }, [isFirstLaunch]);
+
+  const handleRequestPermissions = async (types: any[]) => {
+    await requestPermissions(types);
+    setShowPermissionModal(false);
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner position="top-center" />
+        <PermissionRequestModal
+          isOpen={showPermissionModal}
+          onRequestPermissions={handleRequestPermissions}
+          onClose={() => setShowPermissionModal(false)}
+        />
         <BrowserRouter>
           <RootNavigator />
         </BrowserRouter>

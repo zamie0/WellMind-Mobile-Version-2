@@ -108,6 +108,30 @@ io.on("connection", (socket) => {
     if (conversationId) socket.leave(`conversation:${conversationId}`);
   });
 
+  socket.on("call:offer", (payload) => {
+    if (payload?.conversationId) {
+      socket.to(`conversation:${payload.conversationId}`).emit("call:offer", payload);
+    }
+  });
+
+  socket.on("call:answer", (payload) => {
+    if (payload?.conversationId) {
+      socket.to(`conversation:${payload.conversationId}`).emit("call:answer", payload);
+    }
+  });
+
+  socket.on("call:candidate", (payload) => {
+    if (payload?.conversationId) {
+      socket.to(`conversation:${payload.conversationId}`).emit("call:candidate", payload);
+    }
+  });
+
+  socket.on("call:end", (payload) => {
+    if (payload?.conversationId) {
+      socket.to(`conversation:${payload.conversationId}`).emit("call:end", payload);
+    }
+  });
+
   socket.on("disconnect", () => {
     if (socket.data.role !== "counselor" || !socket.data.participantId) return;
 

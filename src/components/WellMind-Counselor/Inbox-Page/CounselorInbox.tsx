@@ -1,6 +1,6 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Inbox, MessageSquare, Search, Send, UserRound } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Inbox, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
 import {
@@ -15,6 +15,12 @@ import {
   type ChatConversation,
   type ChatMessage,
 } from '@/lib/realtimeCounselorChat';
+import { CounselorInboxHeader } from './CounselorInboxHeader';
+import { CounselorMessageBubble } from './CounselorInboxMessageBubble';
+import { CounselorInboxInput } from './CounselorInboxInput';
+import { CounselorInboxConversationList } from './CounselorInboxConversationList';
+import { CounselorVideoCall } from './CounselorVideoCall';
+import { useVideoCall } from '@/hooks/useVideoCall';
 
 interface CounselorInboxProps {
   initialConversationId?: string | null;
@@ -35,9 +41,29 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
   const counselorName = currentUser?.counselorName || currentUser?.email?.split('@')[0] || 'Counselor';
   const activeConversation = conversations.find((c) => c.id === activeId) || null;
 
-  const filteredConversations = conversations.filter((c) =>
-    `${c.userName} ${c.lastMessage}`.toLowerCase().includes(query.toLowerCase()),
-  );
+  // Video call state
+  const {
+    isActive: isVideoCallActive,
+    isMinimized: isVideoCallMinimized,
+    localStream: counselorLocalStream,
+    remoteStream: counselorRemoteStream,
+    remoteUserId,
+    remoteUserName,
+    isAudioEnabled: isCounselorAudioEnabled,
+    isVideoEnabled: isCounselorVideoEnabled,
+    connectionState: counselorConnectionState,
+    startCall,
+    endCall,
+    toggleMinimize,
+    toggleAudio: toggleCounselorAudio,
+    toggleVideo: toggleCounselorVideo,
+  } = useVideoCall({
+    conversationId: activeId ?? undefined,
+    localUserId: counselorId ?? undefined,
+    localUserName: counselorName,
+    localRole: 'counselor',
+    onError: (error) => toast.error(error.message),
+  });
 
   const visibleMessages = useMemo(
     () => messages.slice(Math.max(messages.length - 220, 0)),
@@ -174,130 +200,137 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
     }
   };
 
-  // ── Chat thread view ──────────────────────────────────────────────
+  const logCallEvent = async (eventText: string) => {
+    if (!activeId || !counselorId || !activeConversation) return;
+    try {
+      await sendChatMessage(activeId, {
+        senderId: counselorId,
+        senderRole: 'counselor',
+        senderName: counselorName,
+        text: eventText,
+      });
+    } catch (error) {
+      console.error('Failed to save call history:', error);
+    }
+  };
+
+  const handleStartVideoCall = async () => {
+    if (!activeConversation) return;
+    try {
+      await startCall(activeConversation.userId || '', activeConversation.userName, 'video');
+      await logCallEvent(`Started video call with ${activeConversation.userName}`);
+      toast.success('Initiating video call...');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to start video call');
+    }
+  };
+
+  const handleStartAudioCall = async () => {
+    if (!activeConversation) return;
+    try {
+      await startCall(activeConversation.userId || '', activeConversation.userName, 'audio');
+      await logCallEvent(`Started audio call with ${activeConversation.userName}`);
+      toast.success('Initiating audio call...');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to start audio call');
+    }
+  };
+
+  const handleHangUp = async () => {
+    if (!activeConversation) return;
+    endCall();
+    await logCallEvent(`Ended call with ${activeConversation.userName}`);
+  };
+
+  // Chat thread view
   if (activeConversation) {
     return (
-      <motion.div
-        key="counselor-chat"
-        initial={{ opacity: 0, x: 16 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -16 }}
-        className="fixed inset-0 z-50 flex flex-col"
-        style={{ background: 'linear-gradient(180deg,#eef4f7 0%,#f8fbfc 60%,#ffffff 100%)' }}
-      >
-        {/* Header */}
-        <header
-          className="flex items-center gap-3 px-4"
-          style={{
-            paddingTop: 'max(env(safe-area-inset-top, 0px), 14px)',
-            paddingBottom: 12,
-            background: 'rgba(238,244,247,0.96)',
-            borderBottom: '0.5px solid rgba(74,144,164,0.16)',
-            backdropFilter: 'blur(12px)',
-          }}
+      <>
+        <motion.div
+          key="counselor-chat"
+          initial={{ opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -16 }}
+          className="fixed inset-0 z-40 flex flex-col"
+          style={{ background: 'linear-gradient(180deg,#eef4f7 0%,#f8fbfc 60%,#ffffff 100%)' }}
         >
-          <button
-            type="button"
-            onClick={() => setActiveId(null)}
-            className="h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
-            aria-label="Back to inbox"
-          >
-            <ArrowLeft className="h-4 w-4" style={{ color: '#5f7585' }} />
-          </button>
+          {/* Header */}
+          <CounselorInboxHeader
+            activeConversation={activeConversation}
+            onBack={() => setActiveId(null)}
+            onVideoCall={handleStartVideoCall}
+            onAudioCall={handleStartAudioCall}
+          />
 
-          <div
-            className="h-10 w-10 rounded-2xl flex items-center justify-center flex-shrink-0"
-            style={{ background: '#eaf3f7' }}
-          >
-            <UserRound className="h-5 w-5" style={{ color: '#4a90a4' }} />
-          </div>
+          {/* Messages */}
+          <main className="flex-1 overflow-y-auto px-4 py-5 space-y-3">
+            {visibleMessages.map((message, index) => (
+              <CounselorMessageBubble
+                key={message.id}
+                message={message}
+                isOwn={message.senderRole === 'counselor'}
+                index={index}
+              />
+            ))}
 
-          <div className="min-w-0">
-            <p className="text-sm font-bold truncate" style={{ color: '#1a2b38' }}>
-              {activeConversation.userName}
-            </p>
-            <p className="text-[11px] font-semibold" style={{ color: '#4a90a4' }}>Active chat</p>
-          </div>
-        </header>
-
-        {/* Messages */}
-        <main className="flex-1 overflow-y-auto px-4 py-5 space-y-3">
-          {visibleMessages.map((message, index) => (
-            <CounselorMessageBubble
-              key={message.id}
-              message={message}
-              isOwn={message.senderRole === 'counselor'}
-              index={index}
-            />
-          ))}
-
-          {!visibleMessages.length && (
-            <div className="py-16 text-center">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3"
-                style={{ background: 'rgba(74,144,164,0.1)' }}
-              >
-                <MessageSquare className="h-6 w-6" style={{ color: '#4a90a4' }} />
+            {!visibleMessages.length && (
+              <div className="py-16 text-center">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3"
+                  style={{ background: 'rgba(74,144,164,0.1)' }}
+                >
+                  <Search className="h-6 w-6" style={{ color: '#4a90a4' }} />
+                </div>
+                <p className="text-sm font-semibold" style={{ color: '#1a2b38' }}>
+                  No messages yet
+                </p>
+                <p className="text-xs mt-1" style={{ color: '#8fa3b1' }}>
+                  Start the conversation below.
+                </p>
               </div>
-              <p className="text-sm font-semibold" style={{ color: '#1a2b38' }}>No messages yet</p>
-              <p className="text-xs mt-1" style={{ color: '#8fa3b1' }}>Start the conversation below.</p>
-            </div>
-          )}
+            )}
 
-          <div ref={messagesEndRef} />
-        </main>
+            <div ref={messagesEndRef} />
+          </main>
 
-        {/* Input */}
-        <footer
-          className="px-4"
-          style={{
-            paddingTop: 10,
-            paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)',
-            background: 'rgba(238,244,247,0.97)',
-            borderTop: '0.5px solid rgba(74,144,164,0.16)',
-            backdropFilter: 'blur(12px)',
-          }}
-        >
-          <div
-            className="flex items-center gap-2 rounded-full px-4 py-1.5"
-            style={{ background: 'white', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
-          >
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && void sendMessage()}
-              placeholder="Reply to client..."
-              className="flex-1 bg-transparent border-none outline-none text-sm py-2"
-              style={{ color: '#1a2b38' }}
+          {/* Input */}
+          <CounselorInboxInput
+            input={input}
+            onInputChange={setInput}
+            onSend={sendMessage}
+          />
+        </motion.div>
+
+        {/* Video call overlay */}
+        <AnimatePresence>
+          {isVideoCallActive && remoteUserId && (
+            <CounselorVideoCall
+              remoteUserName={remoteUserName}
+              localStream={counselorLocalStream}
+              remoteStream={counselorRemoteStream}
+              isAudioEnabled={isCounselorAudioEnabled}
+              isVideoEnabled={isCounselorVideoEnabled}
+              connectionState={counselorConnectionState}
+              onHangup={handleHangUp}
+              onMinimize={toggleMinimize}
+              isMinimized={isVideoCallMinimized}
+              onToggleAudio={toggleCounselorAudio}
+              onToggleVideo={toggleCounselorVideo}
             />
-            <button
-              type="button"
-              onClick={() => void sendMessage()}
-              disabled={!input.trim()}
-              className="h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0 transition-opacity"
-              style={{
-                background: 'linear-gradient(135deg,#4a90a4,#7bbccc)',
-                opacity: input.trim() ? 1 : 0.4,
-              }}
-              aria-label="Send reply"
-            >
-              <Send className="h-4 w-4 text-white" />
-            </button>
-          </div>
-        </footer>
-      </motion.div>
+          )}
+        </AnimatePresence>
+      </>
     );
   }
 
-  // ── Inbox list view ───────────────────────────────────────────────
+  // Inbox list view
   return (
     <motion.div
       key="inbox"
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
-      className="space-y-5"
+      className="space-y-5 px-4 pt-6"
     >
       {/* Hero header */}
       <div className="relative overflow-hidden px-1 pt-2 pb-1">
@@ -358,150 +391,15 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
       </motion.div>
 
       {/* Conversation list */}
-      <div className="space-y-3">
-        {filteredConversations.map((conversation, index) => (
-          <motion.button
-            key={conversation.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.18 + index * 0.06 }}
-            type="button"
-            onClick={() => setActiveId(conversation.id)}
-            className="w-full text-left rounded-3xl overflow-hidden"
-            style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
-          >
-            {/* Accent stripe */}
-            <div
-              className="h-1 w-full"
-              style={{
-                background: conversation.unreadForCounselor > 0
-                  ? 'linear-gradient(90deg, #e8735a, #f0957a)'
-                  : 'linear-gradient(90deg, #4a90a4, #7bbccc)',
-              }}
-            />
-            <div className="flex items-center gap-3 px-4 py-4">
-              <div
-                className="h-12 w-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                style={{ background: '#eaf3f7' }}
-              >
-                <UserRound className="h-5 w-5" style={{ color: '#4a90a4' }} />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="text-sm font-bold truncate" style={{ color: '#1a2b38' }}>
-                    {conversation.userName}
-                  </p>
-                  {conversation.unreadForCounselor > 0 && (
-                    <span
-                      className="text-[10px] font-bold rounded-full px-2 py-0.5 flex-shrink-0"
-                      style={{ background: '#e8735a', color: 'white' }}
-                    >
-                      {conversation.unreadForCounselor}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs truncate" style={{ color: '#8fa3b1' }}>
-                  {conversation.lastMessage || 'New conversation'}
-                </p>
-              </div>
-
-              <p className="text-[11px] flex-shrink-0" style={{ color: '#b0c0cc' }}>
-                {new Date(conversation.lastMessageAt || conversation.updatedAt).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </p>
-            </div>
-          </motion.button>
-        ))}
-
-        {/* Empty state */}
-        {!filteredConversations.length && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="rounded-3xl overflow-hidden"
-            style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
-          >
-            <div
-              className="h-1 w-full"
-              style={{ background: 'linear-gradient(90deg, #8fa3b1, #b0c4ce)' }}
-            />
-            <div className="p-10 text-center">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3"
-                style={{ background: 'rgba(74,144,164,0.1)' }}
-              >
-                <MessageSquare className="h-6 w-6" style={{ color: '#4a90a4' }} />
-              </div>
-              <p className="text-sm font-semibold" style={{ color: '#1a2b38' }}>
-                {isLoading ? 'Loading chats...' : 'No active chats'}
-              </p>
-              <p className="text-xs mt-1" style={{ color: '#8fa3b1' }}>
-                Users who message you will appear here.
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </div>
+      <CounselorInboxConversationList
+        conversations={conversations}
+        isLoading={isLoading}
+        onSelectConversation={setActiveId}
+        onSearch={setQuery}
+        query={query}
+      />
     </motion.div>
   );
 };
-
-// ── Message bubble ────────────────────────────────────────────────────
-const CounselorMessageBubble = memo(({
-  message,
-  isOwn,
-  index,
-}: {
-  message: ChatMessage;
-  isOwn: boolean;
-  index: number;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: 8 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: Math.min(index * 0.01, 0.12) }}
-    className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-  >
-    <div
-      className="max-w-[78%] px-4 py-3 rounded-2xl"
-      style={
-        isOwn
-          ? {
-              background: message.failed
-                ? '#c0502f'
-                : 'linear-gradient(135deg,#4a90a4,#7bbccc)',
-              color: 'white',
-              borderBottomRightRadius: 5,
-              opacity: message.optimistic ? 0.78 : 1,
-            }
-          : {
-              background: 'white',
-              color: '#1a2b38',
-              borderBottomLeftRadius: 5,
-              boxShadow: '0 2px 10px rgba(0,0,0,0.07)',
-            }
-      }
-    >
-      <p className="text-sm leading-relaxed">{message.text}</p>
-      <p
-        className="text-[10px] mt-1"
-        style={{
-          color: isOwn ? 'rgba(255,255,255,0.72)' : '#8fa3b1',
-          textAlign: isOwn ? 'right' : 'left',
-        }}
-      >
-        {message.failed
-          ? 'Failed'
-          : message.optimistic
-            ? 'Sending...'
-            : new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-      </p>
-    </div>
-  </motion.div>
-));
 
 export default CounselorInbox;

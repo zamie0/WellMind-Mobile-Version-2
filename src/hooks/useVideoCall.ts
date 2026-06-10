@@ -1,0 +1,331 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  getChatSocket,
+  joinConversationRoom,
+  leaveConversationRoom,
+  sendCallAnswer,
+  sendCallEnd,
+  sendCallOffer,
+  sendIceCandidate,
+  type ChatRole,
+  type WebRTCCallAnswer,
+  type WebRTCCallOffer,
+  type WebRTCCandidate,
+  type WebRTCCallEnd,
+} from '@/lib/realtimeCounselorChat';
+
+interface UseVideoCallOptions {
+  conversationId?: string;
+  localUserId?: string;
+  localUserName?: string;
+  localRole: ChatRole;
+  onError?: (error: Error) => void;
+}
+
+type CallMode = 'video' | 'audio';
+
+export const useVideoCall = ({
+  conversationId,
+  localUserId,
+  localUserName,
+  localRole,
+  onError,
+}: UseVideoCallOptions) => {
+  const [isActive, setIsActive] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [remoteUserId, setRemoteUserId] = useState<string | null>(null);
+  const [remoteUserName, setRemoteUserName] = useState('');
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [connectionState, setConnectionState] = useState<
+    'connecting' | 'connected' | 'disconnected' | 'failed'
+  >('connecting');
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
+  const isCallInitiatorRef = useRef(false);
+
+  const cleanupCall = useCallback(() => {
+    peerConnectionRef.current?.close();
+    peerConnectionRef.current = null;
+    pendingCandidatesRef.current = [];
+    localStream?.getTracks().forEach((track) => track.stop());
+    remoteStream?.getTracks().forEach((track) => track.stop());
+    setLocalStream(null);
+    setRemoteStream(null);
+    setIsAudioEnabled(true);
+    setIsVideoEnabled(true);
+    setConnectionState('connecting');
+    setIsMinimized(false);
+    setIsActive(false);
+    isCallInitiatorRef.current = false;
+  }, [localStream, remoteStream]);
+
+  const attachRemoteStream = useCallback((event: RTCTrackEvent) => {
+    const stream = remoteStream ?? new MediaStream();
+    if (event.streams && event.streams[0]) {
+      event.streams[0].getTracks().forEach((track) => stream.addTrack(track));
+    } else {
+      stream.addTrack(event.track);
+    }
+    setRemoteStream(stream);
+  }, [remoteStream]);
+
+  const preparePeerConnection = useCallback(() => {
+    if (peerConnectionRef.current) return peerConnectionRef.current;
+
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: ['stun:stun.l.google.com:19302'] },
+        { urls: ['stun:stun1.l.google.com:19302'] },
+      ],
+    });
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate && conversationId) {
+        const candidatePayload: WebRTCCandidate = {
+          conversationId,
+          candidate: event.candidate.toJSON(),
+        };
+        sendIceCandidate(candidatePayload);
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      const state = pc.connectionState as
+        | 'connecting'
+        | 'connected'
+        | 'disconnected'
+        | 'failed';
+      setConnectionState(state);
+      if (state === 'connected') {
+        setIsActive(true);
+      }
+      if (state === 'disconnected' || state === 'failed') {
+        cleanupCall();
+      }
+    };
+
+    pc.ontrack = attachRemoteStream;
+    peerConnectionRef.current = pc;
+    return pc;
+  }, [attachRemoteStream, cleanupCall, conversationId]);
+
+  const flushPendingCandidates = useCallback(async () => {
+    const pc = peerConnectionRef.current;
+    if (!pc || !pc.remoteDescription) return;
+
+    const candidates = pendingCandidatesRef.current.slice();
+    pendingCandidatesRef.current = [];
+
+    for (const candidateInit of candidates) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidateInit));
+      } catch (error) {
+        console.warn('Failed to add queued ICE candidate', error);
+      }
+    }
+  }, []);
+
+  const toggleAudio = useCallback(() => {
+    if (!localStream) return;
+    localStream.getAudioTracks().forEach((track) => {
+      track.enabled = !track.enabled;
+    });
+    setIsAudioEnabled((prev) => !prev);
+  }, [localStream]);
+
+  const toggleVideo = useCallback(() => {
+    if (!localStream) return;
+    localStream.getVideoTracks().forEach((track) => {
+      track.enabled = !track.enabled;
+    });
+    setIsVideoEnabled((prev) => !prev);
+  }, [localStream]);
+
+  const createLocalStream = useCallback(
+    async (mode: CallMode = 'video') => {
+      const constraints = {
+        audio: true,
+        video: mode === 'video' ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false,
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      setLocalStream(stream);
+      setIsVideoEnabled(mode === 'video');
+      const pc = preparePeerConnection();
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+      return stream;
+    },
+    [preparePeerConnection],
+  );
+
+  const handleIncomingOffer = useCallback(
+    async (payload: WebRTCCallOffer) => {
+      if (!conversationId || payload.conversationId !== conversationId) return;
+      if (payload.callerId === localUserId) return;
+
+      try {
+        const stream = await createLocalStream(payload.mode);
+        setRemoteUserId(payload.callerId);
+        setRemoteUserName(payload.callerName);
+        setConnectionState('connecting');
+        setIsActive(true);
+        setIsMinimized(false);
+
+        const pc = preparePeerConnection();
+        await pc.setRemoteDescription({ type: payload.type, sdp: payload.sdp });
+        await flushPendingCandidates();
+
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+
+        const answerPayload: WebRTCCallAnswer = {
+          conversationId,
+          responderId: localUserId ?? '',
+          responderName: localUserName ?? 'User',
+          sdp: answer.sdp ?? '',
+          type: answer.type,
+          mode: payload.mode,
+        };
+        sendCallAnswer(answerPayload);
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error('Could not answer incoming call');
+        onError?.(err);
+        cleanupCall();
+      }
+    },
+    [conversationId, createLocalStream, flushPendingCandidates, localUserId, localUserName, onError, preparePeerConnection, cleanupCall],
+  );
+
+  const handleIncomingAnswer = useCallback(
+    async (payload: WebRTCCallAnswer) => {
+      if (!conversationId || payload.conversationId !== conversationId) return;
+      if (!peerConnectionRef.current) return;
+
+      try {
+        await peerConnectionRef.current.setRemoteDescription({ type: payload.type, sdp: payload.sdp });
+        await flushPendingCandidates();
+      } catch (error) {
+        console.error('Failed to set remote answer', error);
+      }
+    },
+    [conversationId, flushPendingCandidates],
+  );
+
+  const handleIncomingCandidate = useCallback(
+    async (payload: WebRTCCandidate) => {
+      if (!conversationId || payload.conversationId !== conversationId) return;
+      const pc = peerConnectionRef.current;
+      if (!pc || !payload.candidate) return;
+
+      if (pc.remoteDescription && pc.remoteDescription.type) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+        } catch (error) {
+          console.warn('Failed to add ICE candidate', error);
+        }
+        return;
+      }
+
+      pendingCandidatesRef.current.push(payload.candidate);
+    },
+    [conversationId],
+  );
+
+  const handleIncomingCallEnd = useCallback(
+    (payload: WebRTCCallEnd) => {
+      if (!conversationId || payload.conversationId !== conversationId) return;
+      cleanupCall();
+      setIsActive(false);
+    },
+    [conversationId, cleanupCall],
+  );
+
+  const startCall = useCallback(
+    async (remoteId: string, remoteName: string, mode: CallMode = 'video') => {
+      if (!conversationId) throw new Error('Unable to start call: no active conversation');
+      if (!localUserId) throw new Error('Unable to start call: local user is not identified');
+      if (!localUserName) throw new Error('Unable to start call: local user is missing a name');
+
+      try {
+        isCallInitiatorRef.current = true;
+        await createLocalStream(mode);
+        setRemoteUserId(remoteId);
+        setRemoteUserName(remoteName);
+        setConnectionState('connecting');
+        setIsActive(true);
+        setIsMinimized(false);
+
+        const pc = preparePeerConnection();
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        const offerPayload: WebRTCCallOffer = {
+          conversationId,
+          callerId: localUserId,
+          callerName: localUserName,
+          sdp: offer.sdp ?? '',
+          type: offer.type,
+          mode,
+        };
+        sendCallOffer(offerPayload);
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error('Failed to start video call');
+        onError?.(err);
+        cleanupCall();
+      }
+    },
+    [conversationId, createLocalStream, cleanupCall, localUserId, localUserName, onError, preparePeerConnection],
+  );
+
+  const endCall = useCallback(() => {
+    if (conversationId) {
+      sendCallEnd({ conversationId });
+    }
+    cleanupCall();
+    setIsActive(false);
+  }, [cleanupCall, conversationId]);
+
+  useEffect(() => {
+    if (!conversationId) return undefined;
+    joinConversationRoom(conversationId);
+    const socket = getChatSocket();
+
+    socket.on('call:offer', handleIncomingOffer);
+    socket.on('call:answer', handleIncomingAnswer);
+    socket.on('call:candidate', handleIncomingCandidate);
+    socket.on('call:end', handleIncomingCallEnd);
+
+    return () => {
+      if (conversationId) leaveConversationRoom(conversationId);
+      socket.off('call:offer', handleIncomingOffer);
+      socket.off('call:answer', handleIncomingAnswer);
+      socket.off('call:candidate', handleIncomingCandidate);
+      socket.off('call:end', handleIncomingCallEnd);
+      cleanupCall();
+    };
+  }, [conversationId, handleIncomingAnswer, handleIncomingCallEnd, handleIncomingCandidate, handleIncomingOffer, cleanupCall]);
+
+  return {
+    isActive,
+    isMinimized,
+    localStream,
+    remoteStream,
+    remoteUserId,
+    remoteUserName,
+    isAudioEnabled,
+    isVideoEnabled,
+    connectionState,
+    startCall,
+    endCall,
+    toggleMinimize: useCallback(() => {
+      setIsMinimized((prev) => !prev);
+    }, []),
+    toggleAudio,
+    toggleVideo,
+  };
+};
+
+export default useVideoCall;

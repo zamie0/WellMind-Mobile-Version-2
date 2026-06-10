@@ -48,7 +48,7 @@ export const CounselorClients = ({ onOpenChat }: CounselorClientsProps) => {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
-      className="space-y-5"
+      className="space-y-5 px-4 pt-6"
     >
       {/* ── Hero header ─────────────────────────────────────── */}
       <div className="relative overflow-hidden px-1 pt-2 pb-1">

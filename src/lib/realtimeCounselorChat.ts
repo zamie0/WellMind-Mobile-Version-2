@@ -98,6 +98,49 @@ export const sendChatMessage = (
     },
   );
 
+export interface WebRTCCallOffer {
+  conversationId: string;
+  callerId: string;
+  callerName: string;
+  sdp: string;
+  type: RTCSdpType;
+  mode: 'video' | 'audio';
+}
+
+export interface WebRTCCallAnswer {
+  conversationId: string;
+  responderId: string;
+  responderName: string;
+  sdp: string;
+  type: RTCSdpType;
+  mode: 'video' | 'audio';
+}
+
+export interface WebRTCCandidate {
+  conversationId: string;
+  candidate: RTCIceCandidateInit;
+}
+
+export interface WebRTCCallEnd {
+  conversationId: string;
+}
+
+export const sendCallOffer = (payload: WebRTCCallOffer) => {
+  getChatSocket().emit('call:offer', payload);
+};
+
+export const sendCallAnswer = (payload: WebRTCCallAnswer) => {
+  getChatSocket().emit('call:answer', payload);
+};
+
+export const sendIceCandidate = (payload: WebRTCCandidate) => {
+  getChatSocket().emit('call:candidate', payload);
+};
+
+export const sendCallEnd = (payload: WebRTCCallEnd) => {
+  getChatSocket().emit('call:end', payload);
+};
+
 export const markConversationRead = (conversationId: string, readerRole: ChatRole) =>
   apiRequest<{ conversation: ChatConversation }>(`/api/chat/conversations/${conversationId}/read`, {
     method: 'PATCH',

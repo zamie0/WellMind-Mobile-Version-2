@@ -8,7 +8,6 @@ import {
   Inbox,
   MessageSquare,
   Sparkles,
-  Users,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { useCounselorStore } from '@/stores/counselorStore';
@@ -98,60 +97,6 @@ export const CounselorHome = ({ onOpenChat, onViewChange }: CounselorHomeProps) 
             </button>
           ))}
         </div>
-
-        <section>
-          <SectionHeading icon={<MessageSquare className="h-4 w-4" style={{ color: '#4a90a4' }} />}>
-            Live Inbox
-          </SectionHeading>
-          <div className="rounded-2xl overflow-hidden" style={{ background: 'white', boxShadow: '0 3px 14px rgba(0,0,0,0.065)' }}>
-            <div className="h-[3px]" style={{ background: 'linear-gradient(90deg,#4a90a4,#7bbccc)' }} />
-            <div className="p-5">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>Client Conversations</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#8fa3b1' }}>
-                    {unreadChats ? `${unreadChats} unread message${unreadChats === 1 ? '' : 's'}` : 'All caught up'}
-                  </p>
-                </div>
-                <button type="button" onClick={() => onViewChange('inbox')} className="text-xs font-semibold rounded-full px-3.5 py-1.5 border-0" style={{ background: '#eaf3f7', color: '#4a90a4' }}>
-                  Inbox
-                </button>
-              </div>
-
-              {recentClients.length ? (
-                <div className="space-y-2">
-                  {recentClients.map((client) => (
-                    <button
-                      key={client.id}
-                      type="button"
-                      onClick={() => client.conversationId ? onOpenChat(client.conversationId) : onViewChange('inbox')}
-                      className="flex w-full items-center gap-3 rounded-2xl text-left transition-all active:scale-[0.98]"
-                      style={{ background: '#f5f8fa', padding: '12px 14px' }}
-                    >
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#eaf3f7,#c8e0ea)' }}>
-                        <MessageSquare style={{ color: '#4a90a4', width: 16, height: 16 }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold truncate" style={{ color: '#1a2b38' }}>{client.displayName}</p>
-                        <p className="text-[11px] mt-0.5 truncate" style={{ color: '#8fa3b1' }}>
-                          {client.lastMessage || 'Open conversation'}
-                        </p>
-                      </div>
-                      {client.unreadCount ? (
-                        <span className="text-[10px] font-bold rounded-full px-2 py-0.5" style={{ background: '#e8735a', color: 'white' }}>{client.unreadCount}</span>
-                      ) : null}
-                      <ChevronRight style={{ color: '#c4d4de', width: 16, height: 16, flexShrink: 0 }} />
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-2xl text-center p-6" style={{ border: '1.5px dashed #dce7ec' }}>
-                  <p className="text-xs" style={{ color: '#8fa3b1' }}>No active conversations right now.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
 
         <section>
           <SectionHeading icon={<Sparkles className="h-4 w-4" style={{ color: '#e8c45a' }} />}>

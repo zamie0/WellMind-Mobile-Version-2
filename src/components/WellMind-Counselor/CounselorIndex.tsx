@@ -108,7 +108,7 @@ const Index = () => {
           : undefined
       }
     >
-      <main className={isHome ? '' : 'space-y-6 px-4 pt-6'}>
+      <main className={isHome ? '' : ''}>
         <AnimatePresence mode="wait">
           {activeView === 'home' && (
             <CounselorHome
