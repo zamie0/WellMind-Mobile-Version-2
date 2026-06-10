@@ -24,15 +24,45 @@ const POSITIVE_EMOTIONS: EmotionLabel[] = ['happy', 'calm'];
 const NEUTRAL_EMOTIONS: EmotionLabel[] = ['neutral'];
 
 function getInsight(counts: Record<string, number>, total: number): string {
-  if (total === 0) return 'Start chatting with MindBuddy to track your emotions! 💬';
+  if (total === 0) return 'Start chatting with MindBuddy to track your emotions. Your feelings matter, and noticing them is the first step toward understanding yourself better. 💚';
+  
   const topEmotion = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] as EmotionLabel | undefined;
-  if (!topEmotion) return 'Keep sharing your feelings! 🌱';
+  if (!topEmotion) return 'Keep sharing your feelings. Every conversation helps you understand what you're going through. 🌱';
+  
   const meta = emotionMeta[topEmotion];
-  if (topEmotion === 'crisis') return '🚨 Please reach out to a professional. You matter!';
-  if (topEmotion === 'severe') return "⚠️ You've been under a lot of pressure. Consider talking to a counselor.";
-  if (POSITIVE_EMOTIONS.includes(topEmotion)) return `${meta.emoji} You've been feeling ${meta.label.toLowerCase()} most often. Keep it up!`;
-  if (NEUTRAL_EMOTIONS.includes(topEmotion)) return '😐 Things seem steady. MindBuddy is here whenever you need to talk.';
-  return `${meta.emoji} ${meta.label} has been most common lately. MindBuddy is here for you 💚`;
+  const secondTop = Object.entries(counts).sort((a, b) => b[1] - a[1])[1]?.[0] as EmotionLabel | undefined;
+  const topCount = counts[topEmotion] ?? 0;
+  const topPct = Math.round((topCount / total) * 100);
+  
+  if (topEmotion === 'crisis') {
+    return "🚨 I'm concerned about what you've been sharing. Your safety matters most. Please reach out to a professional counselor or crisis support. You don't have to go through this alone.";
+  }
+  
+  if (topEmotion === 'severe') {
+    return `⚠️ You've been feeling overwhelmed often (${topPct}% of the time). That's a lot to carry. Consider speaking with a counselor — they can help you work through what's weighing on you. You deserve real support.`;
+  }
+  
+  if (topEmotion === 'depress') {
+    return `😔 You've been feeling low lately (${topPct}% of the time)${secondTop ? `, especially when you're also ${emotionMeta[secondTop].label.toLowerCase()}` : ''}. This pattern is worth exploring with someone you trust. Talking about it can help — and MindBuddy is here to listen whenever you need.`;
+  }
+  
+  if (topEmotion === 'anxious') {
+    return `😰 Anxiety has been showing up often (${topPct}% of the time). That's your mind trying to protect you, but it can feel overwhelming. Grounding techniques and talking through what worries you can help. What's one thing that helped you feel calmer recently?`;
+  }
+  
+  if (topEmotion === 'stress') {
+    return `😤 You've been stressed frequently (${topPct}% of the time). Stress is your body telling you something needs attention — whether it's rest, boundaries, or support. Notice what patterns trigger it. That awareness is powerful.`;
+  }
+  
+  if (POSITIVE_EMOTIONS.includes(topEmotion)) {
+    return `${meta.emoji} You've been feeling ${meta.label.toLowerCase()} most often (${topPct}% of the time) — that's wonderful. Notice what helped create those moments. Keep doing those things. 💚`;
+  }
+  
+  if (NEUTRAL_EMOTIONS.includes(topEmotion)) {
+    return '😐 Things seem steady for you. That stability is valuable. MindBuddy is here whenever you want to explore deeper feelings or just need someone to listen.';
+  }
+  
+  return `${meta.emoji} ${meta.label} has been most common (${topPct}% of the time). Your emotions are trying to tell you something — whether it's to slow down, ask for help, or celebrate a win. What do you think they're pointing to?`;
 }
 
 export const EmotionDashboard = () => {
@@ -94,7 +124,7 @@ export const EmotionDashboard = () => {
             <div className="min-w-0">
               <p className="font-bold text-sm truncate" style={{ color: '#1a2b38' }}>My Emotions</p>
               <p className="text-[11px] font-semibold" style={{ color: '#39a89b' }}>
-                AI-tracked from your MindBuddy chats
+                Understanding your emotional patterns
               </p>
             </div>
           </div>
@@ -121,10 +151,10 @@ export const EmotionDashboard = () => {
             className="text-[1.75rem] font-bold leading-tight mb-1.5"
             style={{ color: '#1a2b38', letterSpacing: '-0.02em' }}
           >
-            Know how{'\n'}you feel.
+            Your Emotional{'\n'}Journey.
           </h2>
           <p className="text-[14px] leading-relaxed mb-5" style={{ color: '#5f7585' }}>
-            Your emotional patterns, beautifully tracked.
+            Every feeling tells a story. Noticing your patterns helps you understand yourself better.
           </p>
         </motion.div>
 
@@ -148,7 +178,7 @@ export const EmotionDashboard = () => {
               {todayMeta.emoji}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px]" style={{ color: '#8fa3b1' }}>Last detected mood</p>
+              <p className="text-[11px]" style={{ color: '#8fa3b1' }}>How you're feeling now</p>
               <p className="text-xl font-bold" style={{ color: todayMeta.accent }}>{todayMeta.label}</p>
             </div>
             <div
@@ -183,7 +213,7 @@ export const EmotionDashboard = () => {
               >
                 <Sparkles className="h-4 w-4" style={{ color: '#7c6fa0' }} strokeWidth={1.75} />
               </div>
-              <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>MindBuddy Insight</p>
+              <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>What Your Patterns Tell Us</p>
             </div>
             <p className="text-[13px] leading-relaxed" style={{ color: '#5f7585' }}>{insight}</p>
           </div>
@@ -200,8 +230,8 @@ export const EmotionDashboard = () => {
             </p>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'Messages tracked', value: total, accent: '#39a89b' },
-                { label: 'Emotions detected', value: sortedEmotions.length, accent: '#e8735a' },
+                { label: 'Times you opened up', value: total, accent: '#39a89b' },
+                { label: 'Different feelings explored', value: sortedEmotions.length, accent: '#e8735a' },
               ].map((stat, i) => (
                 <motion.div
                   key={stat.label}
@@ -253,9 +283,9 @@ export const EmotionDashboard = () => {
                   <TrendingUp className="h-5 w-5" style={{ color: '#3b82f6' }} strokeWidth={1.75} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>Breakdown</p>
+                  <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>Your Emotion Distribution</p>
                   <p className="text-[11px]" style={{ color: '#8fa3b1' }}>
-                    Based on {total} message{total !== 1 ? 's' : ''}
+                    From {total} heartfelt message{total !== 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
@@ -341,8 +371,8 @@ export const EmotionDashboard = () => {
                   <MessageCircle className="h-5 w-5" style={{ color: '#d97706' }} strokeWidth={1.75} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>Recent Messages</p>
-                  <p className="text-[11px]" style={{ color: '#8fa3b1' }}>Last 10 tracked entries</p>
+                  <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>Your Recent Shares</p>
+                  <p className="text-[11px]" style={{ color: '#8fa3b1' }}>Latest conversations with MindBuddy</p>
                 </div>
               </div>
 
@@ -427,7 +457,7 @@ export const EmotionDashboard = () => {
               <Heart className="h-4 w-4" style={{ color: '#39a89b' }} strokeWidth={1.75} />
             </div>
             <p className="text-xs leading-relaxed pt-1" style={{ color: '#5f7585' }}>
-              Checking in regularly helps you spot emotional patterns before they grow. MindBuddy is always here to listen. 💚
+              Self-awareness is powerful. By noticing your emotional patterns, you're building the foundation for real growth and resilience. Keep checking in with yourself — and know that MindBuddy is always here to listen and support you. 💚
             </p>
           </div>
         </motion.div>
