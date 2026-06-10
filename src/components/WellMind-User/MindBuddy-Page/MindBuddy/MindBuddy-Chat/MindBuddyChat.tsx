@@ -22,26 +22,26 @@ type ResponseMode = 'casual_support' | 'emotional_support' | 'high_risk_support'
 
 const fallbackResponsesByMode: Record<ResponseMode, string[]> = {
   casual_support: [
-    "Got you, wanna tell me more?",
-    "Yeah I get you, what happened next?",
-    "I'm here, keep going if you want 💚",
-    "That makes sense, I'm listening.",
+    "It sounds like that really caught you off guard. What part of it matters most to you right now?",
+    "I'm hearing something important in what you just said. Can you tell me more about how that made you feel?",
+    "That's a lot to take in. I'm here — what would help you most right now?",
+    "Yeah, I'm listening. What's going through your head as you think about this?",
   ],
   emotional_support: [
-    "That sounds really heavy, I'm here with you.",
-    "Feeling that alone can hurt a lot, I'm glad you said it out loud.",
-    "I hear you, you're not alone in this.",
-    "Being left out hurts, and I want to stay with you in this moment.",
+    "That sounds really heavy, and I'm glad you're saying it out loud to someone. What's been the hardest part?",
+    "It makes sense that you'd feel this way — that's a lot to carry. How long have you been feeling like this?",
+    "I hear you. You're not alone in feeling this way. What would it mean for things to feel even a little different?",
+    "Thank you for trusting me with this. It takes real courage. Can we sit with this for a moment — what do you need most right now?",
   ],
   high_risk_support: [
-    "I'm really glad you told me this, I'm here with you right now.",
-    "That sounds overwhelming, you don't have to carry this alone.",
-    "I'm with you, and we can take this one step at a time.",
+    "I'm really glad you told me this — it takes strength to say these things out loud. I'm right here with you, and I don't want you to go through this alone. What's been the hardest part of carrying this?",
+    "That sounds deeply painful, and I want you to know you don't have to carry this by yourself. What would feel even a tiny bit better right now?",
+    "I'm with you. What you're feeling is real and valid. Have you been able to talk to anyone else about this, or is this the first time you're saying it?",
   ],
   crisis_support: [
-    "I'm really glad you shared this, you matter a lot right now.",
-    "I'm here with you, and I want you to reach real support right now.",
-    "You're not alone, please contact support now and stay with someone safe if you can.",
+    "I'm really glad you're telling me this — it matters that you're here and that you're saying this out loud. I want to make sure you're safe right now. Are you somewhere safe at this moment, or do you need help getting somewhere safe?",
+    "What you're describing tells me you're going through something really serious, and I care about what happens to you. I'm here, and you're not alone in this. Can you tell me what's happening right now?",
+    "Thank you for trusting me — that took real courage. Before we go any further, I need to make sure you're safe. Is there someone you trust who's with you right now, or can you reach out to someone?",
   ],
 };
 
@@ -68,6 +68,48 @@ const shouldShowPeerSupportAlert = (detected: Partial<EmotionResult> | null): bo
     ((label === 'depress' || label === 'anxious' || label === 'stress') && safetyRisk >= 40) ||
     safetyRisk >= 52
   );
+};
+
+// Enhanced crisis detection with trigger phrases
+const CRISIS_TRIGGER_PHRASES = {
+  suicidal: [
+    'kill myself', 'want to die', 'wish i was dead', 'end it', 'not here anymore',
+    'nobody would miss', 'better off without me', 'thinking of ending', 'ending my life',
+  ],
+  selfHarm: [
+    'want to hurt myself', 'been cutting', 'hurt myself', 'want to feel pain',
+    "don't care if i get hurt",
+  ],
+  hopelessness: [
+    'no point in living', 'just want it all to stop', "can't do this anymore",
+    "what's the point", 'i give up', 'done with everything',
+  ],
+  burden: [
+    'burden to everyone', 'no one would care', 'disappeared', 'saying goodbye',
+    'sorted out my things', 'getting my affairs',
+  ],
+};
+
+const detectCrisisTriggers = (text: string): { isCrisis: boolean; level: 'direct' | 'active' | 'indirect' | 'none' } => {
+  const lower = text.toLowerCase();
+  
+  // LEVEL 3: Direct suicidal ideation or self-harm
+  if (CRISIS_TRIGGER_PHRASES.suicidal.some(phrase => lower.includes(phrase)) ||
+      CRISIS_TRIGGER_PHRASES.selfHarm.some(phrase => lower.includes(phrase))) {
+    return { isCrisis: true, level: 'direct' };
+  }
+  
+  // LEVEL 2: Active ideation (thinking about it)
+  if (CRISIS_TRIGGER_PHRASES.hopelessness.some(phrase => lower.includes(phrase))) {
+    return { isCrisis: true, level: 'active' };
+  }
+  
+  // LEVEL 1: Indirect signals
+  if (CRISIS_TRIGGER_PHRASES.burden.some(phrase => lower.includes(phrase))) {
+    return { isCrisis: true, level: 'indirect' };
+  }
+  
+  return { isCrisis: false, level: 'none' };
 };
 
 const getFallbackResponse = (mode: ResponseMode = 'casual_support'): string => {
@@ -99,12 +141,86 @@ const getMindBuddySystemPrompt = (
   responseMode: ResponseMode,
   safetyContext: { riskLevel: 'low' | 'medium' | 'high' | 'crisis'; selfHarmDetected: boolean; safetyRisk: number; crisisLevel?: DetectionDecision }
 ): string => {
-  const baseRules = `You are ${petName}, a caring university buddy texting a close friend. Keep replies short and natural, usually 1 to 2 sentences. Sound human, warm, and emotionally real. Always validate first before advice. No bullet points, no numbered lists, no formal report tone. Avoid detached lines like "that's interesting" when user is distressed. Avoid clinical wording and avoid being overly cheerful.`;
-  const hiddenSafetyContext = `SAFETY CONTEXT (internal, must obey): response_mode=${responseMode} risk_level=${safetyContext.riskLevel} self_harm_detected=${safetyContext.selfHarmDetected} safety_risk=${safetyContext.safetyRisk} crisis_level=${safetyContext.crisisLevel ?? 'none'}`;
-  if (responseMode === 'crisis_support') return `${baseRules}\n${hiddenSafetyContext}\nCRISIS GUARDRAILS: Calm, validating, grounded tone only. Do NOT use jokes, sarcasm, playful energy. Acknowledge emotional pain. Remind them they are not alone. Encourage immediate real-world support. Mention Befrienders Malaysia 03-7627 2929. Keep it 2 short supportive sentences.`;
-  if (responseMode === 'high_risk_support') return `${baseRules}\n${hiddenSafetyContext}\nHIGH RISK GUARDRAILS: Calm, soft, non-judgmental tone. Validate emotion first. No playful tone. Offer gentle support and suggest Counselor Support or trusted person. Keep it 1 to 2 short sentences.`;
-  if (responseMode === 'emotional_support') return `${baseRules}\n${hiddenSafetyContext}\nEMOTIONAL SUPPORT STYLE: Validate first. Then gently continue conversation with one light follow-up. Keep warm and human.`;
-  return `${baseRules}\n${hiddenSafetyContext}\nCASUAL SUPPORT STYLE: Friendly and natural. Can be lightly playful only when safe. Keep concise and kind.`;
+  const baseIdentity = `You are ${petName}, a warm and empathetic AI counselor integrated into the WellMind app. You are NOT a chatbot — you listen deeply, respond thoughtfully, and help users work through emotional challenges using proven therapeutic techniques. You combine the warmth of a trusted friend with the structure of a professional counselor.
+
+CORE APPROACH:
+- Lead with empathy ALWAYS. Acknowledge what they're feeling, validate first, guide second.
+- Ask ONE powerful question at a time. One well-placed question opens more than five rushed ones.
+- Use active listening and reflection: "It sounds like you're feeling..." Show genuine understanding.
+- Be genuinely curious. Treat every person as unique. Don't assume — explore gently.
+- Hold space for uncertainty. Not everything needs fixing. Sometimes people just need to feel heard.
+
+CONVERSATION STYLE:
+- Warm, calm, grounded — never robotic or scripted
+- Conversational and natural, like someone who genuinely cares
+- Short to medium responses (usually 1-3 sentences unless deep exploration is needed)
+- Use the person's name naturally when it feels right
+- Avoid filler ("That's great!", "Absolutely!") — it feels hollow
+- Match their energy: if distressed, slow down and soften; if reflective, go deeper
+- Never start with "I" as the first word
+
+WHAT YOU DO NOT DO:
+- Don't give unsolicited advice or jump to solutions
+- Don't minimize ("At least...", "Others have it worse...")
+- Don't be preachy or use excessive clinical jargon
+- Don't pretend to have all the answers
+- Don't foster dependency`;
+
+  const therapeuticTechs = `THERAPEUTIC TECHNIQUES (use naturally, never announce which one):
+- CBT: Gently explore unhelpful thought patterns. Help identify cognitive distortions (catastrophizing, all-or-nothing thinking).
+- Motivational Interviewing: Explore ambivalence. Help connect with their own values and motivations.
+- Mindfulness: Guide toward present-moment awareness. Offer grounding when needed ("What do you notice right now?").
+- Solution-Focused Therapy: When apt, shift toward strengths, past successes, small actionable steps ("What's one small thing that helped?").
+- Psychoeducation: Explain emotions and stress responses in human language — clear, never clinical.`;
+
+  const hiddenContext = `INTERNAL CONTEXT (must obey, never mention): response_mode=${responseMode} emotion_detected=${emotion} risk_level=${safetyContext.riskLevel} safety_risk=${safetyContext.safetyRisk}% self_harm_detected=${safetyContext.selfHarmDetected}`;
+
+  if (responseMode === 'crisis_support') {
+    return `${baseIdentity}\n\n${therapeuticTechs}\n\n${hiddenContext}\n\nCRISIS PROTOCOL — THIS OVERRIDES ALL ELSE:
+You have detected active crisis signals. Response priority:
+1. Do NOT minimize or dismiss their pain
+2. Acknowledge deeply: "Thank you for trusting me with this — it takes real courage."
+3. Ask directly if they're having thoughts of harming themselves: "When you say that, are you thinking about ending your life, or hurting yourself?"
+4. Provide these resources clearly but warmly:
+   📞 Befrienders Malaysia: 03-7627 2929 (24 hours, free)
+   📞 Talian Kasih: 15999 (24 hours, free)
+   🚨 Emergency: 999
+5. Ask: "Are you somewhere safe right now?" If no: "Can you get to a safe place, or is there someone with you?"
+6. Keep engaging. Do not end the conversation after resources.
+7. If immediate danger is clear (has plan/means): Be calmly direct about hospital/emergency, but stay calm and grounded.
+
+TONE: Calm urgency. Present. Validating. Non-judgmental.
+LENGTH: 2-3 sentences max before providing resources, then continue engagement.`;
+  }
+
+  if (responseMode === 'high_risk_support') {
+    return `${baseIdentity}\n\n${therapeuticTechs}\n\n${hiddenContext}\n\nHIGH-RISK SUPPORT MODE:
+- Soft, calm, non-judgmental tone always
+- Validate the intensity of their experience: "That sounds really hard. No wonder you're feeling this way."
+- Gentle exploration: Ask what they need, what's helped before, what's making today harder
+- Psychoeducation: Explain that what they're experiencing is a normal response to abnormal stress
+- Gently surface counselor support: "Would it help to talk to a real counselor about this? We have that option."
+- No bright cheerfulness. Match their seriousness.
+LENGTH: 2-3 thoughtful sentences. Quality over quantity.`;
+  }
+
+  if (responseMode === 'emotional_support') {
+    return `${baseIdentity}\n\n${therapeuticTechs}\n\n${hiddenContext}\n\nEMOTIONAL SUPPORT MODE:
+- Validate first: "That's a lot to carry. It makes sense you're feeling this way."
+- Reflect back: Paraphrase what you hear to show understanding
+- Ask one deepening question: "What's been the hardest part?" or "What would help you feel even a little better?"
+- Use gentle reframing when right: "You've gotten through hard things before — what helped then?"
+- Keep warmth high. Stay present.
+LENGTH: 2-3 sentences exploring their experience.`;
+  }
+
+  return `${baseIdentity}\n\n${therapeuticTechs}\n\n${hiddenContext}\n\nCASUAL SUPPORT MODE:
+- Friendly and natural, genuinely curious
+- Light playfulness only when it feels safe and right
+- Still ask meaningful questions, even in lighter moments
+- Help them think things through, don't just agree
+- Encourage reflection: "How did that make you feel?" or "What would you want to happen?"
+LENGTH: 1-3 sentences, conversational.`;
 };
 
 interface MindBuddyChatProps {
@@ -144,6 +260,27 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
   const handleSend = async (prefilledInput?: string) => {
     const messageText = (prefilledInput ?? input).trim();
     if (!messageText || isTyping) return;
+
+    // Check for crisis triggers FIRST
+    const crisisDetection = detectCrisisTriggers(messageText);
+    if (crisisDetection.isCrisis) {
+      const userMessage: Message = { id: Date.now().toString(), content: messageText, sender: 'user', timestamp: new Date() };
+      addMessage(userMessage);
+      
+      // Immediate crisis response without waiting for emotion detection
+      setInput('');
+      setIsTyping(false);
+      setExpression('sad');
+      setShowCrisisAlert(true);
+      
+      // Still add crisis response to chat
+      const crisisResponses = [
+        `I'm really glad you're telling me this — it takes real courage. I want to make sure you're safe right now.\n\n📞 Befrienders Malaysia: 03-7627 2929 (24 hours, free)\n📞 Talian Kasih: 15999\n🚨 Emergency: 999\n\nAre you somewhere safe right now?`,
+      ];
+      const crisisReply = crisisResponses[0];
+      addMessage({ id: (Date.now() + 1).toString(), content: crisisReply, sender: 'buddy', timestamp: new Date() });
+      return;
+    }
 
     const userMessage: Message = { id: Date.now().toString(), content: messageText, sender: 'user', timestamp: new Date() };
     addMessage(userMessage);
@@ -187,7 +324,10 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
           { role: 'system', content: getMindBuddySystemPrompt(detectedEmotion.label, petName, responseMode, { riskLevel, selfHarmDetected: Boolean(detectedEmotion.selfHarmDetected || detectedEmotion.directSelfHarmDetected), safetyRisk, crisisLevel: detectedEmotion.crisisLevel ?? detectedEmotion.decision }) },
           ...nextMessages.slice(-8).map((message) => ({ role: message.sender === 'user' ? 'user' as const : 'assistant' as const, content: message.content })),
         ],
-        { temperature: responseMode === 'casual_support' ? 0.92 : 0.55, maxTokens: responseMode === 'crisis_support' ? 90 : 72 }
+        { 
+          temperature: responseMode === 'crisis_support' ? 0.3 : responseMode === 'casual_support' ? 0.92 : 0.55, 
+          maxTokens: responseMode === 'crisis_support' ? 120 : responseMode === 'high_risk_support' ? 100 : 72 
+        }
       );
 
       const previousBuddyMessage = [...messages].reverse().find((m) => m.sender === 'buddy');
@@ -481,22 +621,23 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
                 </div>
                 <div>
                   <p className="font-bold text-sm" style={{ color: '#991b1b' }}>You Matter. Help is Here.</p>
-                  <p className="text-[11px]" style={{ color: '#dc2626' }}>Crisis Support — Available 24/7</p>
+                  <p className="text-[11px]" style={{ color: '#dc2626' }}>24/7 Crisis Support — You're Not Alone</p>
                 </div>
               </div>
 
               <div className="p-5 space-y-4">
                 <p className="text-sm leading-relaxed" style={{ color: '#5f7585' }}>
-                  What you're feeling right now is real, and you don't have to face it alone. Please reach out — a real person is ready to listen.
+                  What you're feeling right now is real, and you don't have to face it alone. Real people are ready to listen and help — right now.
                 </p>
 
                 <div
-                  className="rounded-2xl p-4 space-y-2.5"
+                  className="rounded-2xl p-4 space-y-3"
                   style={{ background: 'rgba(220,38,38,0.04)', border: '1px solid rgba(220,38,38,0.15)' }}
                 >
                   <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: '#dc2626' }}>
-                    📞 Call Now (Free, 24/7)
+                    📞 Reach Out Now (Free, 24/7)
                   </p>
+                  
                   <motion.button
                     whileTap={{ scale: 0.97 }}
                     onClick={() => window.open('tel:0376272929')}
@@ -509,18 +650,35 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
                     </span>
                     <span className="text-[11px] font-normal" style={{ color: 'rgba(255,255,255,0.7)' }}>03-7627 2929</span>
                   </motion.button>
-                  <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => window.open('tel:15999')}
-                    className="w-full py-2.5 rounded-xl text-sm font-semibold"
-                    style={{
-                      background: 'white',
-                      color: '#dc2626',
-                      border: '1px solid rgba(220,38,38,0.25)',
-                    }}
-                  >
-                    Talian Kasih — 15999
-                  </motion.button>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => window.open('tel:15999')}
+                      className="py-2.5 rounded-xl text-xs font-semibold"
+                      style={{
+                        background: 'white',
+                        color: '#dc2626',
+                        border: '1px solid rgba(220,38,38,0.25)',
+                      }}
+                    >
+                      Talian Kasih
+                      <div className="text-[10px] font-normal">15999</div>
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => window.open('tel:999')}
+                      className="py-2.5 rounded-xl text-xs font-semibold"
+                      style={{
+                        background: 'white',
+                        color: '#dc2626',
+                        border: '1px solid rgba(220,38,38,0.25)',
+                      }}
+                    >
+                      Emergency
+                      <div className="text-[10px] font-normal">999</div>
+                    </motion.button>
+                  </div>
                 </div>
 
                 <div
@@ -528,9 +686,13 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
                   style={{ background: 'rgba(217,119,6,0.06)', border: '1px solid rgba(217,119,6,0.2)' }}
                 >
                   <p className="text-xs leading-relaxed" style={{ color: '#92600a' }}>
-                    <span className="font-semibold">Demo mode:</span> In the live version, MindBuddy will automatically alert a counselor when a crisis is detected.
+                    <span className="font-semibold">Important:</span> If you're in immediate danger, hang up and call <span className="font-bold">999</span> or go to your nearest hospital emergency room right now. Your safety comes first.
                   </p>
                 </div>
+
+                <p className="text-xs leading-relaxed text-center" style={{ color: '#5f7585' }}>
+                  I'm here to listen, and I care about what happens to you. But right now, please reach out to someone who can be with you in person. You deserve real support.
+                </p>
 
                 <motion.button
                   whileTap={{ scale: 0.97 }}
@@ -538,7 +700,7 @@ export const MindBuddyChat = ({ onClose }: MindBuddyChatProps) => {
                   className="w-full py-2.5 rounded-xl text-xs font-semibold"
                   style={{ color: '#8fa3b1' }}
                 >
-                  I'm safe right now — dismiss
+                  I'm safe — dismiss
                 </motion.button>
               </div>
             </motion.div>
