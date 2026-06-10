@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Camera } from '@capacitor/camera';
 import {
   getChatSocket,
   joinConversationRoom,
@@ -149,6 +151,28 @@ export const useVideoCall = ({
 
   const createLocalStream = useCallback(
     async (mode: CallMode = 'video') => {
+      const isNative = Capacitor.isNativePlatform();
+
+      // For native Android/iOS, request permissions first
+      if (isNative) {
+        try {
+          const permResult = await Camera.requestPermissions({
+            permissions: ['camera', 'photos'],
+          });
+
+          if (permResult.camera !== 'granted') {
+            throw new Error(
+              'Camera permission denied. Please enable it in your phone settings (Settings > Apps > WellMind > Permissions > Camera).',
+            );
+          }
+        } catch (error) {
+          console.error('Permission request failed:', error);
+          throw new Error(
+            'Unable to access camera. Please enable camera permission in your phone settings.',
+          );
+        }
+      }
+
       const constraints = {
         audio: true,
         video: mode === 'video' ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false,
@@ -165,7 +189,7 @@ export const useVideoCall = ({
         const err = error as DOMException;
         if (err.name === 'NotAllowedError') {
           throw new Error(
-            'Camera and/or microphone permissions are denied. Please enable them in your phone settings to make calls.',
+            'Camera/Microphone permissions denied. Please enable them in Settings > Apps > WellMind > Permissions.',
           );
         }
         if (err.name === 'NotFoundError') {

@@ -1,23 +1,50 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, PhoneOff, Video } from 'lucide-react';
 import { toast } from 'sonner';
+import { Capacitor } from '@capacitor/core';
+import { Camera } from '@capacitor/camera';
 import { useIncomingCallStore } from '@/stores/incomingCallStore';
 import { useAppPermissions } from '@/hooks/useAppPermissions';
 
 export const IncomingCallNotification = () => {
   const { incomingCall, acceptCall, rejectCall } = useIncomingCallStore();
   const { requestPermissions } = useAppPermissions();
+  const isNative = Capacitor.isNativePlatform();
 
   const handleAccept = async () => {
     if (!incomingCall) return;
 
     try {
-      // Request permissions if needed
-      await requestPermissions(['camera', 'microphone']);
+      // Request native Android permissions first
+      if (isNative) {
+        try {
+          const result = await Camera.requestPermissions({
+            permissions: ['camera', 'photos'],
+          });
+
+          if (result.camera !== 'granted') {
+            toast.error(
+              'Camera permission denied. Please enable it in Settings > Apps > WellMind > Permissions > Camera.',
+            );
+            rejectCall();
+            return;
+          }
+        } catch (error) {
+          console.error('Failed to request permissions:', error);
+          toast.error('Unable to access camera. Please check your phone settings.');
+          rejectCall();
+          return;
+        }
+      } else {
+        // Web fallback
+        await requestPermissions(['camera', 'microphone']);
+      }
+
       acceptCall();
+      toast.success(`${incomingCall.mode} call accepted`);
     } catch (error) {
       console.error('Permission request failed:', error);
-      toast.error('Unable to grant permissions. Please check your phone settings.');
+      toast.error('Unable to grant permissions. Please try again.');
       rejectCall();
     }
   };
