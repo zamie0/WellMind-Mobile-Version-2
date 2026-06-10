@@ -68,36 +68,36 @@ const copingStrategies: {
   accentBg: string;
 }[] = [
   {
-    title: 'Ground Yourself',
-    description: 'Use the 5-4-3-2-1 technique: Name 5 things you see, 4 you can touch, 3 you hear, 2 you smell, 1 you taste.',
+    title: 'Ground Yourself (5-4-3-2-1 Technique)',
+    description: 'When emotions feel overwhelming, this grounding technique brings you back to the present moment. Name 5 things you see, 4 you can touch, 3 you hear, 2 you smell, 1 you taste. Your senses anchor you in the here and now.',
     icon: Anchor,
     accent: '#3b82f6',
     accentBg: 'rgba(59,130,246,0.1)',
   },
   {
-    title: 'Breathe Deeply',
-    description: 'Take slow, deep breaths. Inhale for 4 counts, hold for 4, exhale for 6. Repeat several times.',
+    title: 'Breathe Deeply (Box Breathing)',
+    description: 'When your nervous system is activated, breathing slowly tells your body you are safe. Inhale for 4 counts, hold for 4, exhale for 6. This calms your stress response naturally.',
     icon: Wind,
     accent: '#39a89b',
     accentBg: 'rgba(57,168,155,0.1)',
   },
   {
-    title: 'Reach Out',
-    description: "Call or text someone you trust. You don't have to go through this alone.",
+    title: 'Connect With Someone',
+    description: 'Reaching out is an act of courage. Call, text, or be with someone you trust. Humans need connection, especially in hard moments. You do not have to carry this alone.',
     icon: Users,
     accent: '#7c6fa0',
     accentBg: 'rgba(124,111,160,0.1)',
   },
   {
     title: 'Move Your Body',
-    description: 'Take a short walk, stretch, or do some light movement to release tension.',
+    description: 'Physical movement releases built-up tension and stress hormones. Even a short walk or gentle stretching can help shift your emotional state. Your body and mind are connected.',
     icon: Footprints,
     accent: '#d97706',
     accentBg: 'rgba(251,191,36,0.12)',
   },
   {
-    title: 'Write It Down',
-    description: 'Put your thoughts and feelings on paper. It can help process overwhelming emotions.',
+    title: 'Write Your Feelings (Expressive Writing)',
+    description: 'Putting thoughts and feelings on paper helps process overwhelming emotions. You don\'t need to write perfectly — just let it flow. This creates distance from intense feelings and helps clarity emerge.',
     icon: PenLine,
     accent: '#e8735a',
     accentBg: 'rgba(232,115,90,0.1)',
@@ -149,7 +149,7 @@ export const CrisisSupport = ({ onClose }: CrisisSupportProps) => {
             <div className="min-w-0">
               <p className="font-bold text-sm truncate" style={{ color: '#1a2b38' }}>Crisis Support</p>
               <p className="text-[11px] font-semibold" style={{ color: '#39a89b' }}>
-                You're not alone — help is available
+                Reaching out is courage. You matter.
               </p>
             </div>
           </div>
@@ -175,10 +175,10 @@ export const CrisisSupport = ({ onClose }: CrisisSupportProps) => {
             className="text-[1.75rem] font-bold leading-tight mb-1.5"
             style={{ color: '#1a2b38', letterSpacing: '-0.02em' }}
           >
-            We're here{'\n'}with you.
+            You Don't Have{'\n'}to Go Alone.
           </h2>
           <p className="text-[14px] leading-relaxed" style={{ color: '#5f7585' }}>
-            Reach out — support is just one call away.
+            What you're feeling right now is real. Real support is just one call away, and people are ready to listen.
           </p>
         </motion.div>
       </motion.div>
@@ -206,9 +206,9 @@ export const CrisisSupport = ({ onClose }: CrisisSupportProps) => {
                 <Siren className="h-5 w-5" style={{ color: '#ef4444' }} strokeWidth={1.75} />
               </div>
               <div>
-                <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>If you're in immediate danger</p>
+                <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>Immediate Safety First</p>
                 <p className="text-[11px] leading-relaxed mt-0.5" style={{ color: '#8fa3b1' }}>
-                  Call emergency services or go to the nearest hospital
+                  If you're in danger right now, please call 999 or go to the nearest hospital. Your safety comes first.
                 </p>
               </div>
             </div>
@@ -239,7 +239,7 @@ export const CrisisSupport = ({ onClose }: CrisisSupportProps) => {
             className="text-[10px] font-semibold uppercase tracking-widest px-1"
             style={{ color: '#8fa3b1' }}
           >
-            Crisis Hotlines
+            Reach Out — Trained Counselors Ready to Listen
           </p>
 
           {crisisResources.map((resource, i) => (
@@ -300,7 +300,7 @@ export const CrisisSupport = ({ onClose }: CrisisSupportProps) => {
             className="text-[10px] font-semibold uppercase tracking-widest px-1"
             style={{ color: '#8fa3b1' }}
           >
-            Coping Strategies
+            Things You Can Do Right Now
           </p>
 
           {copingStrategies.map((strategy, i) => {
@@ -355,7 +355,7 @@ export const CrisisSupport = ({ onClose }: CrisisSupportProps) => {
               <Heart className="h-4 w-4" style={{ color: '#39a89b' }} strokeWidth={1.75} />
             </div>
             <p className="text-xs leading-relaxed pt-1" style={{ color: '#5f7585' }}>
-              Remember — reaching out is a sign of strength, not weakness. You deserve support and care. 💚
+              Reaching out is courage. Asking for help is not weakness — it's wisdom. You are worthy of support, care, and compassion. Right now, and always. 💚
             </p>
           </div>
         </motion.div>

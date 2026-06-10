@@ -27,7 +27,7 @@ function getInsight(counts: Record<string, number>, total: number): string {
   if (total === 0) return 'Start chatting with MindBuddy to track your emotions. Your feelings matter, and noticing them is the first step toward understanding yourself better. 💚';
   
   const topEmotion = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] as EmotionLabel | undefined;
-  if (!topEmotion) return 'Keep sharing your feelings. Every conversation helps you understand what you're going through. 🌱';
+  if (!topEmotion) return "Keep sharing your feelings. Every conversation helps you understand what you're going through. 🌱";
   
   const meta = emotionMeta[topEmotion];
   const secondTop = Object.entries(counts).sort((a, b) => b[1] - a[1])[1]?.[0] as EmotionLabel | undefined;
