@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Inbox, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
+import { useIncomingCallStore } from '@/stores/incomingCallStore';
 import {
   getChatSocket,
   identifyChatParticipant,
@@ -57,6 +58,7 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
     toggleMinimize,
     toggleAudio: toggleCounselorAudio,
     toggleVideo: toggleCounselorVideo,
+    acceptIncomingCall,
   } = useVideoCall({
     conversationId: activeId ?? undefined,
     localUserId: counselorId ?? undefined,
@@ -241,6 +243,17 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
     endCall();
     await logCallEvent(`Ended call with ${activeConversation.userName}`);
   };
+
+  // Watch for accepted incoming calls and trigger the WebRTC answer
+  const { acceptedCall } = useIncomingCallStore();
+  useEffect(() => {
+    if (acceptedCall) {
+      acceptIncomingCall().catch((error) => {
+        console.error('Failed to accept incoming call:', error);
+        toast.error('Failed to establish call connection');
+      });
+    }
+  }, [acceptedCall, acceptIncomingCall]);
 
   // Chat thread view
   if (activeConversation) {

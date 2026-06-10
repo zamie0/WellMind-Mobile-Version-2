@@ -8,6 +8,7 @@ import { formatMessageContent, formatTime } from './CounselorSupportChat.utils';
 import { CounselorVideoCall } from '@/components/WellMind-Counselor/Inbox-Page/CounselorVideoCall';
 import { useVideoCall } from '@/hooks/useVideoCall';
 import { sendChatMessage } from '@/lib/realtimeCounselorChat';
+import { useIncomingCallStore } from '@/stores/incomingCallStore';
 import type { CounselorChat, CounselorUser } from '@/types/wellmind';
 import type { RefObject } from 'react';
 
@@ -50,6 +51,7 @@ export const CounselorChatView = ({
     toggleMinimize: toggleUserMinimize,
     toggleAudio: toggleUserAudio,
     toggleVideo: toggleUserVideo,
+    acceptIncomingCall,
   } = useVideoCall({
     conversationId: activeChat.id,
     localUserId: counselorProfile?.id ?? undefined,
@@ -98,6 +100,17 @@ export const CounselorChatView = ({
     endUserCall();
     await logUserCallEvent(`Ended call with ${chatCounselor.displayName}`);
   };
+
+  // Watch for accepted incoming calls and trigger the WebRTC answer
+  const { acceptedCall } = useIncomingCallStore();
+  useEffect(() => {
+    if (acceptedCall) {
+      acceptIncomingCall().catch((error) => {
+        console.error('Failed to accept incoming call:', error);
+        toast.error('Failed to establish call connection');
+      });
+    }
+  }, [acceptedCall, acceptIncomingCall]);
 
   const visibleMessages = useMemo(
     () => activeChat.messages.slice(Math.max(activeChat.messages.length - 220, 0)),
