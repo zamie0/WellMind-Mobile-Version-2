@@ -19,6 +19,31 @@ export interface PermissionStatus {
 
 const PERMISSION_STATUS_KEY = 'wellmind_permissions_requested';
 
+const normalizePermissionState = (
+  state:
+    | 'granted'
+    | 'denied'
+    | 'prompt'
+    | 'prompt-with-rationale'
+    | 'limited'
+    | undefined,
+): 'granted' | 'denied' | 'prompt' => {
+  if (state === 'prompt-with-rationale' || state === undefined) {
+    return 'prompt';
+  }
+  if (state === 'limited') {
+    return 'granted';
+  }
+  return state;
+};
+
+const normalizeNotificationPermission = (permission: NotificationPermission): 'granted' | 'denied' | 'prompt' => {
+  if (permission === 'default') {
+    return 'prompt';
+  }
+  return permission;
+};
+
 export const useAppPermissions = () => {
   const [permissions, setPermissions] = useState<PermissionStatus>({
     camera: 'prompt',
@@ -43,34 +68,46 @@ export const useAppPermissions = () => {
     async (type: PermissionType): Promise<'granted' | 'denied' | 'prompt'> => {
       // For native Android/iOS
       if (isNative) {
-        if (type === 'camera' || type === 'microphone') {
+        if (type === 'camera') {
           try {
             const result = await Camera.checkPermissions();
-            if (result.camera === 'granted' && (type === 'microphone' ? result.photos === 'granted' : true)) {
-              return 'granted';
-            } else if (result.camera === 'denied') {
-              return 'denied';
-            }
-            return 'prompt';
+            return normalizePermissionState(result.camera);
           } catch (error) {
             console.error('Failed to check camera permission:', error);
             return 'prompt';
           }
         }
-        if (type === 'notifications') {
-          if ('Notification' in window) {
-            return Notification.permission as 'granted' | 'denied' | 'prompt';
+
+        if (type === 'microphone') {
+          try {
+            if (navigator.permissions) {
+              const status = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+              return status.state === 'granted'
+                ? 'granted'
+                : status.state === 'denied'
+                ? 'denied'
+                : 'prompt';
+            }
+          } catch (error) {
+            console.error('Failed to check microphone permission:', error);
           }
           return 'prompt';
         }
+
+        if (type === 'notifications') {
+          if ('Notification' in window) {
+            return normalizeNotificationPermission(Notification.permission);
+          }
+          return 'prompt';
+        }
+
         return 'granted';
       }
 
       // For web
       if (type === 'notifications') {
         if ('Notification' in window) {
-          const perm = Notification.permission;
-          return perm === 'default' ? 'prompt' : (perm as 'granted' | 'denied' | 'prompt');
+          return Notification.permission as 'granted' | 'denied' | 'prompt';
         }
         return 'prompt';
       }
@@ -104,25 +141,36 @@ export const useAppPermissions = () => {
         // Native Android/iOS permissions
         try {
           for (const type of types) {
-            if (type === 'camera' || type === 'microphone') {
+            if (type === 'camera') {
               try {
                 const result = await Camera.requestPermissions({
                   permissions: ['camera', 'photos'],
                 });
-                results.camera = result.camera;
-                results.microphone = result.camera; // Camera permission also covers microphone for calls
-                results.photos = result.photos;
+                results.camera = normalizePermissionState(result.camera);
+                results.photos = normalizePermissionState(result.photos);
               } catch (error) {
                 console.error('Failed to request camera permissions:', error);
                 results.camera = 'denied';
-                results.microphone = 'denied';
+                results.photos = 'denied';
+              }
+            } else if (type === 'microphone') {
+              try {
+                if (navigator.mediaDevices?.getUserMedia) {
+                  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                  stream.getTracks().forEach((track) => track.stop());
+                  results.microphone = 'granted';
+                } else {
+                  results.microphone = 'prompt';
+                }
+              } catch (error) {
+                results.microphone = (error as DOMException).name === 'NotAllowedError' ? 'denied' : 'prompt';
               }
             } else if (type === 'notifications') {
-              if ('Notification' in window && Notification.permission === 'prompt') {
+              if ('Notification' in window && Notification.permission === 'default') {
                 const permission = await Notification.requestPermission();
-                results[type] = permission as 'granted' | 'denied' | 'prompt';
+                results[type] = normalizeNotificationPermission(permission);
               } else {
-                results[type] = (Notification.permission as 'granted' | 'denied' | 'prompt') || 'prompt';
+                results[type] = normalizeNotificationPermission(Notification.permission);
               }
             } else {
               results[type] = 'granted';
@@ -136,11 +184,11 @@ export const useAppPermissions = () => {
         for (const type of types) {
           try {
             if (type === 'notifications') {
-              if ('Notification' in window && Notification.permission === 'prompt') {
+              if ('Notification' in window && Notification.permission === 'default') {
                 const permission = await Notification.requestPermission();
-                results[type] = permission as 'granted' | 'denied' | 'prompt';
+                results[type] = normalizeNotificationPermission(permission);
               } else {
-                results[type] = (Notification.permission as 'granted' | 'denied' | 'prompt') || 'prompt';
+                results[type] = normalizeNotificationPermission(Notification.permission);
               }
             } else if (type === 'camera') {
               const stream = await navigator.mediaDevices.getUserMedia({ video: true });

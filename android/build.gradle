@@ -26,10 +26,23 @@ allprojects {
 }
 
 subprojects { subproject ->
+    subproject.plugins.withId('org.jetbrains.kotlin.jvm') {
+        subproject.kotlin.jvmToolchain(21)
+    }
+    subproject.plugins.withId('org.jetbrains.kotlin.android') {
+        subproject.kotlin.jvmToolchain(21)
+    }
+    subproject.plugins.withId('java') {
+        subproject.java {
+            toolchain {
+                languageVersion.set(JavaLanguageVersion.of(21))
+            }
+        }
+    }
     subproject.tasks.withType(JavaCompile).configureEach {
         javaCompiler.set(
             javaToolchains.compilerFor {
-                languageVersion.set(JavaLanguageVersion.of(25))
+                languageVersion.set(JavaLanguageVersion.of(21))
             }
         )
     }
