@@ -1,5 +1,6 @@
 import { Send, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useEffect } from 'react';
 
 interface CounselorInboxInputProps {
   input: string;
@@ -16,6 +17,13 @@ export const CounselorInboxInput = ({
   onAttachFile,
   disabled = false,
 }: CounselorInboxInputProps) => {
+  useEffect(() => {
+    try {
+      // debug mount visibility
+      // eslint-disable-next-line no-console
+      console.log('CounselorInboxInput rendered', { inputShown: !!input, disabled });
+    } catch (e) {}
+  }, [input, disabled]);
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();

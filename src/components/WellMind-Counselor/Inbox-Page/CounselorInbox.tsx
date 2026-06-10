@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Inbox, Search } from 'lucide-react';
+import { Inbox, Search, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
 import { useIncomingCallStore } from '@/stores/incomingCallStore';
@@ -35,6 +35,9 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
   const [activeId, setActiveId] = useState<string | null>(initialConversationId || null);
   const [input, setInput] = useState('');
   const [query, setQuery] = useState('');
+  // Quick-reply state for inbox (allows replying without opening thread)
+  const [quickInput, setQuickInput] = useState('');
+  const [quickTargetId, setQuickTargetId] = useState<string | null>(conversations[0]?.id ?? null);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -202,6 +205,32 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
     }
   };
 
+  const sendQuickReply = async () => {
+    if (!quickTargetId || !counselorId || !quickInput.trim()) return;
+    const text = quickInput.trim();
+    const optimisticId = `optimistic-${crypto.randomUUID()}`;
+    setQuickInput('');
+
+    // optimistic conversation update: add a lightweight lastMessage and updatedAt
+    setConversations((current) =>
+      current.map((c) => (c.id === quickTargetId ? { ...c, lastMessage: text, updatedAt: new Date().toISOString() } : c)),
+    );
+
+    try {
+      const { message, conversation } = await sendChatMessage(quickTargetId, {
+        senderId: counselorId,
+        senderRole: 'counselor',
+        senderName: counselorName,
+        text,
+      });
+      // update conversation metadata
+      setConversations((current) => current.map((c) => (c.id === conversation.id ? conversation : c)));
+      toast.success('Message sent');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Quick reply failed');
+    }
+  };
+
   const logCallEvent = async (eventText: string) => {
     if (!activeId || !counselorId || !activeConversation) return;
     try {
@@ -264,8 +293,8 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
           initial={{ opacity: 0, x: 16 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -16 }}
-          className="fixed inset-0 z-40 flex flex-col"
-          style={{ background: 'linear-gradient(180deg,#eef4f7 0%,#f8fbfc 60%,#ffffff 100%)' }}
+          className="fixed inset-0 flex flex-col"
+          style={{ background: 'linear-gradient(180deg,#eef4f7 0%,#f8fbfc 60%,#ffffff 100%)', zIndex: 90000 }}
         >
           {/* Header */}
           <CounselorInboxHeader
@@ -307,11 +336,13 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
           </main>
 
           {/* Input */}
-          <CounselorInboxInput
-            input={input}
-            onInputChange={setInput}
-            onSend={sendMessage}
-          />
+          <div style={{ position: 'sticky', bottom: 0, zIndex: 99999 }}>
+            <CounselorInboxInput
+              input={input}
+              onInputChange={setInput}
+              onSend={sendMessage}
+            />
+          </div>
         </motion.div>
 
         {/* Video call overlay */}
@@ -344,6 +375,7 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
       className="space-y-5 px-4 pt-6"
+      style={{ zIndex: 90000 }}
     >
       {/* Hero header */}
       <div className="relative overflow-hidden px-1 pt-2 pb-1">
@@ -411,6 +443,59 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
         onSearch={setQuery}
         query={query}
       />
+      {/* Quick-reply footer: send a message without opening the full thread */}
+      {conversations.length > 0 && (
+        <footer
+          className="px-4 sticky bottom-0 bg-transparent"
+          style={{ paddingTop: 8, paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}
+        >
+          <div
+            className="flex items-center gap-2 rounded-full px-4 py-1.5"
+            style={{ background: 'white', boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+          >
+            <select
+              value={quickTargetId ?? ''}
+              onChange={(e) => setQuickTargetId(e.target.value || null)}
+              className="text-sm rounded-md px-2 py-1 border-none outline-none bg-transparent flex-shrink-0"
+              style={{ color: '#1a2b38', minWidth: 120 }}
+            >
+              {conversations.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.userName}
+                </option>
+              ))}
+            </select>
+
+            <input
+              value={quickInput}
+              onChange={(e) => setQuickInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  void sendQuickReply();
+                }
+              }}
+              placeholder="Quick reply to selected chat..."
+              className="flex-1 bg-transparent border-none outline-none text-sm py-2"
+              style={{ color: '#1a2b38' }}
+            />
+
+            <button
+              type="button"
+              onClick={() => void sendQuickReply()}
+              disabled={!quickInput.trim()}
+              className="h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{
+                background: quickInput.trim() ? 'linear-gradient(135deg,#4a90a4,#7bbccc)' : '#cbd9dc',
+                opacity: quickInput.trim() ? 1 : 0.6,
+              }}
+              aria-label="Send quick reply"
+            >
+              <Send className="h-4 w-4 text-white" />
+            </button>
+          </div>
+        </footer>
+      )}
     </motion.div>
   );
 };
