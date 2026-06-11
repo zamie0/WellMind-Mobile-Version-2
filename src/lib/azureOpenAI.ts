@@ -12,7 +12,7 @@ interface AzureChatOptions {
 
 const getAzureOpenAIConfig = () => {
     const endpoint = import.meta.env.VITE_AZURE_OPENAI_ENDPOINT?.replace(/\/+$/, '');
-    const deployment = import.meta.env.VITE_AZURE_OPENAI_DEPLOYMENT || 'gpt-4o-mini';
+    const deployment = import.meta.env.VITE_AZURE_OPENAI_DEPLOYMENT || 'gpt-4.1';
     const apiVersion = import.meta.env.VITE_AZURE_OPENAI_API_VERSION || '2025-01-01-preview';
     const apiKey = import.meta.env.VITE_AZURE_OPENAI_API_KEY;
 
