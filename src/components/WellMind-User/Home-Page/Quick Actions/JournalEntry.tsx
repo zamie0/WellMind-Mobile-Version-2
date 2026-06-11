@@ -75,7 +75,7 @@ export const JournalEntry = ({ onClose }: JournalEntryProps) => {
         <div className="flex items-center gap-3">
           <motion.button
             whileTap={{ scale: 0.94 }}
-            onClick={() => navigate(-1)}
+            onClick={() => onClose()}
             className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
             style={{ background: 'white', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
             aria-label="Go back"
