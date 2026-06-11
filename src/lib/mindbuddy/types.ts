@@ -16,7 +16,7 @@ export type EmotionSignal =
   | 'neutral'
   | 'positive';
 
-export type DetectionDecision = 'normal_support' | 'counselor_support_suggestion' | 'crisis_escalation';
+export type DetectionDecision = 'normal_support' | 'peer_support_suggestion' | 'crisis_escalation';
 
 export interface SemanticDetectionResult {
   intent: IntentLabel;
@@ -49,6 +49,7 @@ export interface ContradictionSignals {
 
 export type SafetyIntentCategory =
   | 'direct_self_harm'
+  | 'harm_to_others'
   | 'passive_hopelessness'
   | 'emotional_distress'
   | 'figurative_stress'
@@ -67,6 +68,7 @@ export interface SafetyFlags {
   safety_intent_categories: SafetyIntentCategory[];
   directSelfHarmMatches: string[];
   reasons: string[];
+  harm_to_others_detected: boolean;
 }
 
 export interface RiskDimensions {
