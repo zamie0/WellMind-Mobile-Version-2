@@ -55,7 +55,7 @@ export const applyEscalationCooldown = (
 
   if (elapsed < cooldownMs && riskDelta <= escalationDeltaThreshold) {
     return {
-      finalDecision: 'counselor_support_suggestion',
+      finalDecision: 'peer_support_suggestion',
       escalationAllowed: false,
       preventedByCooldown: true,
       reasons: ['crisis escalation prevented by cooldown', `elapsed=${elapsed}ms`, `riskDelta=${riskDelta}`],
