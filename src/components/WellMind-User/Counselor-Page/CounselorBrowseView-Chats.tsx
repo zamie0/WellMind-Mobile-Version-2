@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ChevronRight, MessageCircle } from 'lucide-react';
+import { ChevronRight, MessageCircle, Image, File } from 'lucide-react';
 import { CounselorAvatar, getStatusColor } from './CounselorAvatar';
 import { formatMessageContent, formatTime } from './CounselorSupportChat.utils';
 import type { CounselorChat, CounselorUser } from '@/types/wellmind';
@@ -25,16 +25,38 @@ const EmptyState = ({
     animate={{ opacity: 1, y: 0 }}
     className="flex flex-col items-center justify-center py-16 gap-3 text-center"
   >
-    <div
-      className="w-14 h-14 rounded-full flex items-center justify-center"
-      style={{ background: 'rgba(57,168,155,0.1)' }}
-    >
+    <div className="w-14 h-14 rounded-full flex items-center justify-center"
+      style={{ background: 'rgba(57,168,155,0.1)' }}>
       {icon}
     </div>
     <p className="text-sm font-semibold" style={{ color: '#1a2b38' }}>{title}</p>
     <p className="text-xs leading-relaxed max-w-[220px]" style={{ color: '#8fa3b1' }}>{desc}</p>
   </motion.div>
 );
+
+function LastMessagePreview({ message }: { message: CounselorChat['messages'][number] }) {
+  if (message.attachment) {
+    const isImage = message.attachment.type === 'image';
+    return (
+      <span className="flex items-center gap-1 text-xs truncate" style={{ color: '#8fa3b1' }}>
+        {isImage
+          ? <Image className="h-3 w-3 flex-shrink-0" style={{ color: '#39a89b' }} />
+          : <File className="h-3 w-3 flex-shrink-0" style={{ color: '#7c6fa0' }} />
+        }
+        <span className="truncate">
+          {message.content
+            ? formatMessageContent(message.content)
+            : (isImage ? 'Image' : message.attachment.name)}
+        </span>
+      </span>
+    );
+  }
+  return (
+    <p className="text-xs truncate mt-0.5" style={{ color: '#8fa3b1' }}>
+      {formatMessageContent(message.content)}
+    </p>
+  );
+}
 
 export const CounselorBrowseChats = ({
   chats,
@@ -69,18 +91,19 @@ export const CounselorBrowseChats = ({
             className="w-full rounded-2xl p-4 flex items-center gap-3.5 text-left"
             style={{ background: 'white', boxShadow: '0 2px 10px rgba(0,0,0,0.055)' }}
           >
+            {/* Avatar + status dot */}
             <div className="relative flex-shrink-0">
               <CounselorAvatar counselor={counselor} size="md" />
               <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${getStatusColor(counselor.status)}`} />
             </div>
+
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-sm" style={{ color: '#1a2b38' }}>{counselor.displayName}</p>
-              {lastMessage && (
-                <p className="text-xs truncate mt-0.5" style={{ color: '#8fa3b1' }}>
-                  {formatMessageContent(lastMessage.content)}
-                </p>
-              )}
+              <p className="font-semibold text-sm" style={{ color: '#1a2b38' }}>
+                {counselor.displayName}
+              </p>
+              {lastMessage && <LastMessagePreview message={lastMessage} />}
             </div>
+
             <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
               <span className="text-[11px]" style={{ color: '#b0c0cc' }}>
                 {formatTime(chat.lastMessageAt)}

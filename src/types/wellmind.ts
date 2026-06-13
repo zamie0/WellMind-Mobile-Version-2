@@ -38,6 +38,15 @@ export interface EncryptedPayload {
   data: string;
 }
 
+export interface ChatAttachment {
+  id: string;
+  name: string;
+  type: 'image' | 'file';
+  mimeType: string;
+  base64: string;
+  size: number;
+}
+
 export interface CounselorMessage {
   id: string;
   chatId: string;
@@ -46,6 +55,7 @@ export interface CounselorMessage {
   /** Plaintext is never persisted. `content` holds the AES-GCM ciphertext. */
   content: EncryptedPayload | string;
   timestamp: Date;
+  attachment?: ChatAttachment;
   isRead?: boolean;
   optimistic?: boolean;
   failed?: boolean;

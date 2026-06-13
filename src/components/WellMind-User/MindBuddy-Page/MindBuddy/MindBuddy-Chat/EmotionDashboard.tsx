@@ -25,43 +25,23 @@ const NEUTRAL_EMOTIONS: EmotionLabel[] = ['neutral'];
 
 function getInsight(counts: Record<string, number>, total: number): string {
   if (total === 0) return 'Start chatting with MindBuddy to track your emotions. Your feelings matter, and noticing them is the first step toward understanding yourself better. 💚';
-  
+
   const topEmotion = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] as EmotionLabel | undefined;
   if (!topEmotion) return "Keep sharing your feelings. Every conversation helps you understand what you're going through. 🌱";
-  
+
   const meta = emotionMeta[topEmotion];
   const secondTop = Object.entries(counts).sort((a, b) => b[1] - a[1])[1]?.[0] as EmotionLabel | undefined;
   const topCount = counts[topEmotion] ?? 0;
   const topPct = Math.round((topCount / total) * 100);
-  
-  if (topEmotion === 'crisis') {
-    return "🚨 I'm concerned about what you've been sharing. Your safety matters most. Please reach out to a professional counselor or crisis support. You don't have to go through this alone.";
-  }
-  
-  if (topEmotion === 'severe') {
-    return `⚠️ You've been feeling overwhelmed often (${topPct}% of the time). That's a lot to carry. Consider speaking with a counselor — they can help you work through what's weighing on you. You deserve real support.`;
-  }
-  
-  if (topEmotion === 'depress') {
-    return `😔 You've been feeling low lately (${topPct}% of the time)${secondTop ? `, especially when you're also ${emotionMeta[secondTop].label.toLowerCase()}` : ''}. This pattern is worth exploring with someone you trust. Talking about it can help — and MindBuddy is here to listen whenever you need.`;
-  }
-  
-  if (topEmotion === 'anxious') {
-    return `😰 Anxiety has been showing up often (${topPct}% of the time). That's your mind trying to protect you, but it can feel overwhelming. Grounding techniques and talking through what worries you can help. What's one thing that helped you feel calmer recently?`;
-  }
-  
-  if (topEmotion === 'stress') {
-    return `😤 You've been stressed frequently (${topPct}% of the time). Stress is your body telling you something needs attention — whether it's rest, boundaries, or support. Notice what patterns trigger it. That awareness is powerful.`;
-  }
-  
-  if (POSITIVE_EMOTIONS.includes(topEmotion)) {
-    return `${meta.emoji} You've been feeling ${meta.label.toLowerCase()} most often (${topPct}% of the time) — that's wonderful. Notice what helped create those moments. Keep doing those things. 💚`;
-  }
-  
-  if (NEUTRAL_EMOTIONS.includes(topEmotion)) {
-    return '😐 Things seem steady for you. That stability is valuable. MindBuddy is here whenever you want to explore deeper feelings or just need someone to listen.';
-  }
-  
+
+  if (topEmotion === 'crisis') return "🚨 I'm concerned about what you've been sharing. Your safety matters most. Please reach out to a professional counselor or crisis support. You don't have to go through this alone.";
+  if (topEmotion === 'severe') return `⚠️ You've been feeling overwhelmed often (${topPct}% of the time). That's a lot to carry. Consider speaking with a counselor — they can help you work through what's weighing on you. You deserve real support.`;
+  if (topEmotion === 'depress') return `😔 You've been feeling low lately (${topPct}% of the time)${secondTop ? `, especially when you're also ${emotionMeta[secondTop].label.toLowerCase()}` : ''}. This pattern is worth exploring with someone you trust. Talking about it can help — and MindBuddy is here to listen whenever you need.`;
+  if (topEmotion === 'anxious') return `😰 Anxiety has been showing up often (${topPct}% of the time). That's your mind trying to protect you, but it can feel overwhelming. Grounding techniques and talking through what worries you can help. What's one thing that helped you feel calmer recently?`;
+  if (topEmotion === 'stress') return `😤 You've been stressed frequently (${topPct}% of the time). Stress is your body telling you something needs attention — whether it's rest, boundaries, or support. Notice what patterns trigger it. That awareness is powerful.`;
+  if (POSITIVE_EMOTIONS.includes(topEmotion)) return `${meta.emoji} You've been feeling ${meta.label.toLowerCase()} most often (${topPct}% of the time) — that's wonderful. Notice what helped create those moments. Keep doing those things. 💚`;
+  if (NEUTRAL_EMOTIONS.includes(topEmotion)) return '😐 Things seem steady for you. That stability is valuable. MindBuddy is here whenever you want to explore deeper feelings or just need someone to listen.';
+
   return `${meta.emoji} ${meta.label} has been most common (${topPct}% of the time). Your emotions are trying to tell you something — whether it's to slow down, ask for help, or celebrate a win. What do you think they're pointing to?`;
 }
 
@@ -297,8 +277,13 @@ export const EmotionDashboard = () => {
 
               {total === 0 ? (
                 <div className="text-center py-6">
-                  <p className="text-3xl mb-2">💬</p>
-                  <p className="text-sm" style={{ color: '#8fa3b1' }}>No data yet.</p>
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
+                    style={{ background: 'rgba(59,130,246,0.08)' }}
+                  >
+                    <TrendingUp className="h-5 w-5" style={{ color: '#3b82f6' }} strokeWidth={1.5} />
+                  </div>
+                  <p className="text-sm font-semibold" style={{ color: '#1a2b38' }}>No data yet</p>
                   <p className="text-xs mt-1" style={{ color: '#8fa3b1' }}>Start chatting to see your patterns!</p>
                 </div>
               ) : (
@@ -345,85 +330,130 @@ export const EmotionDashboard = () => {
 
         {/* ── Recent timeline ── */}
         <section>
-          <p
-            className="text-[10px] font-semibold uppercase tracking-widest px-1 mb-3"
-            style={{ color: '#8fa3b1' }}
-          >
-            Recent Messages
-          </p>
+          <div className="flex items-center justify-between px-1 mb-3">
+            <p
+              className="text-[10px] font-semibold uppercase tracking-widest"
+              style={{ color: '#8fa3b1' }}
+            >
+              Recent Messages
+            </p>
+            {timeline.length > 0 && (
+              <span
+                className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(217,119,6,0.10)', color: '#d97706' }}
+              >
+                {timeline.length} entries
+              </span>
+            )}
+          </div>
+
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35, type: 'spring', stiffness: 280, damping: 26 }}
             className="rounded-3xl overflow-hidden"
-            style={{ background: 'white', boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}
+            style={{ background: 'white', boxShadow: '0 4px 24px rgba(0,0,0,0.07)' }}
           >
             <div
-              className="h-0.5 w-full"
-              style={{ background: 'linear-gradient(90deg, #d97706, #d9770688)' }}
+              className="h-1 w-full"
+              style={{ background: 'linear-gradient(90deg, #d97706, rgba(217,119,6,0.20))' }}
             />
-            <div className="p-4">
-              <div className="flex items-center gap-3 mb-4">
-                <div
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: 'rgba(217,119,6,0.1)' }}
-                >
-                  <MessageCircle className="h-5 w-5" style={{ color: '#d97706' }} strokeWidth={1.75} />
-                </div>
-                <div>
-                  <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>Your Recent Shares</p>
-                  <p className="text-[11px]" style={{ color: '#8fa3b1' }}>Latest conversations with MindBuddy</p>
-                </div>
-              </div>
 
+            <div className="px-4 pt-4 pb-3 flex items-center gap-3">
               <div
-                className="h-px w-full mb-4"
-                style={{ background: 'linear-gradient(90deg, rgba(57,168,155,0.15), transparent)' }}
-              />
+                className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{ background: 'rgba(217,119,6,0.10)' }}
+              >
+                {/* fixed: was h-4.5 w-4.5 — invalid Tailwind, use explicit px size */}
+                <MessageCircle className="h-[18px] w-[18px]" style={{ color: '#d97706' }} strokeWidth={1.75} />
+              </div>
+              <div>
+                <p className="text-sm font-bold" style={{ color: '#1a2b38' }}>Your Recent Shares</p>
+                <p className="text-[11px]" style={{ color: '#8fa3b1' }}>Latest conversations with MindBuddy</p>
+              </div>
+            </div>
 
+            <div className="mx-4 h-px" style={{ background: 'rgba(143,163,177,0.15)' }} />
+
+            <div className="p-4">
               {timeline.length === 0 ? (
-                <div className="text-center py-6">
-                  <p className="text-3xl mb-2">🌱</p>
-                  <p className="text-sm" style={{ color: '#8fa3b1' }}>No messages yet.</p>
+                <div className="text-center py-8">
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3"
+                    style={{ background: 'rgba(57,168,155,0.08)' }}
+                  >
+                    <MessageCircle className="h-5 w-5" style={{ color: '#6bab9e' }} strokeWidth={1.5} />
+                  </div>
+                  <p className="text-sm font-semibold" style={{ color: '#1a2b38' }}>Nothing shared yet</p>
+                  <p className="text-xs mt-1" style={{ color: '#8fa3b1' }}>
+                    Start a chat with MindBuddy to see your history here.
+                  </p>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {timeline.map((m, i) => {
                     const meta = emotionMeta[m.emotion!];
                     const confidence = m.emotionConfidence ?? null;
+                    // Guard: createdAt may not exist on MindBuddyMessage — cast safely
+                    const rawDate = (m as any).createdAt;
+                    const timeLabel =
+                      typeof rawDate === 'string'
+                        ? new Date(rawDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : null;
+
                     return (
                       <motion.div
                         key={m.id}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.38 + i * 0.04 }}
-                        className="flex items-start gap-3 rounded-2xl p-3"
-                        style={{ background: 'rgba(57,168,155,0.04)' }}
+                        className="rounded-2xl overflow-hidden"
+                        style={{
+                          background: meta.accentBg,
+                          border: `1px solid ${meta.accentText}18`,
+                        }}
                       >
-                        {/* Pill + confidence */}
-                        <div className="flex flex-col items-center gap-1 flex-shrink-0 pt-0.5">
-                          <span
-                            className="text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap"
-                            style={{ background: meta.accentBg, color: meta.accentText }}
-                          >
-                            {meta.emoji} {meta.label}
-                          </span>
-                          {confidence !== null && (
+                        <div
+                          className="flex items-center justify-between px-3 pt-2.5 pb-2"
+                          style={{ borderBottom: `1px solid ${meta.accentText}14` }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="text-[11px] font-bold px-2.5 py-0.5 rounded-full"
+                              style={{ background: 'white', color: meta.accentText }}
+                            >
+                              {meta.emoji} {meta.label}
+                            </span>
+                            {confidence !== null && (
+                              <div className="flex items-center gap-1">
+                                <div
+                                  className="h-1 w-16 rounded-full overflow-hidden"
+                                  style={{ background: 'rgba(143,163,177,0.20)' }}
+                                >
+                                  <div
+                                    className="h-full rounded-full"
+                                    style={{
+                                      width: `${Math.round(confidence * 100)}%`,
+                                      background: meta.accentText,
+                                    }}
+                                  />
+                                </div>
+                                <span className="text-[10px]" style={{ color: '#8fa3b1' }}>
+                                  {Math.round(confidence * 100)}%
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {timeLabel && (
                             <span className="text-[10px]" style={{ color: '#8fa3b1' }}>
-                              {Math.round(confidence * 100)}%
+                              {timeLabel}
                             </span>
                           )}
                         </div>
 
-                        {/* Divider */}
-                        <div
-                          className="w-px self-stretch flex-shrink-0"
-                          style={{ background: 'rgba(57,168,155,0.2)' }}
-                        />
-
-                        {/* Message */}
                         <p
-                          className="text-xs leading-relaxed flex-1 line-clamp-2"
+                          className="text-xs leading-relaxed px-3 py-2.5 line-clamp-2"
                           style={{ color: '#5f7585' }}
                         >
                           {m.content}
