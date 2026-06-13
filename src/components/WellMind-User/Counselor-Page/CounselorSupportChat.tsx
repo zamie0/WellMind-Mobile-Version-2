@@ -46,7 +46,7 @@ export const CounselorSupportChat = ({ onClose: _onClose, embedded = false }: Co
   const [bookingCounselor, setBookingCounselor] = useState<CounselorUser | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const callConversationId = searchParams.get('callConversationId');
+  const routeConversationId = searchParams.get('callConversationId') || searchParams.get('conversationId');
 
   useEffect(() => {
     loadAvailableCounselors();
@@ -72,20 +72,21 @@ export const CounselorSupportChat = ({ onClose: _onClose, embedded = false }: Co
   }, [activeChatId, chats]);
 
   useEffect(() => {
-    if (!callConversationId) return;
-    const targetChat = chats.find((chat) => chat.id === callConversationId);
+    if (!routeConversationId) return;
+    const targetChat = chats.find((chat) => chat.id === routeConversationId);
     if (!targetChat) return;
 
-    setActiveChatId(callConversationId);
+    setActiveChatId(routeConversationId);
     setView('chat');
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
       next.delete('callConversationId');
+      next.delete('conversationId');
       return next;
     }, { replace: true });
-  }, [callConversationId, chats, setSearchParams]);
+  }, [routeConversationId, chats, setSearchParams]);
 
-  const handleSetupComplete = () => {
+  const handleSetupComplete = async () => {
     if (!displayName.trim() && !isAnonymous) {
       toast.error('Please enter a display name');
       return;
@@ -95,7 +96,7 @@ export const CounselorSupportChat = ({ onClose: _onClose, embedded = false }: Co
     if (!counselorProfile) {
       createCounselorProfile(preferredName, isAnonymous, bio, undefined, authUser?.id);
     } else {
-      updateCounselorProfile({
+      await updateCounselorProfile({
         isAnonymous,
         displayName: isAnonymous ? 'Anonymous' : preferredName,
         bio,

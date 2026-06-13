@@ -1,8 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, PhoneOff, Video } from 'lucide-react';
 import { toast } from 'sonner';
-import { Capacitor } from '@capacitor/core';
-import { Camera } from '@capacitor/camera';
 import { useNavigate } from 'react-router-dom';
 import { sendCallEnd } from '@/lib/realtimeCounselorChat';
 import { useAuthStore } from '@/stores/authStore';
@@ -14,27 +12,17 @@ export const IncomingCallNotification = () => {
   const currentSession = useAuthStore((state) => state.currentSession);
   const { requestPermissions } = useAppPermissions();
   const navigate = useNavigate();
-  const isNative = Capacitor.isNativePlatform();
 
   const handleAccept = async () => {
     if (!incomingCall) return;
     try {
-      if (isNative) {
-        try {
-          const result = await Camera.requestPermissions({ permissions: ['camera', 'photos'] });
-          if (result.camera !== 'granted') {
-            toast.error('Camera permission denied. Enable it in Settings > Apps > WellMind > Permissions.');
-            rejectCall();
-            return;
-          }
-        } catch (error) {
-          console.error('Failed to request permissions:', error);
-          toast.error('Unable to access camera. Please check your phone settings.');
-          rejectCall();
-          return;
-        }
-      } else {
-        await requestPermissions(['camera', 'microphone']);
+      const permissions = incomingCall.mode === 'video'
+        ? await requestPermissions(['camera', 'microphone'])
+        : await requestPermissions(['microphone']);
+      if (permissions.microphone === 'denied' || (incomingCall.mode === 'video' && permissions.camera === 'denied')) {
+        toast.error('Camera or microphone permission denied. Please enable it in your phone settings.');
+        rejectCall();
+        return;
       }
       const route = currentSession.userRole === 'counselor'
         ? `/counselor?callConversationId=${encodeURIComponent(incomingCall.conversationId)}`
@@ -70,8 +58,13 @@ export const IncomingCallNotification = () => {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -80, scale: 0.94 }}
           transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-          className="fixed top-0 left-0 right-0 z-[9999] flex justify-center"
-          style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 14px)', paddingLeft: 16, paddingRight: 16 }}
+          className="fixed top-0 left-0 right-0 flex justify-center"
+          style={{
+            zIndex: 100000,
+            paddingTop: 'max(env(safe-area-inset-top, 0px), 14px)',
+            paddingLeft: 16,
+            paddingRight: 16,
+          }}
         >
           <div
             className="w-full max-w-sm rounded-3xl overflow-hidden"

@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { getChatSocket, identifyChatParticipant } from '@/lib/realtimeCounselorChat';
 import { useAuthStore } from '@/stores/authStore';
 import { useIncomingCallStore } from '@/stores/incomingCallStore';
-import type { WebRTCCallOffer } from '@/lib/realtimeCounselorChat';
+import { showAppNotification } from '@/lib/nativeNotifications';
+import type { ChatMessage, WebRTCCallOffer } from '@/lib/realtimeCounselorChat';
 
 /**
  * Global hook to listen for incoming calls regardless of which conversation is active.
@@ -39,12 +40,35 @@ export const useGlobalCallListener = () => {
           receivedAt: new Date(),
         },
       });
+
+      void showAppNotification(
+        `Incoming ${payload.mode === 'video' ? 'video' : 'audio'} call`,
+        `${payload.callerName} is calling you.`,
+        { type: 'call', conversationId: payload.conversationId },
+      );
+    };
+
+    const handleNewMessage = (message: ChatMessage) => {
+      const { currentSession } = useAuthStore.getState();
+      if (!currentSession.isAuthenticated || !currentSession.currentUserId) return;
+      if (message.senderId === currentSession.currentUserId) return;
+
+      const senderName = message.senderName || (message.senderRole === 'counselor' ? 'Counselor' : 'Client');
+      const body = message.text || (message.attachment ? `Sent ${message.attachment.type === 'image' ? 'an image' : message.attachment.name}` : 'Sent a message');
+
+      void showAppNotification(
+        `New message from ${senderName}`,
+        body,
+        { type: 'message', conversationId: message.conversationId },
+      );
     };
 
     socket.on('call:offer', handleIncomingOffer);
+    socket.on('message:new', handleNewMessage);
 
     return () => {
       socket.off('call:offer', handleIncomingOffer);
+      socket.off('message:new', handleNewMessage);
     };
   }, []);
 };

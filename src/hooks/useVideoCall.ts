@@ -50,13 +50,17 @@ export const useVideoCall = ({
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
   const isCallInitiatorRef = useRef(false);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const remoteStreamRef = useRef<MediaStream | null>(null);
 
   const cleanupCall = useCallback(() => {
     peerConnectionRef.current?.close();
     peerConnectionRef.current = null;
     pendingCandidatesRef.current = [];
-    localStream?.getTracks().forEach((track) => track.stop());
-    remoteStream?.getTracks().forEach((track) => track.stop());
+    localStreamRef.current?.getTracks().forEach((track) => track.stop());
+    remoteStreamRef.current?.getTracks().forEach((track) => track.stop());
+    localStreamRef.current = null;
+    remoteStreamRef.current = null;
     setLocalStream(null);
     setRemoteStream(null);
     setIsAudioEnabled(true);
@@ -65,17 +69,18 @@ export const useVideoCall = ({
     setIsMinimized(false);
     setIsActive(false);
     isCallInitiatorRef.current = false;
-  }, [localStream, remoteStream]);
+  }, []);
 
   const attachRemoteStream = useCallback((event: RTCTrackEvent) => {
-    const stream = remoteStream ?? new MediaStream();
+    const stream = remoteStreamRef.current ?? new MediaStream();
     if (event.streams && event.streams[0]) {
       event.streams[0].getTracks().forEach((track) => stream.addTrack(track));
     } else {
       stream.addTrack(event.track);
     }
+    remoteStreamRef.current = stream;
     setRemoteStream(stream);
-  }, [remoteStream]);
+  }, []);
 
   const preparePeerConnection = useCallback(() => {
     if (peerConnectionRef.current) return peerConnectionRef.current;
@@ -134,20 +139,22 @@ export const useVideoCall = ({
   }, []);
 
   const toggleAudio = useCallback(() => {
-    if (!localStream) return;
-    localStream.getAudioTracks().forEach((track) => {
+    const stream = localStreamRef.current;
+    if (!stream) return;
+    stream.getAudioTracks().forEach((track) => {
       track.enabled = !track.enabled;
     });
     setIsAudioEnabled((prev) => !prev);
-  }, [localStream]);
+  }, []);
 
   const toggleVideo = useCallback(() => {
-    if (!localStream) return;
-    localStream.getVideoTracks().forEach((track) => {
+    const stream = localStreamRef.current;
+    if (!stream) return;
+    stream.getVideoTracks().forEach((track) => {
       track.enabled = !track.enabled;
     });
     setIsVideoEnabled((prev) => !prev);
-  }, [localStream]);
+  }, []);
 
   const createLocalStream = useCallback(
     async (mode: CallMode = 'video') => {
@@ -155,7 +162,7 @@ export const useVideoCall = ({
       console.log('📹 Creating local stream:', { mode, isNative });
 
       // For native Android/iOS, request permissions first
-      if (isNative) {
+      if (isNative && mode === 'video') {
         try {
           console.log('📹 Requesting native Android permissions...');
           const permResult = await Camera.requestPermissions({
@@ -186,6 +193,7 @@ export const useVideoCall = ({
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         console.log('📹 Stream obtained:', { videoTracks: stream.getVideoTracks().length, audioTracks: stream.getAudioTracks().length });
         
+        localStreamRef.current = stream;
         setLocalStream(stream);
         setIsVideoEnabled(mode === 'video');
         const pc = preparePeerConnection();
@@ -240,6 +248,10 @@ export const useVideoCall = ({
       try {
         await peerConnectionRef.current.setRemoteDescription({ type: payload.type, sdp: payload.sdp });
         await flushPendingCandidates();
+        setRemoteUserName((current) => current || payload.responderName);
+        setConnectionState('connecting');
+        setIsActive(true);
+        setIsMinimized(false);
       } catch (error) {
         console.error('Failed to set remote answer', error);
       }

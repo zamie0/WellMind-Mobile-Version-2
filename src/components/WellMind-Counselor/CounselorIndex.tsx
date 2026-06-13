@@ -32,7 +32,7 @@ const Index = () => {
   >('home');
   const [openingConversationId, setOpeningConversationId] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  const callConversationId = searchParams.get('callConversationId');
+  const routeConversationId = searchParams.get('callConversationId') || searchParams.get('conversationId');
 
   useEffect(() => {
     if (currentSession.isAuthenticated && currentSession.userRole === 'counselor' && currentSession.currentUserId) {
@@ -78,15 +78,16 @@ const Index = () => {
   ]);
 
   useEffect(() => {
-    if (!callConversationId) return;
-    setOpeningConversationId(callConversationId);
+    if (!routeConversationId) return;
+    setOpeningConversationId(routeConversationId);
     setActiveView('inbox');
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
       next.delete('callConversationId');
+      next.delete('conversationId');
       return next;
     }, { replace: true });
-  }, [callConversationId, setSearchParams]);
+  }, [routeConversationId, setSearchParams]);
 
   if (!currentSession.isAuthenticated) return <Auth />;
 

@@ -39,22 +39,37 @@ export const Onboarding = () => {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const navigate = useNavigate();
   const completeOnboarding = useWellMindStore((s) => s.completeOnboarding);
   const currentUser = useAuthStore((s) => s.getCurrentUser());
   const updateCurrentUserProfile = useAuthStore((s) => s.updateCurrentUserProfile);
+  const saveCurrentUserProfile = useAuthStore((s) => s.saveCurrentUserProfile);
 
   const handleNext = () => {
     if (step < slides.length - 1) setStep(step + 1);
     else setStep(slides.length);
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (!name.trim()) { setError('Please enter your name'); return; }
     setError('');
     const cleanName = name.trim();
+
+    setIsSaving(true);
+    const result = currentUser
+      ? await saveCurrentUserProfile({ name: cleanName, onboardingCompleted: true })
+      : { success: true };
+    setIsSaving(false);
+
+    if (!result.success) {
+      setError(result.error || 'Unable to save your profile');
+      return;
+    }
+
+    const savedUser = result.user || currentUser;
     updateCurrentUserProfile({ name: cleanName, onboardingCompleted: true });
-    completeOnboarding(cleanName, currentUser?.id, currentUser?.email);
+    completeOnboarding(savedUser?.name || cleanName, savedUser?.id || currentUser?.id, savedUser?.email || currentUser?.email);
     navigate('/');
   };
 
@@ -309,15 +324,15 @@ export const Onboarding = () => {
                 transition={{ delay: 0.2 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={handleComplete}
-                disabled={!name.trim()}
+                disabled={!name.trim() || isSaving}
                 className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-sm font-bold text-white"
                 style={{
                   background: 'linear-gradient(135deg, #39a89b, #6bab9e)',
                   boxShadow: '0 4px 16px rgba(57,168,155,0.35)',
-                  opacity: name.trim() ? 1 : 0.45,
+                  opacity: name.trim() && !isSaving ? 1 : 0.45,
                 }}
               >
-                Let's Begin
+                {isSaving ? 'Saving...' : "Let's Begin"}
                 <Sparkles className="h-4 w-4" />
               </motion.button>
             </div>

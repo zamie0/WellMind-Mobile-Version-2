@@ -19,14 +19,23 @@ const Index = () => {
   useEffect(() => {
     if (!currentSession.isAuthenticated || currentSession.userRole !== 'user' || !currentUser) return;
 
-    if (currentUser.onboardingCompleted && user?.id !== currentUser.id) {
+    if (
+      currentUser.onboardingCompleted
+      && (
+        user?.id !== currentUser.id
+        || user?.name !== currentUser.name
+        || user?.email !== currentUser.email
+        || user?.avatar !== currentUser.avatar
+      )
+    ) {
       setUser({
         id: currentUser.id,
         name: currentUser.name || currentUser.email.split('@')[0],
         email: currentUser.email,
-        notificationsEnabled: true,
+        avatar: currentUser.avatar,
+        notificationsEnabled: currentUser.notificationsEnabled ?? true,
         onboardingCompleted: true,
-        streak: 0,
+        streak: user?.id === currentUser.id ? user.streak : 0,
       });
       return;
     }
@@ -34,7 +43,7 @@ const Index = () => {
     if (!currentUser.onboardingCompleted && user?.id && user.id !== currentUser.id) {
       clearUser();
     }
-  }, [clearUser, currentSession.isAuthenticated, currentSession.userRole, currentUser, setUser, user?.id]);
+  }, [clearUser, currentSession.isAuthenticated, currentSession.userRole, currentUser, setUser, user]);
 
   // Not authenticated - show login/register
   if (!currentSession.isAuthenticated) {

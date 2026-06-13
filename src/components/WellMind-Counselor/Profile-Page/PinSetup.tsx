@@ -16,10 +16,12 @@ const PinSetup = ({ onComplete, onSkip }: PinSetupProps) => {
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   
   const { setupPin } = useAuthStore();
 
-  const handlePinChange = (value: string) => {
+  const handlePinChange = async (value: string) => {
+    if (isSaving) return;
     setError('');
     if (step === 'create') {
       setPin(value);
@@ -30,7 +32,9 @@ const PinSetup = ({ onComplete, onSkip }: PinSetupProps) => {
       setConfirmPin(value);
       if (value.length === 6) {
         if (value === pin) {
-          const success = setupPin(value);
+          setIsSaving(true);
+          const success = await setupPin(value);
+          setIsSaving(false);
           if (success) {
             toast.success('PIN set up successfully! 🔐');
             onComplete();
@@ -85,6 +89,7 @@ const PinSetup = ({ onComplete, onSkip }: PinSetupProps) => {
             maxLength={6}
             value={step === 'create' ? pin : confirmPin}
             onChange={handlePinChange}
+            disabled={isSaving}
           >
             <InputOTPGroup>
               {[0, 1, 2, 3, 4, 5].map((index) => (
@@ -121,14 +126,15 @@ const PinSetup = ({ onComplete, onSkip }: PinSetupProps) => {
           <Button
             variant="ghost"
             onClick={onSkip}
+            disabled={isSaving}
             className="text-sage-500 hover:text-sage-700"
           >
-            Skip for now
+            {isSaving ? 'Saving...' : 'Skip for now'}
           </Button>
         )}
 
         <p className="text-sage-500 text-sm mt-6">
-          You'll use this PIN to quickly unlock the app
+          {isSaving ? 'Saving your PIN securely...' : "You'll use this PIN to quickly unlock the app"}
         </p>
       </motion.div>
     </div>

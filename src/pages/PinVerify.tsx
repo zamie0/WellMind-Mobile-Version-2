@@ -9,16 +9,20 @@ const PinVerify = () => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [attempts, setAttempts] = useState(0);
+  const [isVerifying, setIsVerifying] = useState(false);
   
   const { verifyPin, logout, getCurrentUser } = useAuthStore();
   const user = getCurrentUser();
 
-  const handlePinChange = (value: string) => {
+  const handlePinChange = async (value: string) => {
+    if (isVerifying) return;
     setError('');
     setPin(value);
     
     if (value.length === 6) {
-      const success = verifyPin(value);
+      setIsVerifying(true);
+      const success = await verifyPin(value);
+      setIsVerifying(false);
       if (!success) {
         setAttempts(prev => prev + 1);
         setError(attempts >= 2 ? 'Too many attempts. Try logging in again.' : 'Incorrect PIN. Try again.');
@@ -86,6 +90,7 @@ const PinVerify = () => {
             maxLength={6}
             value={pin}
             onChange={handlePinChange}
+            disabled={isVerifying}
           >
             <InputOTPGroup>
               {[0, 1, 2, 3, 4, 5].map((index) => (
@@ -134,7 +139,7 @@ const PinVerify = () => {
         </Button>
 
         <p className="text-sage-400 text-xs mt-6">
-          Forgot PIN? Log out and use your password
+          {isVerifying ? 'Checking PIN...' : 'Forgot PIN? Log out and use your password'}
         </p>
       </motion.div>
     </div>

@@ -78,6 +78,15 @@ export const getOrCreateConversation = (input: {
     body: JSON.stringify(input),
   });
 
+export const updateUserConversationDisplayName = (userId: string, userName: string) =>
+  apiRequest<{ conversations: ChatConversation[] }>(
+    `/api/chat/users/${encodeURIComponent(userId)}/display-name`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ userName }),
+    },
+  );
+
 export const listMessages = (conversationId: string, limit = 100) =>
   apiRequest<{ messages: ChatMessage[] }>(
     `/api/chat/conversations/${conversationId}/messages?limit=${limit}`,

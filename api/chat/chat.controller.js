@@ -4,6 +4,7 @@ import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 import User from "../models/User.js";
 import Counselor from "../models/Counselor.js";
+import { sendPushToParticipant } from "../utils/pushNotifications.js";
 
 const isObjectId = (value) => mongoose.Types.ObjectId.isValid(String(value || ""));
 
@@ -65,10 +66,25 @@ const emitConversationUpdate = (req, conversation) => {
 
 const emitMessage = (req, conversation, message) => {
   const io = req.app.get("io");
-  if (!io) return;
   const dto = toMessageDto(message);
-  io.to(`conversation:${dto.conversationId}`).emit("message:new", dto);
-  emitConversationUpdate(req, conversation);
+  if (io) {
+    io.to(`conversation:${dto.conversationId}`).emit("message:new", dto);
+    emitConversationUpdate(req, conversation);
+  }
+
+  const targetRole = dto.senderRole === "user" ? "counselor" : "user";
+  const targetId = dto.senderRole === "user" ? conversation.counselorId : conversation.userId;
+  const body = dto.text || (dto.attachment?.type === "image" ? "Sent an image" : dto.attachment?.name || "Sent a message");
+
+  void sendPushToParticipant(targetRole, targetId, {
+    title: `New message from ${dto.senderName || "WellMind"}`,
+    body,
+    data: {
+      type: "message",
+      conversationId: dto.conversationId,
+      senderRole: dto.senderRole,
+    },
+  });
 };
 
 export async function getOrCreateConversation(req, res) {
@@ -106,6 +122,35 @@ export async function getOrCreateConversation(req, res) {
   } catch (error) {
     console.error("Failed to create conversation:", error);
     return res.status(500).json({ message: "Failed to create conversation" });
+  }
+}
+
+export async function updateUserConversationName(req, res) {
+  try {
+    await connectDB();
+
+    const { userId } = req.params;
+    const { userName } = req.body || {};
+    const safeUserName = String(userName || "").trim() || "Anonymous";
+
+    if (!String(userId || "").trim()) {
+      return res.status(400).json({ message: "Valid userId is required" });
+    }
+
+    const conversations = await Conversation.find({ userId });
+    if (!conversations.length) {
+      return res.status(200).json({ conversations: [] });
+    }
+
+    await Conversation.updateMany({ userId }, { $set: { userName: safeUserName } });
+    const updated = await Conversation.find({ userId }).sort({ updatedAt: -1 }).limit(100);
+
+    updated.forEach((conversation) => emitConversationUpdate(req, conversation));
+
+    return res.status(200).json({ conversations: updated.map(toConversationDto) });
+  } catch (error) {
+    console.error("Failed to update conversation display name:", error);
+    return res.status(500).json({ message: "Failed to update conversation display name" });
   }
 }
 

@@ -24,17 +24,28 @@ interface AuthStore {
   quickRegister: () => void;
   quickLogin: () => void;
   updateCounselorProfile: (updates: Partial<CounselorProfile>) => void;
-  updateCurrentUserProfile: (updates: { name?: string; onboardingCompleted?: boolean }) => void;
+  updateCurrentUserProfile: (updates: { name?: string; avatar?: string; onboardingCompleted?: boolean; notificationsEnabled?: boolean }) => void;
+  saveCurrentUserProfile: (updates: { name?: string; avatar?: string | null; onboardingCompleted?: boolean; notificationsEnabled?: boolean }) => Promise<{ success: boolean; user?: LocalUser; error?: string }>;
   logout: () => void;
-  setupPin: (pin: string) => boolean;
-  verifyPin: (pin: string) => boolean;
+  setupPin: (pin: string) => Promise<boolean>;
+  verifyPin: (pin: string) => Promise<boolean>;
   hasPin: () => boolean;
   getCurrentUser: () => LocalUser | null;
   resetPinVerification: () => void;
 }
 
 type UserAuthResponse = {
-  user: { id: string; email: string; role: 'user'; createdAt: string };
+  user: {
+    id: string;
+    email: string;
+    role: 'user';
+    name?: string;
+    avatar?: string;
+    onboardingCompleted?: boolean;
+    notificationsEnabled?: boolean;
+    hasPin?: boolean;
+    createdAt: string;
+  };
 };
 
 type CounselorAuthResponse = {
@@ -48,8 +59,14 @@ type CounselorAuthResponse = {
     bio?: string;
     availability?: LocalUser['availability'];
     isVerified?: boolean;
+    hasPin?: boolean;
     createdAt: string;
   };
+};
+
+type PinUpdateResponse = {
+  user?: UserAuthResponse['user'];
+  counselor?: CounselorAuthResponse['counselor'];
 };
 
 export const useAuthStore = create<AuthStore>()(
@@ -82,7 +99,11 @@ export const useAuthStore = create<AuthStore>()(
             const newUser: LocalUser = {
               id: response.user.id,
               email: response.user.email,
-              name: existingNameForEmail(get().users, response.user.email),
+              name: response.user.name || existingNameForEmail(get().users, response.user.email),
+              avatar: response.user.avatar,
+              onboardingCompleted: response.user.onboardingCompleted,
+              notificationsEnabled: response.user.notificationsEnabled,
+              hasPin: response.user.hasPin,
               passwordHash: '',
               role: 'user',
               createdAt: new Date(response.user.createdAt),
@@ -127,6 +148,7 @@ export const useAuthStore = create<AuthStore>()(
               bio: counselor.bio,
               availability: counselor.availability,
               isVerified: counselor.isVerified,
+              hasPin: counselor.hasPin,
             };
 
             set((state) => ({
@@ -136,7 +158,7 @@ export const useAuthStore = create<AuthStore>()(
               ],
               currentSession: {
                 isAuthenticated: true,
-                isPinVerified: !existing?.pin,
+                isPinVerified: !Boolean(counselor.hasPin ?? existing?.hasPin ?? existing?.pin),
                 currentUserId: localUser.id,
                 userRole: 'counselor',
               },
@@ -155,8 +177,11 @@ export const useAuthStore = create<AuthStore>()(
           const localUser: LocalUser = {
             id: user.id,
             email: user.email,
-            name: existing?.name,
-            onboardingCompleted: existing?.onboardingCompleted,
+            name: user.name || existing?.name,
+            avatar: user.avatar || existing?.avatar,
+            onboardingCompleted: user.onboardingCompleted ?? existing?.onboardingCompleted,
+            notificationsEnabled: user.notificationsEnabled ?? existing?.notificationsEnabled,
+            hasPin: user.hasPin ?? existing?.hasPin,
             passwordHash: '',
             role: 'user',
             createdAt: new Date(user.createdAt),
@@ -169,7 +194,7 @@ export const useAuthStore = create<AuthStore>()(
             ],
             currentSession: {
               isAuthenticated: true,
-              isPinVerified: !existing?.pin,
+              isPinVerified: !Boolean(user.hasPin ?? existing?.hasPin ?? existing?.pin),
               currentUserId: localUser.id,
               userRole: 'user',
             },
@@ -211,7 +236,7 @@ export const useAuthStore = create<AuthStore>()(
           set({
             currentSession: {
               isAuthenticated: true,
-              isPinVerified: !lastUser.pin,
+              isPinVerified: !Boolean(lastUser.hasPin || lastUser.pin),
               currentUserId: lastUser.id,
               userRole: lastUser.role,
             },
@@ -232,25 +257,55 @@ export const useAuthStore = create<AuthStore>()(
         });
       },
 
-      setupPin: (pin) => {
+      setupPin: async (pin) => {
         const { currentSession, users } = get();
-        if (!currentSession.currentUserId || pin.length !== 6) return false;
+        if (!currentSession.currentUserId || !/^\d{6}$/.test(pin)) return false;
 
-        set({
-          users: users.map((u) =>
-            u.id === currentSession.currentUserId ? { ...u, pin: simpleHash(pin) } : u,
-          ),
-        });
+        const isCounselor = currentSession.userRole === 'counselor';
+        const path = isCounselor
+          ? `/api/counselor/${currentSession.currentUserId}/pin`
+          : `/api/user/${currentSession.currentUserId}/pin`;
 
-        return true;
+        try {
+          await apiRequest<PinUpdateResponse>(path, {
+            method: 'PATCH',
+            body: JSON.stringify({ pin }),
+          });
+
+          set({
+            users: users.map((u) =>
+              u.id === currentSession.currentUserId
+                ? { ...u, pin: simpleHash(pin), hasPin: true }
+                : u,
+            ),
+            currentSession: {
+              ...currentSession,
+              isPinVerified: true,
+            },
+          });
+
+          return true;
+        } catch (error) {
+          console.error('Failed to save PIN:', error);
+          return false;
+        }
       },
 
-      verifyPin: (pin) => {
+      verifyPin: async (pin) => {
         const { currentSession, users } = get();
         const user = users.find((u) => u.id === currentSession.currentUserId);
-        if (!user || !user.pin) return false;
+        if (!user || !currentSession.currentUserId || !/^\d{6}$/.test(pin)) return false;
 
-        if (user.pin === simpleHash(pin)) {
+        const isCounselor = currentSession.userRole === 'counselor';
+        const path = isCounselor
+          ? `/api/counselor/${currentSession.currentUserId}/pin/verify`
+          : `/api/user/${currentSession.currentUserId}/pin/verify`;
+
+        try {
+          await apiRequest<{ ok: boolean }>(path, {
+            method: 'POST',
+            body: JSON.stringify({ pin }),
+          });
           set({
             currentSession: {
               ...currentSession,
@@ -258,15 +313,24 @@ export const useAuthStore = create<AuthStore>()(
             },
           });
           return true;
+        } catch (error) {
+          if (user.pin === simpleHash(pin)) {
+            set({
+              currentSession: {
+                ...currentSession,
+                isPinVerified: true,
+              },
+            });
+            return true;
+          }
+          return false;
         }
-
-        return false;
       },
 
       hasPin: () => {
         const { currentSession, users } = get();
         const user = users.find((u) => u.id === currentSession.currentUserId);
-        return !!user?.pin;
+        return Boolean(user?.hasPin || user?.pin);
       },
 
       getCurrentUser: () => {
@@ -315,6 +379,50 @@ export const useAuthStore = create<AuthStore>()(
               : u,
           ),
         });
+      },
+
+      saveCurrentUserProfile: async (updates) => {
+        const { currentSession } = get();
+        if (!currentSession.currentUserId || currentSession.userRole !== 'user') {
+          return { success: false, error: 'No user account is active' };
+        }
+
+        try {
+          const response = await apiRequest<UserAuthResponse>(`/api/user/${currentSession.currentUserId}/profile`, {
+            method: 'PATCH',
+            body: JSON.stringify(updates),
+          });
+
+          const apiUser = response.user;
+          const localUser: LocalUser = {
+            id: apiUser.id,
+            email: apiUser.email,
+            name: apiUser.name,
+            avatar: apiUser.avatar,
+            onboardingCompleted: apiUser.onboardingCompleted,
+            notificationsEnabled: apiUser.notificationsEnabled,
+            hasPin: apiUser.hasPin,
+            passwordHash: '',
+            role: 'user',
+            createdAt: new Date(apiUser.createdAt),
+          };
+
+          let savedUser: LocalUser = localUser;
+          set((state) => {
+            const existing = state.users.find((u) => u.id === localUser.id || u.email === localUser.email);
+            savedUser = { ...existing, ...localUser };
+            return {
+              users: [
+                ...state.users.filter((u) => u.id !== localUser.id && u.email !== localUser.email),
+                savedUser,
+              ],
+            };
+          });
+
+          return { success: true, user: savedUser };
+        } catch (error) {
+          return { success: false, error: error instanceof Error ? error.message : 'Profile update failed' };
+        }
       },
     }),
     {

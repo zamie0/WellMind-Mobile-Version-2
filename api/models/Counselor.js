@@ -13,6 +13,7 @@ const counselorSchema = new mongoose.Schema(
   {
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
+    pinHash: { type: String },
     displayName: { type: String, required: true, trim: true },
     fullName: { type: String, trim: true },
     specializations: [{ type: String, trim: true }],
@@ -28,6 +29,11 @@ const counselorSchema = new mongoose.Schema(
     certificateFileId: { type: mongoose.Schema.Types.ObjectId },
     certificateUrl: { type: String },
     createdByAdmin: { type: Boolean, default: false },
+    pushTokens: [{
+      token: { type: String, required: true },
+      platform: { type: String, default: "android" },
+      updatedAt: { type: Date, default: Date.now },
+    }],
   },
   { timestamps: true },
 );

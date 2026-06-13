@@ -4,11 +4,14 @@ export interface LocalUser {
   id: string;
   email: string;
   name?: string;
+  avatar?: string;
   passwordHash: string; // Simple hash for demo
   pin?: string;
+  hasPin?: boolean;
   role: UserRole; // 'user' or 'counselor'
   createdAt: Date;
   onboardingCompleted?: boolean;
+  notificationsEnabled?: boolean;
   counselorProfile?: CounselorProfile;
   // Counselor specific fields
   counselorName?: string;

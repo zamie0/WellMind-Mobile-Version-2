@@ -11,10 +11,16 @@ const userSchema = new mongoose.Schema(
     assignedCounselor: { type: mongoose.Schema.Types.ObjectId, ref: "Counselor" },
     riskScore: { type: Number, default: 0, min: 0, max: 100 },
     profile: {
+      avatar: String,
       reminderTime: String,
       onboardingCompleted: { type: Boolean, default: false },
       notificationsEnabled: { type: Boolean, default: true },
     },
+    pushTokens: [{
+      token: { type: String, required: true },
+      platform: { type: String, default: "android" },
+      updatedAt: { type: Date, default: Date.now },
+    }],
   },
   { timestamps: true },
 );

@@ -29,6 +29,7 @@ import Auth from "./pages/Auth";
 import CounselorSupportChat from "./components/WellMind-User/Counselor-Page/CounselorSupportChat";
 import { useAuthStore } from "./stores/authStore";
 import { startNotificationScheduler } from "./lib/notificationScheduler";
+import { initializeNativeNotifications } from "./lib/nativeNotifications";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +84,7 @@ const RootNavigator = () => {
 
 const App = () => {
   const { isFirstLaunch, requestPermissions } = useAppPermissions();
+  const { currentSession } = useAuthStore();
   const [showPermissionModal, setShowPermissionModal] = useState(isFirstLaunch);
 
   // Listen for incoming calls globally, regardless of which screen the user is on
@@ -91,6 +93,11 @@ const App = () => {
   useEffect(() => {
     startNotificationScheduler();
   }, []);
+
+  useEffect(() => {
+    if (!currentSession.isAuthenticated || !currentSession.userRole || !currentSession.currentUserId) return;
+    void initializeNativeNotifications(currentSession.userRole, currentSession.currentUserId);
+  }, [currentSession.currentUserId, currentSession.isAuthenticated, currentSession.userRole]);
 
   useEffect(() => {
     setShowPermissionModal(isFirstLaunch);

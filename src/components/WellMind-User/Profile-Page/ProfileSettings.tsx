@@ -2,6 +2,8 @@ import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, User, Mail, Camera, Trash2, Save } from 'lucide-react';
 import { useWellMindStore } from '@/stores/wellmindStore';
+import { useAuthStore } from '@/stores/authStore';
+import { useCounselorChatStore } from '@/stores/counselorChatStore';
 import { toast } from 'sonner';
 
 interface ProfileSettingsProps {
@@ -11,10 +13,15 @@ interface ProfileSettingsProps {
 export default function ProfileSettings({ onClose }: ProfileSettingsProps) {
   const user = useWellMindStore((state) => state.user);
   const updateUser = useWellMindStore((state) => state.updateUser);
+  const currentUser = useAuthStore((state) => state.getCurrentUser());
+  const saveCurrentUserProfile = useAuthStore((state) => state.saveCurrentUserProfile);
+  const counselorProfile = useCounselorChatStore((state) => state.counselorProfile);
+  const updateCounselorProfile = useCounselorChatStore((state) => state.updateCounselorProfile);
 
-  const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [avatar, setAvatar] = useState<string | undefined>(user?.avatar);
+  const [name, setName] = useState(currentUser?.name || user?.name || '');
+  const [email] = useState(currentUser?.email || user?.email || '');
+  const [avatar, setAvatar] = useState<string | undefined>(currentUser?.avatar || user?.avatar);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImagePick = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,8 +41,34 @@ export default function ProfileSettings({ onClose }: ProfileSettingsProps) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleSave = () => {
-    updateUser({ name, email, avatar });
+  const handleSave = async () => {
+    const cleanName = name.trim();
+    if (!cleanName) return;
+
+    setIsSaving(true);
+    const result = currentUser
+      ? await saveCurrentUserProfile({ name: cleanName, avatar: avatar ?? null })
+      : { success: true };
+
+    if (!result.success) {
+      setIsSaving(false);
+      toast.error(result.error || 'Unable to save profile');
+      return;
+    }
+
+    const savedUser = result.user || currentUser;
+    updateUser({
+      id: savedUser?.id || user?.id,
+      name: savedUser?.name || cleanName,
+      email: savedUser?.email || email,
+      avatar: savedUser?.avatar || avatar,
+    });
+
+    if (counselorProfile && !counselorProfile.isAnonymous) {
+      await updateCounselorProfile({ displayName: savedUser?.name || cleanName });
+    }
+
+    setIsSaving(false);
     toast.success('Profile updated!');
     onClose();
   };
@@ -287,13 +320,14 @@ export default function ProfileSettings({ onClose }: ProfileSettingsProps) {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              readOnly
               placeholder="your@email.com"
               className="w-full px-4 py-3 rounded-2xl text-sm outline-none"
               style={{
                 background: 'rgba(124,111,160,0.06)',
                 color: '#1a2b38',
                 border: '1px solid rgba(124,111,160,0.15)',
+                opacity: 0.75,
               }}
             />
           </div>
@@ -309,18 +343,18 @@ export default function ProfileSettings({ onClose }: ProfileSettingsProps) {
             whileTap={{ scale: 0.97 }}
             type="button"
             onClick={handleSave}
-            disabled={!name.trim()}
+            disabled={!name.trim() || isSaving}
             className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-sm font-bold text-white"
             style={{
               background: name.trim()
                 ? 'linear-gradient(135deg, #39a89b, #6bab9e)'
                 : '#c8d5db',
               boxShadow: name.trim() ? '0 4px 16px rgba(57,168,155,0.35)' : 'none',
-              opacity: name.trim() ? 1 : 0.7,
+              opacity: name.trim() && !isSaving ? 1 : 0.7,
             }}
           >
             <Save className="h-4 w-4" />
-            Save Changes
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </motion.button>
         </motion.div>
 

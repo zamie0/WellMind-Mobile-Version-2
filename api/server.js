@@ -5,6 +5,8 @@ import userRoutes from "./user/user.routes.js";
 import counselorRoutes from "./counselor/counselor.routes.js";
 import chatRoutes from "./chat/chat.routes.js";
 import appointmentRoutes from "./appointment/appointment.routes.js";
+import notificationRoutes from "./notification/notification.routes.js";
+import { sendPushToParticipant } from "./utils/pushNotifications.js";
 import { loadEnv } from "./utils/loadEnv.js";
 
 loadEnv();
@@ -22,8 +24,10 @@ const io = new Server(server, {
 app.set("io", io);
 app.locals.onlineCounselors = new Set();
 app.locals.counselorSocketCounts = new Map();
+app.locals.onlineUsers = new Set();
+app.locals.userSocketCounts = new Map();
 
-app.use(express.json());
+app.use(express.json({ limit: "8mb" }));
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", process.env.CLIENT_ORIGIN || "*");
@@ -42,10 +46,17 @@ app.use("/api/user", userRoutes);
 app.use("/api/counselor", counselorRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 const broadcastCounselorPresence = () => {
   io.emit("counselor:presence", {
     onlineCounselorIds: Array.from(app.locals.onlineCounselors),
+  });
+};
+
+const broadcastUserPresence = () => {
+  io.emit("user:presence", {
+    onlineUserIds: Array.from(app.locals.onlineUsers),
   });
 };
 
@@ -67,6 +78,24 @@ const removeCounselorSocket = (counselorId) => {
   }
 };
 
+const addUserSocket = (userId) => {
+  const id = String(userId);
+  const currentCount = app.locals.userSocketCounts.get(id) || 0;
+  app.locals.userSocketCounts.set(id, currentCount + 1);
+  app.locals.onlineUsers.add(id);
+};
+
+const removeUserSocket = (userId) => {
+  const id = String(userId);
+  const nextCount = Math.max((app.locals.userSocketCounts.get(id) || 1) - 1, 0);
+  if (nextCount === 0) {
+    app.locals.userSocketCounts.delete(id);
+    app.locals.onlineUsers.delete(id);
+  } else {
+    app.locals.userSocketCounts.set(id, nextCount);
+  }
+};
+
 io.on("connection", (socket) => {
   socket.on("chat:identify", ({ role, participantId } = {}) => {
     if ((role === "user" || role === "counselor") && participantId) {
@@ -79,11 +108,17 @@ io.on("connection", (socket) => {
         socket.emit("counselor:presence", {
           onlineCounselorIds: Array.from(app.locals.onlineCounselors),
         });
+        socket.emit("user:presence", {
+          onlineUserIds: Array.from(app.locals.onlineUsers),
+        });
         return;
       }
 
       if (socket.data.role === "counselor" && socket.data.participantId) {
         removeCounselorSocket(socket.data.participantId);
+      }
+      if (socket.data.role === "user" && socket.data.participantId) {
+        removeUserSocket(socket.data.participantId);
       }
 
       socket.data.role = role;
@@ -92,7 +127,12 @@ io.on("connection", (socket) => {
       if (role === "counselor") {
         addCounselorSocket(participantId);
         broadcastCounselorPresence();
+        socket.emit("user:presence", {
+          onlineUserIds: Array.from(app.locals.onlineUsers),
+        });
       } else {
+        addUserSocket(participantId);
+        broadcastUserPresence();
         socket.emit("counselor:presence", {
           onlineCounselorIds: Array.from(app.locals.onlineCounselors),
         });
@@ -120,6 +160,19 @@ io.on("connection", (socket) => {
       } else {
         socket.to(`conversation:${payload.conversationId}`).emit("call:offer", payload);
       }
+
+      if (payload.targetRole && payload.targetId) {
+        void sendPushToParticipant(payload.targetRole, payload.targetId, {
+          title: `Incoming ${payload.mode === "video" ? "video" : "audio"} call`,
+          body: `${payload.callerName || "Someone"} is calling you.`,
+          data: {
+            type: "call",
+            conversationId: payload.conversationId,
+            callerId: payload.callerId,
+            mode: payload.mode,
+          },
+        });
+      }
     }
   });
 
@@ -142,10 +195,17 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    if (socket.data.role !== "counselor" || !socket.data.participantId) return;
+    if (!socket.data.participantId) return;
 
-    removeCounselorSocket(socket.data.participantId);
-    broadcastCounselorPresence();
+    if (socket.data.role === "counselor") {
+      removeCounselorSocket(socket.data.participantId);
+      broadcastCounselorPresence();
+    }
+
+    if (socket.data.role === "user") {
+      removeUserSocket(socket.data.participantId);
+      broadcastUserPresence();
+    }
   });
 });
 

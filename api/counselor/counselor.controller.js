@@ -1,6 +1,6 @@
 import connectDB from "../../config/db.js";
 import Counselor from "../models/Counselor.js";
-import { verifyPassword } from "../utils/password.js";
+import { hashPassword, verifyPassword } from "../utils/password.js";
 
 const publicCounselor = (counselor, isOnline = false) => ({
   id: counselor._id.toString(),
@@ -14,8 +14,11 @@ const publicCounselor = (counselor, isOnline = false) => ({
   isVerified: counselor.isVerified,
   accountStatus: counselor.status,
   status: isOnline ? "online" : "away",
+  hasPin: Boolean(counselor.pinHash),
   createdAt: counselor.createdAt,
 });
+
+const isValidPin = (pin) => /^\d{6}$/.test(String(pin || ""));
 
 export async function listCounselors(req, res) {
   try {
@@ -52,5 +55,51 @@ export async function loginCounselor(req, res) {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Counselor login failed" });
+  }
+}
+
+export async function updateCounselorPin(req, res) {
+  try {
+    await connectDB();
+    const { counselorId } = req.params;
+    const { pin } = req.body || {};
+
+    if (!isValidPin(pin)) {
+      return res.status(400).json({ message: "PIN must be 6 digits" });
+    }
+
+    const counselor = await Counselor.findByIdAndUpdate(
+      counselorId,
+      { $set: { pinHash: hashPassword(String(pin)) } },
+      { new: true },
+    );
+    if (!counselor) return res.status(404).json({ message: "Counselor not found" });
+
+    return res.json({ counselor: publicCounselor(counselor) });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "PIN update failed" });
+  }
+}
+
+export async function verifyCounselorPin(req, res) {
+  try {
+    await connectDB();
+    const { counselorId } = req.params;
+    const { pin } = req.body || {};
+
+    if (!isValidPin(pin)) {
+      return res.status(400).json({ message: "PIN must be 6 digits" });
+    }
+
+    const counselor = await Counselor.findById(counselorId);
+    if (!counselor || !counselor.pinHash || !verifyPassword(String(pin), counselor.pinHash)) {
+      return res.status(401).json({ message: "Incorrect PIN" });
+    }
+
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "PIN verification failed" });
   }
 }

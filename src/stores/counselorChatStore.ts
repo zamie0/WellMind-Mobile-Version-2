@@ -12,6 +12,7 @@ import {
   listMessages,
   markConversationRead,
   sendChatMessage,
+  updateUserConversationDisplayName,
   type ChatConversation,
   type ChatMessage,
 } from '@/lib/realtimeCounselorChat';
@@ -54,7 +55,7 @@ interface CounselorChatState {
   counselorClients: Array<{ userId: string; userName: string; joinedDate: Date }>;
 
   createCounselorProfile: (displayName: string, isAnonymous: boolean, bio?: string, supportTopics?: string[], userId?: string) => void;
-  updateCounselorProfile: (updates: Partial<CounselorUser>) => void;
+  updateCounselorProfile: (updates: Partial<CounselorUser>) => Promise<void>;
   loadAvailableCounselors: () => Promise<void>;
   subscribeRealtime: () => () => void;
   loadUserConversations: () => Promise<void>;
@@ -164,10 +165,31 @@ export const useCounselorChatStore = create<CounselorChatState>()(
         identifyChatParticipant('user', profile.id);
       },
 
-      updateCounselorProfile: (updates) => {
+      updateCounselorProfile: async (updates) => {
+        const current = get().counselorProfile;
+        if (!current) return;
+
+        const nextProfile = { ...current, ...updates };
         set((state) => ({
-          counselorProfile: state.counselorProfile ? { ...state.counselorProfile, ...updates } : null,
+          counselorProfile: nextProfile,
+          chats: state.chats.map((chat) =>
+            chat.participants.includes(nextProfile.id)
+              ? {
+                  ...chat,
+                  participantNames: chat.participantNames.map((name, index) =>
+                    chat.participants[index] === nextProfile.id ? nextProfile.displayName : name,
+                  ),
+                }
+              : chat,
+          ),
         }));
+
+        try {
+          const { conversations } = await updateUserConversationDisplayName(nextProfile.id, nextProfile.displayName);
+          set((state) => conversations.reduce((chats, conversation) => mergeChat(chats, toChat(conversation)), state.chats));
+        } catch (error) {
+          console.error('Failed to sync display name to counselor conversations:', error);
+        }
       },
 
       loadAvailableCounselors: async () => {

@@ -61,6 +61,7 @@ export const CounselorVideoCall = ({
         className="fixed bottom-24 right-4 w-24 h-32 rounded-2xl overflow-hidden cursor-pointer"
         onClick={onMinimize}
         style={{
+          zIndex: 100001,
           background: 'linear-gradient(135deg, #4a90a4, #7bbccc)',
           boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
         }}
@@ -81,7 +82,8 @@ export const CounselorVideoCall = ({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 24 }}
-      className="fixed inset-0 z-50 flex flex-col bg-black"
+      className="fixed inset-0 flex flex-col bg-black"
+      style={{ zIndex: 100001 }}
     >
       <div className="flex-1 relative bg-gray-900">
         <video

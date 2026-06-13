@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
-import { ArrowLeft, Phone, Video, MoreVertical } from 'lucide-react';
+import { ArrowLeft, Phone, Video } from 'lucide-react';
 import { UserRound } from 'lucide-react';
 import type { ChatConversation } from '@/lib/realtimeCounselorChat';
 
 interface CounselorInboxHeaderProps {
   activeConversation: ChatConversation;
   onBack: () => void;
+  userStatus?: 'online' | 'away';
   onVideoCall?: () => void;
   onAudioCall?: () => void;
 }
@@ -13,9 +14,12 @@ interface CounselorInboxHeaderProps {
 export const CounselorInboxHeader = ({
   activeConversation,
   onBack,
+  userStatus = 'away',
   onVideoCall,
   onAudioCall,
 }: CounselorInboxHeaderProps) => {
+  const isOnline = userStatus === 'online';
+
   return (
     <header
       className="flex items-center gap-3 px-4"
@@ -42,10 +46,14 @@ export const CounselorInboxHeader = ({
 
       {/* Avatar */}
       <div
-        className="h-10 w-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+        className="relative h-10 w-10 rounded-2xl flex items-center justify-center flex-shrink-0"
         style={{ background: '#eaf3f7' }}
       >
         <UserRound className="h-5 w-5" style={{ color: '#4a90a4' }} />
+        <span
+          className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2"
+          style={{ background: isOnline ? '#39a89b' : '#8fa3b1', borderColor: '#eef4f7' }}
+        />
       </div>
 
       {/* User info */}
@@ -53,8 +61,8 @@ export const CounselorInboxHeader = ({
         <p className="text-sm font-bold truncate" style={{ color: '#1a2b38' }}>
           {activeConversation.userName}
         </p>
-        <p className="text-[11px] font-semibold" style={{ color: '#4a90a4' }}>
-          Active chat
+        <p className="text-[11px] font-semibold capitalize" style={{ color: isOnline ? '#39a89b' : '#8fa3b1' }}>
+          {userStatus}
         </p>
       </div>
 
@@ -91,19 +99,6 @@ export const CounselorInboxHeader = ({
             <Video className="h-4 w-4" style={{ color: '#4a90a4' }} />
           </motion.button>
         )}
-
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          type="button"
-          className="h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{
-            background: 'rgba(74,144,164,0.12)',
-          }}
-          aria-label="More options"
-        >
-          <MoreVertical className="h-4 w-4" style={{ color: '#4a90a4' }} />
-        </motion.button>
       </div>
     </header>
   );

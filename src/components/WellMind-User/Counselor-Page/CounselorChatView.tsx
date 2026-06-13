@@ -123,7 +123,7 @@ export const CounselorChatView = ({
     localUserId: counselorProfile?.id ?? undefined,
     localUserName: counselorProfile?.displayName ?? 'You',
     localRole: 'user',
-    onError: (error) => console.error(error),
+    onError: (error) => toast.error(error.message),
   });
 
   const logUserCallEvent = async (label: string) => {
@@ -165,13 +165,13 @@ export const CounselorChatView = ({
 
   const { acceptedCall } = useIncomingCallStore();
   useEffect(() => {
-    if (acceptedCall) {
+    if (acceptedCall && activeChat.id === acceptedCall.conversationId) {
       acceptIncomingCall().catch((error) => {
         console.error('Failed to accept incoming call:', error);
         toast.error('Failed to establish call connection');
       });
     }
-  }, [acceptedCall, acceptIncomingCall]);
+  }, [acceptedCall, acceptIncomingCall, activeChat.id]);
 
   const visibleMessages = useMemo(
     () => activeChat.messages.slice(Math.max(activeChat.messages.length - 220, 0)),

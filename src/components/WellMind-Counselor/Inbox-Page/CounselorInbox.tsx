@@ -22,6 +22,7 @@ import { CounselorInboxInput } from './CounselorInboxInput';
 import { CounselorInboxConversationList } from './CounselorInboxConversationList';
 import { CounselorVideoCall } from './CounselorVideoCall';
 import { useVideoCall } from '@/hooks/useVideoCall';
+import type { ChatAttachment } from '@/types/wellmind';
 
 interface CounselorInboxProps {
   initialConversationId?: string | null;
@@ -39,6 +40,7 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
   const [quickInput, setQuickInput] = useState('');
   const [quickTargetId, setQuickTargetId] = useState<string | null>(conversations[0]?.id ?? null);
   const [isLoading, setIsLoading] = useState(false);
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const counselorId = currentUser?.id;
@@ -111,9 +113,16 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
         return next.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
       });
     };
+    const onUserPresence = ({ onlineUserIds = [] }: { onlineUserIds?: string[] }) => {
+      setOnlineUserIds(new Set(onlineUserIds));
+    };
 
     socket.on('conversation:updated', onConversationUpdated);
-    return () => { socket.off('conversation:updated', onConversationUpdated); };
+    socket.on('user:presence', onUserPresence);
+    return () => {
+      socket.off('conversation:updated', onConversationUpdated);
+      socket.off('user:presence', onUserPresence);
+    };
   }, [counselorId]);
 
   useEffect(() => {
@@ -166,8 +175,8 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
     return () => viewport.removeEventListener('resize', scrollToLatest);
   }, []);
 
-  const sendMessage = async () => {
-    if (!activeId || !counselorId || !input.trim()) return;
+  const sendMessage = async (attachment?: ChatAttachment) => {
+    if (!activeId || !counselorId || (!input.trim() && !attachment)) return;
     const text = input.trim();
     const optimisticId = `optimistic-${crypto.randomUUID()}`;
     setInput('');
@@ -180,6 +189,7 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
         senderRole: 'counselor',
         senderName: counselorName,
         text,
+        attachment,
         isRead: false,
         createdAt: new Date().toISOString(),
         optimistic: true,
@@ -192,6 +202,7 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
         senderRole: 'counselor',
         senderName: counselorName,
         text,
+        attachment,
       });
       setMessages((current) => current.map((item) => (item.id === optimisticId ? message : item)));
       setConversations((current) =>
@@ -268,21 +279,49 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
   };
 
   const handleHangUp = async () => {
-    if (!activeConversation) return;
     endCall();
-    await logCallEvent(`Ended call with ${activeConversation.userName}`);
+    if (activeConversation) {
+      await logCallEvent(`Ended call with ${activeConversation.userName}`);
+    }
   };
 
   // Watch for accepted incoming calls and trigger the WebRTC answer
   const { acceptedCall } = useIncomingCallStore();
   useEffect(() => {
-    if (acceptedCall) {
+    if (!acceptedCall) return;
+
+    if (activeId !== acceptedCall.conversationId) {
+      setActiveId(acceptedCall.conversationId);
+      return;
+    }
+
+    if (activeId === acceptedCall.conversationId) {
       acceptIncomingCall().catch((error) => {
         console.error('Failed to accept incoming call:', error);
         toast.error('Failed to establish call connection');
       });
     }
-  }, [acceptedCall, acceptIncomingCall]);
+  }, [acceptedCall, acceptIncomingCall, activeId]);
+
+  const callOverlay = (
+    <AnimatePresence>
+      {isVideoCallActive && (
+        <CounselorVideoCall
+          remoteUserName={remoteUserName || activeConversation?.userName || 'Client'}
+          localStream={counselorLocalStream}
+          remoteStream={counselorRemoteStream}
+          isAudioEnabled={isCounselorAudioEnabled}
+          isVideoEnabled={isCounselorVideoEnabled}
+          connectionState={counselorConnectionState}
+          onHangup={handleHangUp}
+          onMinimize={toggleMinimize}
+          isMinimized={isVideoCallMinimized}
+          onToggleAudio={toggleCounselorAudio}
+          onToggleVideo={toggleCounselorVideo}
+        />
+      )}
+    </AnimatePresence>
+  );
 
   // Chat thread view
   if (activeConversation) {
@@ -300,6 +339,7 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
           <CounselorInboxHeader
             activeConversation={activeConversation}
             onBack={() => setActiveId(null)}
+            userStatus={onlineUserIds.has(activeConversation.userId) ? 'online' : 'away'}
             onVideoCall={handleStartVideoCall}
             onAudioCall={handleStartAudioCall}
           />
@@ -345,38 +385,22 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
           </div>
         </motion.div>
 
-        {/* Video call overlay */}
-        <AnimatePresence>
-          {isVideoCallActive && remoteUserId && (
-            <CounselorVideoCall
-              remoteUserName={remoteUserName}
-              localStream={counselorLocalStream}
-              remoteStream={counselorRemoteStream}
-              isAudioEnabled={isCounselorAudioEnabled}
-              isVideoEnabled={isCounselorVideoEnabled}
-              connectionState={counselorConnectionState}
-              onHangup={handleHangUp}
-              onMinimize={toggleMinimize}
-              isMinimized={isVideoCallMinimized}
-              onToggleAudio={toggleCounselorAudio}
-              onToggleVideo={toggleCounselorVideo}
-            />
-          )}
-        </AnimatePresence>
+        {callOverlay}
       </>
     );
   }
 
   // Inbox list view
   return (
-    <motion.div
-      key="inbox"
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -16 }}
-      className="space-y-5 px-4 pt-6"
-      style={{ zIndex: 90000 }}
-    >
+    <>
+      <motion.div
+        key="inbox"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -16 }}
+        className="space-y-5 px-4 pt-6"
+        style={{ zIndex: 90000 }}
+      >
       {/* Hero header */}
       <div className="relative overflow-hidden px-1 pt-2 pb-1">
         <div
@@ -496,7 +520,9 @@ export const CounselorInbox = ({ initialConversationId, onChatOpened }: Counselo
           </div>
         </footer>
       )}
-    </motion.div>
+      </motion.div>
+      {callOverlay}
+    </>
   );
 };
 
