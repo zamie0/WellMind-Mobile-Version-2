@@ -1,6 +1,6 @@
 import { create } from 'zustand/react';
 import { persist } from 'zustand/middleware';
-import type { CounselorUser, CounselorChat, CounselorMessage } from '@/types/wellmind';
+import type { ChatAttachment, CounselorUser, CounselorChat, CounselorMessage } from '@/types/wellmind';
 import { apiRequest } from '@/lib/apiClient';
 import {
   getChatSocket,
@@ -61,7 +61,7 @@ interface CounselorChatState {
   loadUserAppointments: () => Promise<void>;
 
   startChat: (counselorId: string) => Promise<string>;
-  sendMessage: (chatId: string, content: string) => Promise<void>;
+  sendMessage: (chatId: string, content: string, attachment?: ChatAttachment) => Promise<void>;
   deleteChat: (chatId: string) => void;
   getChat: (chatId: string) => CounselorChat | undefined;
   getChatWithCounselor: (counselorId: string) => CounselorChat | undefined;
@@ -110,6 +110,7 @@ const toMessage = (message: ChatMessage): CounselorMessage => ({
   senderId: message.senderId,
   senderName: message.senderName,
   content: message.text,
+  attachment: message.attachment,
   timestamp: new Date(message.createdAt),
   isRead: message.isRead,
   optimistic: message.optimistic,
@@ -296,10 +297,10 @@ export const useCounselorChatStore = create<CounselorChatState>()(
         return chat.id;
       },
 
-      sendMessage: async (chatId, content) => {
+      sendMessage: async (chatId, content, attachment) => {
         const profile = get().counselorProfile;
         const text = content.trim();
-        if (!profile || !text) return;
+        if (!profile || (!text && !attachment)) return;
 
         const optimisticId = `optimistic-${crypto.randomUUID()}`;
         const optimistic: CounselorMessage = {
@@ -308,6 +309,7 @@ export const useCounselorChatStore = create<CounselorChatState>()(
           senderId: profile.id,
           senderName: profile.displayName,
           content: text,
+          attachment,
           timestamp: new Date(),
           optimistic: true,
         };
@@ -326,6 +328,7 @@ export const useCounselorChatStore = create<CounselorChatState>()(
             senderRole: 'user',
             senderName: profile.displayName,
             text,
+            attachment,
           });
 
           set((state) => ({

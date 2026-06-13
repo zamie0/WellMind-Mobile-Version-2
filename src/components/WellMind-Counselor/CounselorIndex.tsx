@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import CounselorHome from './Home-Page/CounselorHome';
 import CounselorAppointments from './Appoinments-Page/CounselorAppointments';
@@ -30,6 +31,8 @@ const Index = () => {
     'home' | 'inbox' | 'appointments' | 'clients' | 'notes' | 'reports' | 'profile'
   >('home');
   const [openingConversationId, setOpeningConversationId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const callConversationId = searchParams.get('callConversationId');
 
   useEffect(() => {
     if (currentSession.isAuthenticated && currentSession.userRole === 'counselor' && currentSession.currentUserId) {
@@ -73,6 +76,17 @@ const Index = () => {
     upsertAppointments,
     upsertClientsFromConversations,
   ]);
+
+  useEffect(() => {
+    if (!callConversationId) return;
+    setOpeningConversationId(callConversationId);
+    setActiveView('inbox');
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete('callConversationId');
+      return next;
+    }, { replace: true });
+  }, [callConversationId, setSearchParams]);
 
   if (!currentSession.isAuthenticated) return <Auth />;
 

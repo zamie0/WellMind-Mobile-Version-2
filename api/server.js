@@ -110,7 +110,16 @@ io.on("connection", (socket) => {
 
   socket.on("call:offer", (payload) => {
     if (payload?.conversationId) {
-      socket.to(`conversation:${payload.conversationId}`).emit("call:offer", payload);
+      const targetRoom =
+        payload.targetRole && payload.targetId
+          ? `${payload.targetRole}:${payload.targetId}`
+          : null;
+
+      if (targetRoom) {
+        socket.to(`conversation:${payload.conversationId}`).to(targetRoom).emit("call:offer", payload);
+      } else {
+        socket.to(`conversation:${payload.conversationId}`).emit("call:offer", payload);
+      }
     }
   });
 

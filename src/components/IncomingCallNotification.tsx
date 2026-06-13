@@ -3,12 +3,17 @@ import { Phone, PhoneOff, Video } from 'lucide-react';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { Camera } from '@capacitor/camera';
+import { useNavigate } from 'react-router-dom';
+import { sendCallEnd } from '@/lib/realtimeCounselorChat';
+import { useAuthStore } from '@/stores/authStore';
 import { useIncomingCallStore } from '@/stores/incomingCallStore';
 import { useAppPermissions } from '@/hooks/useAppPermissions';
 
 export const IncomingCallNotification = () => {
   const { incomingCall, acceptCall, rejectCall } = useIncomingCallStore();
+  const currentSession = useAuthStore((state) => state.currentSession);
   const { requestPermissions } = useAppPermissions();
+  const navigate = useNavigate();
   const isNative = Capacitor.isNativePlatform();
 
   const handleAccept = async () => {
@@ -31,6 +36,10 @@ export const IncomingCallNotification = () => {
       } else {
         await requestPermissions(['camera', 'microphone']);
       }
+      const route = currentSession.userRole === 'counselor'
+        ? `/counselor?callConversationId=${encodeURIComponent(incomingCall.conversationId)}`
+        : `/Counselor?callConversationId=${encodeURIComponent(incomingCall.conversationId)}`;
+      navigate(route);
       acceptCall();
       toast.success(`${incomingCall.mode} call accepted`);
     } catch (error) {
@@ -41,6 +50,9 @@ export const IncomingCallNotification = () => {
   };
 
   const handleReject = () => {
+    if (incomingCall) {
+      sendCallEnd({ conversationId: incomingCall.conversationId });
+    }
     rejectCall();
     toast.info('Call rejected');
   };

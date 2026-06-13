@@ -106,13 +106,13 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner position="top-center" />
-        <IncomingCallNotification />
         <PermissionRequestModal
           isOpen={showPermissionModal}
           onRequestPermissions={handleRequestPermissions}
           onClose={() => setShowPermissionModal(false)}
         />
         <BrowserRouter>
+          <IncomingCallNotification />
           <RootNavigator />
         </BrowserRouter>
       </TooltipProvider>

@@ -1,5 +1,6 @@
 import { io, type Socket } from 'socket.io-client';
 import { apiRequest, API_BASE_URL } from '@/lib/apiClient';
+import type { ChatAttachment } from '@/types/wellmind';
 
 export type ChatRole = 'user' | 'counselor';
 
@@ -24,6 +25,7 @@ export interface ChatMessage {
   senderRole: ChatRole;
   senderName: string;
   text: string;
+  attachment?: ChatAttachment;
   isRead: boolean;
   createdAt: string;
   optimistic?: boolean;
@@ -88,6 +90,7 @@ export const sendChatMessage = (
     senderRole: ChatRole;
     senderName: string;
     text: string;
+    attachment?: ChatAttachment;
   },
 ) =>
   apiRequest<{ message: ChatMessage; conversation: ChatConversation }>(
@@ -102,6 +105,8 @@ export interface WebRTCCallOffer {
   conversationId: string;
   callerId: string;
   callerName: string;
+  targetId: string;
+  targetRole: ChatRole;
   sdp: string;
   type: RTCSdpType;
   mode: 'video' | 'audio';

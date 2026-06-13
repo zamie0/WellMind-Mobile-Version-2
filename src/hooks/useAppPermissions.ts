@@ -44,6 +44,30 @@ const normalizeNotificationPermission = (permission: NotificationPermission): 'g
   return permission;
 };
 
+const verifyLocalStorageAccess = () => {
+  try {
+    const key = 'wellmind_storage_permission_test';
+    localStorage.setItem(key, 'ok');
+    localStorage.removeItem(key);
+    return 'granted' as const;
+  } catch {
+    return 'denied' as const;
+  }
+};
+
+const requestNotificationPermission = async () => {
+  if (!('Notification' in window)) {
+    return 'denied' as const;
+  }
+
+  if (Notification.permission === 'default') {
+    const permission = await Notification.requestPermission();
+    return normalizeNotificationPermission(permission);
+  }
+
+  return normalizeNotificationPermission(Notification.permission);
+};
+
 export const useAppPermissions = () => {
   const [permissions, setPermissions] = useState<PermissionStatus>({
     camera: 'prompt',
@@ -95,21 +119,33 @@ export const useAppPermissions = () => {
         }
 
         if (type === 'notifications') {
-          if ('Notification' in window) {
-            return normalizeNotificationPermission(Notification.permission);
-          }
-          return 'prompt';
+          return 'Notification' in window
+            ? normalizeNotificationPermission(Notification.permission)
+            : 'denied';
         }
 
-        return 'granted';
+        if (type === 'photos') {
+          try {
+            const result = await Camera.checkPermissions();
+            return normalizePermissionState(result.photos);
+          } catch (error) {
+            console.error('Failed to check photos permission:', error);
+            return 'prompt';
+          }
+        }
+
+        if (type === 'storage') {
+          return verifyLocalStorageAccess();
+        }
+
+        return 'prompt';
       }
 
       // For web
       if (type === 'notifications') {
-        if ('Notification' in window) {
-          return Notification.permission as 'granted' | 'denied' | 'prompt';
-        }
-        return 'prompt';
+        return 'Notification' in window
+          ? normalizeNotificationPermission(Notification.permission)
+          : 'denied';
       }
 
       if (type === 'camera' || type === 'microphone') {
@@ -128,7 +164,15 @@ export const useAppPermissions = () => {
         }
       }
 
-      return 'granted';
+      if (type === 'storage') {
+        return verifyLocalStorageAccess();
+      }
+
+      if (type === 'photos') {
+        return 'prompt';
+      }
+
+      return 'prompt';
     },
     [isNative],
   );
@@ -166,12 +210,19 @@ export const useAppPermissions = () => {
                 results.microphone = (error as DOMException).name === 'NotAllowedError' ? 'denied' : 'prompt';
               }
             } else if (type === 'notifications') {
-              if ('Notification' in window && Notification.permission === 'default') {
-                const permission = await Notification.requestPermission();
-                results[type] = normalizeNotificationPermission(permission);
-              } else {
-                results[type] = normalizeNotificationPermission(Notification.permission);
+              results.notifications = await requestNotificationPermission();
+            } else if (type === 'photos') {
+              try {
+                const result = await Camera.requestPermissions({
+                  permissions: ['photos'],
+                });
+                results.photos = normalizePermissionState(result.photos);
+              } catch (error) {
+                console.error('Failed to request photos permission:', error);
+                results.photos = 'denied';
               }
+            } else if (type === 'storage') {
+              results.storage = verifyLocalStorageAccess();
             } else {
               results[type] = 'granted';
             }
@@ -184,12 +235,7 @@ export const useAppPermissions = () => {
         for (const type of types) {
           try {
             if (type === 'notifications') {
-              if ('Notification' in window && Notification.permission === 'default') {
-                const permission = await Notification.requestPermission();
-                results[type] = normalizeNotificationPermission(permission);
-              } else {
-                results[type] = normalizeNotificationPermission(Notification.permission);
-              }
+              results.notifications = await requestNotificationPermission();
             } else if (type === 'camera') {
               const stream = await navigator.mediaDevices.getUserMedia({ video: true });
               stream.getTracks().forEach((track) => track.stop());
@@ -198,6 +244,13 @@ export const useAppPermissions = () => {
               const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
               stream.getTracks().forEach((track) => track.stop());
               results[type] = 'granted';
+            } else if (type === 'storage') {
+              results.storage = verifyLocalStorageAccess();
+            } else if (type === 'photos') {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = 'image/*';
+              results.photos = input.accept === 'image/*' ? 'granted' : 'denied';
             } else {
               results[type] = 'granted';
             }

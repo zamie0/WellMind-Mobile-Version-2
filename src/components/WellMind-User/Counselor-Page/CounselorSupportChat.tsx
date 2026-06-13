@@ -1,12 +1,13 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useSearchParams } from 'react-router-dom';
 import { useCounselorChatStore } from '@/stores/counselorChatStore';
 import { useWellMindStore } from '@/stores/wellmindStore';
 import { useAuthStore } from '@/stores/authStore';
 import { CounselorBrowseView } from './CounselorBrowseView';
 import { CounselorChatView } from './CounselorChatView';
 import { CounselorSetupView } from './CounselorSetupView';
-import type { CounselorUser } from '@/types/wellmind';
+import type { ChatAttachment, CounselorUser } from '@/types/wellmind';
 
 interface CounselorSupportChatProps {
   onClose?: () => void;
@@ -44,6 +45,8 @@ export const CounselorSupportChat = ({ onClose: _onClose, embedded = false }: Co
   const [messageInput, setMessageInput] = useState('');
   const [bookingCounselor, setBookingCounselor] = useState<CounselorUser | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const callConversationId = searchParams.get('callConversationId');
 
   useEffect(() => {
     loadAvailableCounselors();
@@ -67,6 +70,20 @@ export const CounselorSupportChat = ({ onClose: _onClose, embedded = false }: Co
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeChatId, chats]);
+
+  useEffect(() => {
+    if (!callConversationId) return;
+    const targetChat = chats.find((chat) => chat.id === callConversationId);
+    if (!targetChat) return;
+
+    setActiveChatId(callConversationId);
+    setView('chat');
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete('callConversationId');
+      return next;
+    }, { replace: true });
+  }, [callConversationId, chats, setSearchParams]);
 
   const handleSetupComplete = () => {
     if (!displayName.trim() && !isAnonymous) {
@@ -106,12 +123,12 @@ export const CounselorSupportChat = ({ onClose: _onClose, embedded = false }: Co
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!messageInput.trim() || !activeChatId) return;
+  const handleSendMessage = async (attachment?: ChatAttachment) => {
+    if ((!messageInput.trim() && !attachment) || !activeChatId) return;
     const nextMessage = messageInput;
     setMessageInput('');
     try {
-      await sendMessage(activeChatId, nextMessage);
+      await sendMessage(activeChatId, nextMessage, attachment);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Message could not be sent');
     }

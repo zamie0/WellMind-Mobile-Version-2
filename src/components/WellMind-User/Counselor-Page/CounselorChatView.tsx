@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Send, ArrowLeft, Video, Phone, Paperclip,
-  Image, Camera, FileText, X, File,
+  Image, Camera, FileText, X, File, Download, ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CounselorAvatar, getStatusColor } from './CounselorAvatar';
@@ -63,6 +63,25 @@ function formatBytes(bytes: number): string {
 
 function isImageMime(mime: string) {
   return mime.startsWith('image/');
+}
+
+function fallbackMimeType(file: File, attachmentType: 'image' | 'file') {
+  if (file.type) return file.type;
+  if (attachmentType === 'image') return 'image/jpeg';
+  return 'application/octet-stream';
+}
+
+function openAttachment(attachment: ChatAttachment) {
+  window.open(attachment.base64, '_blank', 'noopener,noreferrer');
+}
+
+function downloadAttachment(attachment: ChatAttachment) {
+  const link = document.createElement('a');
+  link.href = attachment.base64;
+  link.download = attachment.name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 }
 
 export const CounselorChatView = ({
@@ -181,7 +200,7 @@ export const CounselorChatView = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const maxMb = type === 'file' ? 20 : 10;
+    const maxMb = 5;
     if (file.size > maxMb * 1024 * 1024) {
       toast.error(`File too large. Max ${maxMb} MB allowed.`);
       e.target.value = '';
@@ -194,7 +213,7 @@ export const CounselorChatView = ({
         id: crypto.randomUUID(),
         name: file.name,
         type: isImageMime(file.type) ? 'image' : 'file',
-        mimeType: file.type,
+        mimeType: fallbackMimeType(file, type),
         base64: reader.result as string,
         size: file.size,
       });
@@ -565,10 +584,10 @@ const MessageBubble = memo(({
       style={
         isOwn
           ? {
-              background: message.failed ? '#c0502f' : 'linear-gradient(135deg, #39a89b, #6bab9e)',
+              background: 'linear-gradient(135deg, #39a89b, #6bab9e)',
               borderBottomRightRadius: 5,
-              boxShadow: '0 2px 10px rgba(57,168,155,0.25)',
-              opacity: message.optimistic ? 0.78 : 1,
+              boxShadow: message.failed ? '0 2px 10px rgba(192,80,47,0.18)' : '0 2px 10px rgba(57,168,155,0.25)',
+              opacity: message.optimistic || message.failed ? 0.78 : 1,
             }
           : {
               background: 'white',
@@ -580,28 +599,38 @@ const MessageBubble = memo(({
       {/* Attachment rendering */}
       {message.attachment && (
         message.attachment.type === 'image' ? (
-          <img
-            src={message.attachment.base64}
-            alt={message.attachment.name}
-            className="w-full max-h-52 object-cover"
-            style={{ display: 'block' }}
-          />
+          <div>
+            <button
+              type="button"
+              onClick={() => openAttachment(message.attachment!)}
+              className="block w-full"
+              aria-label={`Open ${message.attachment.name}`}
+            >
+              <img
+                src={message.attachment.base64}
+                alt={message.attachment.name}
+                className="w-full max-h-52 object-cover"
+                style={{ display: 'block' }}
+              />
+            </button>
+            <AttachmentActions attachment={message.attachment} isOwn={isOwn} />
+          </div>
         ) : (
           <div
             className="flex items-center gap-2.5 px-4 py-3"
             style={{
-              background: isOwn ? 'rgba(0,0,0,0.12)' : 'rgba(124,111,160,0.08)',
+              background: isOwn ? 'rgba(255,255,255,0.08)' : 'rgba(57,168,155,0.08)',
               borderBottom: isOwn
                 ? '1px solid rgba(255,255,255,0.10)'
-                : '1px solid rgba(124,111,160,0.12)',
+                : '1px solid rgba(57,168,155,0.14)',
             }}
           >
             <div
               className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: isOwn ? 'rgba(255,255,255,0.15)' : 'rgba(124,111,160,0.12)' }}
+              style={{ background: isOwn ? 'rgba(255,255,255,0.15)' : 'rgba(57,168,155,0.12)' }}
             >
               <File className="h-4 w-4"
-                style={{ color: isOwn ? 'rgba(255,255,255,0.9)' : '#7c6fa0' }} strokeWidth={1.75} />
+                style={{ color: isOwn ? 'rgba(255,255,255,0.9)' : '#39a89b' }} strokeWidth={1.75} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold truncate"
@@ -613,6 +642,18 @@ const MessageBubble = memo(({
                 {formatBytes(message.attachment.size)}
               </p>
             </div>
+            <AttachmentIconButton
+              label={`Open ${message.attachment.name}`}
+              icon="open"
+              isOwn={isOwn}
+              onClick={() => openAttachment(message.attachment!)}
+            />
+            <AttachmentIconButton
+              label={`Download ${message.attachment.name}`}
+              icon="download"
+              isOwn={isOwn}
+              onClick={() => downloadAttachment(message.attachment!)}
+            />
           </div>
         )
       )}
@@ -628,7 +669,7 @@ const MessageBubble = memo(({
           <p
             className="text-[10px] mt-1"
             style={{
-              color: isOwn ? 'rgba(255,255,255,0.7)' : '#8fa3b1',
+              color: message.failed ? '#ffe3dc' : isOwn ? 'rgba(255,255,255,0.7)' : '#8fa3b1',
               textAlign: isOwn ? 'right' : 'left',
             }}
           >
@@ -639,3 +680,55 @@ const MessageBubble = memo(({
     </div>
   </motion.div>
 ));
+
+const AttachmentActions = ({ attachment, isOwn }: { attachment: ChatAttachment; isOwn: boolean }) => (
+  <div
+    className="flex items-center justify-end gap-2 px-3 py-2"
+    style={{
+      background: isOwn ? 'rgba(255,255,255,0.08)' : 'rgba(57,168,155,0.08)',
+      borderBottom: isOwn ? '1px solid rgba(255,255,255,0.10)' : '1px solid rgba(57,168,155,0.14)',
+    }}
+  >
+    <AttachmentIconButton
+      label={`Open ${attachment.name}`}
+      icon="open"
+      isOwn={isOwn}
+      onClick={() => openAttachment(attachment)}
+    />
+    <AttachmentIconButton
+      label={`Download ${attachment.name}`}
+      icon="download"
+      isOwn={isOwn}
+      onClick={() => downloadAttachment(attachment)}
+    />
+  </div>
+);
+
+const AttachmentIconButton = ({
+  label,
+  icon,
+  isOwn,
+  onClick,
+}: {
+  label: string;
+  icon: 'open' | 'download';
+  isOwn: boolean;
+  onClick: () => void;
+}) => {
+  const Icon = icon === 'open' ? ExternalLink : Download;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-8 h-8 rounded-full inline-flex items-center justify-center"
+      style={{
+        background: isOwn ? 'rgba(255,255,255,0.16)' : 'rgba(57,168,155,0.12)',
+        color: isOwn ? 'white' : '#39a89b',
+      }}
+      aria-label={label}
+      title={label}
+    >
+      <Icon className="h-3.5 w-3.5" />
+    </button>
+  );
+};

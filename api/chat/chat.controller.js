@@ -28,9 +28,33 @@ const toMessageDto = (message) => ({
   senderRole: message.senderRole,
   senderName: message.senderName,
   text: message.text,
+  attachment: message.attachment?.base64 ? message.attachment : undefined,
   isRead: message.isRead,
   createdAt: message.createdAt,
 });
+
+const sanitizeAttachment = (attachment) => {
+  if (!attachment || typeof attachment !== "object") return null;
+
+  const name = String(attachment.name || "").trim();
+  const type = attachment.type === "image" ? "image" : attachment.type === "file" ? "file" : "";
+  const mimeType = String(attachment.mimeType || "").trim() || (type === "image" ? "image/jpeg" : "application/octet-stream");
+  const base64 = String(attachment.base64 || "");
+  const size = Number(attachment.size || 0);
+
+  if (!name || !type || !base64 || !Number.isFinite(size) || size <= 0 || size > 5 * 1024 * 1024) {
+    return null;
+  }
+
+  return {
+    id: String(attachment.id || new mongoose.Types.ObjectId().toString()),
+    name: name.slice(0, 180),
+    type,
+    mimeType: mimeType.slice(0, 120),
+    base64,
+    size,
+  };
+};
 
 const emitConversationUpdate = (req, conversation) => {
   const io = req.app.get("io");
@@ -128,11 +152,12 @@ export async function sendMessage(req, res) {
     await connectDB();
 
     const { conversationId } = req.params;
-    const { senderId, senderRole, senderName, text } = req.body || {};
+    const { senderId, senderRole, senderName, text, attachment } = req.body || {};
     const cleanText = String(text || "").trim();
+    const cleanAttachment = sanitizeAttachment(attachment);
 
-    if (!isObjectId(conversationId) || !String(senderId || "").trim() || !["user", "counselor"].includes(senderRole) || !cleanText) {
-      return res.status(400).json({ message: "conversationId, senderId, senderRole, and text are required" });
+    if (!isObjectId(conversationId) || !String(senderId || "").trim() || !["user", "counselor"].includes(senderRole) || (!cleanText && !cleanAttachment)) {
+      return res.status(400).json({ message: "conversationId, senderId, senderRole, and text or attachment are required" });
     }
 
     const conversation = await Conversation.findById(conversationId);
@@ -149,10 +174,11 @@ export async function sendMessage(req, res) {
       senderRole,
       senderName: String(senderName || "").trim(),
       text: cleanText,
+      attachment: cleanAttachment || undefined,
       isRead: false,
     });
 
-    conversation.lastMessage = cleanText;
+    conversation.lastMessage = cleanText || (cleanAttachment?.type === "image" ? "Image attachment" : cleanAttachment?.name || "Attachment");
     conversation.lastMessageAt = message.createdAt;
     if (senderRole === "user") {
       conversation.unreadForCounselor += 1;

@@ -308,6 +308,8 @@ export const useVideoCall = ({
           conversationId,
           callerId: localUserId,
           callerName: localUserName,
+          targetId: remoteId,
+          targetRole: localRole === 'user' ? 'counselor' : 'user',
           sdp: offer.sdp ?? '',
           type: offer.type,
           mode,
@@ -322,23 +324,24 @@ export const useVideoCall = ({
         cleanupCall();
       }
     },
-    [conversationId, createLocalStream, cleanupCall, localUserId, localUserName, onError, preparePeerConnection],
+    [conversationId, createLocalStream, cleanupCall, localRole, localUserId, localUserName, onError, preparePeerConnection],
   );
 
   const acceptIncomingCall = useCallback(async () => {
-    const { incomingCall } = useIncomingCallStore.getState();
-    if (!incomingCall || !conversationId || !localUserId || !localUserName) return;
+    const { incomingCall, acceptedCall } = useIncomingCallStore.getState();
+    const callToAccept = acceptedCall || incomingCall;
+    if (!callToAccept || !conversationId || callToAccept.conversationId !== conversationId || !localUserId || !localUserName) return;
 
     try {
-      const stream = await createLocalStream(incomingCall.mode);
-      setRemoteUserId(incomingCall.callerId);
-      setRemoteUserName(incomingCall.callerName);
+      const stream = await createLocalStream(callToAccept.mode);
+      setRemoteUserId(callToAccept.callerId);
+      setRemoteUserName(callToAccept.callerName);
       setConnectionState('connecting');
       setIsActive(true);
       setIsMinimized(false);
 
       const pc = preparePeerConnection();
-      await pc.setRemoteDescription({ type: incomingCall.offer.type, sdp: incomingCall.offer.sdp });
+      await pc.setRemoteDescription({ type: callToAccept.offer.type, sdp: callToAccept.offer.sdp });
       await flushPendingCandidates();
 
       const answer = await pc.createAnswer();
@@ -350,10 +353,10 @@ export const useVideoCall = ({
         responderName: localUserName,
         sdp: answer.sdp ?? '',
         type: answer.type,
-        mode: incomingCall.mode,
+        mode: callToAccept.mode,
       };
       sendCallAnswer(answerPayload);
-      useIncomingCallStore.setState({ acceptedCall: incomingCall, incomingCall: null });
+      useIncomingCallStore.setState({ acceptedCall: null, incomingCall: null });
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Failed to accept incoming call');
       onError?.(err);

@@ -44,7 +44,7 @@ const PERMISSIONS_LIST: Array<{
   {
     type: 'storage',
     label: 'Storage',
-    description: 'Offline access & saved data',
+    description: 'Offline access and saved app data',
     icon: <HardDrive className="h-5 w-5" />,
     accent: '#c97d1a',
     bg: 'rgba(201,125,26,0.10)',
@@ -52,7 +52,7 @@ const PERMISSIONS_LIST: Array<{
   {
     type: 'photos',
     label: 'Photos',
-    description: 'Share images in sessions',
+    description: 'Share images in counselor chats',
     icon: <Image className="h-5 w-5" />,
     accent: '#39a89b',
     bg: 'rgba(57,168,155,0.10)',
@@ -65,7 +65,7 @@ export const PermissionRequestModal = ({
   onClose,
 }: PermissionRequestModalProps) => {
   const [selected, setSelected] = useState<Set<PermissionType>>(
-    new Set(['camera', 'microphone', 'notifications']),
+    new Set(PERMISSIONS_LIST.map((permission) => permission.type)),
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -94,29 +94,23 @@ export const PermissionRequestModal = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center"
+          className="fixed inset-0 z-[100] flex items-center justify-center px-4"
           style={{ background: 'rgba(15,25,35,0.60)', backdropFilter: 'blur(6px)' }}
           onClick={(e) => e.target === e.currentTarget && onClose()}
         >
           <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
+            initial={{ scale: 0.92, opacity: 0, y: 16 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.92, opacity: 0, y: 16 }}
             transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-            className="w-full max-w-sm rounded-t-[2rem] sm:rounded-[2rem] overflow-hidden"
+            className="w-full max-w-sm rounded-[2rem] overflow-hidden"
             style={{ background: '#f8fbfc' }}
           >
-            {/* Dark anchor bar */}
+            {/* Dark header */}
             <div
               className="px-6 pt-7 pb-6 relative"
               style={{ background: '#1a2b38' }}
             >
-              {/* Drag handle */}
-              <div
-                className="w-10 h-1 rounded-full mx-auto mb-5 sm:hidden"
-                style={{ background: 'rgba(255,255,255,0.18)' }}
-              />
-
               {/* Close */}
               <button
                 type="button"
@@ -194,12 +188,10 @@ export const PermissionRequestModal = ({
                         </p>
                       </div>
 
-                      {/* Toggle dot */}
+                      {/* Toggle */}
                       <div
                         className="h-6 w-11 rounded-full flex-shrink-0 relative transition-colors"
-                        style={{
-                          background: isOn ? perm.accent : '#dde6ea',
-                        }}
+                        style={{ background: isOn ? perm.accent : '#dde6ea' }}
                       >
                         <motion.div
                           animate={{ x: isOn ? 20 : 2 }}
@@ -207,10 +199,7 @@ export const PermissionRequestModal = ({
                           className="absolute top-1 h-4 w-4 rounded-full bg-white flex items-center justify-center"
                         >
                           {isOn && (
-                            <Check
-                              className="h-2.5 w-2.5"
-                              style={{ color: perm.accent }}
-                            />
+                            <Check className="h-2.5 w-2.5" style={{ color: perm.accent }} />
                           )}
                         </motion.div>
                       </div>
@@ -221,11 +210,7 @@ export const PermissionRequestModal = ({
             </div>
 
             {/* Footer */}
-            <div
-              className="px-5 pt-3 pb-6"
-              style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 1.5rem)' }}
-            >
-              {/* Selected count chip */}
+            <div className="px-5 pt-3 pb-6">
               <div className="flex items-center justify-between mb-4 px-1">
                 <span className="text-xs" style={{ color: '#8fa3b1' }}>
                   {selected.size === 0
@@ -261,7 +246,7 @@ export const PermissionRequestModal = ({
                   letterSpacing: '0.01em',
                 }}
               >
-                {isLoading ? 'Requesting access…' : 'Allow selected'}
+                {isLoading ? 'Requesting access...' : 'Allow selected'}
               </motion.button>
 
               <button
