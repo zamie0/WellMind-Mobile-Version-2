@@ -1,124 +1,165 @@
-<<<<<<< HEAD
-# 🌿 WellMind – Preventive Mental Health Mobile Application
+# WellMind
 
-## Project Overview
+WellMind is a mobile-first preventive mental wellness application designed to support users with emotional awareness, calming tools, self-reflection, and access to counselor-guided support. The platform combines a polished wellness experience for users with a dedicated counselor experience for support professionals.
 
-**WellMind** is a technology-driven mental wellness application focused on **depression and anxiety prevention**. The app empowers users to monitor emotional patterns, build healthy coping habits, and access timely support through AI-powered insights, mindfulness tools, and anonymous community features.
+## What the app provides
 
-WellMind is designed as a **preventive and supportive platform**, not a replacement for professional diagnosis or therapy. It promotes early awareness, emotional resilience, and psychological safety for students, working adults, and caregivers.
+WellMind is not a replacement for professional diagnosis or therapy. Instead, it is a supportive, prevention-focused tool that helps users:
 
----
+- track mood and emotional patterns
+- access guided breathing, grounding, and relaxation activities
+- complete self-assessments for stress, burnout, anxiety, and depression-related wellbeing signals
+- use a dedicated MindBuddy companion for reflective conversations and wellness suggestions
+- explore resources such as community support, volunteering, events, mentorship, and programs
+- connect with counselors through anonymous support chat and appointment-based conversations
+- receive reminders and mobile notifications for check-ins and support flows
 
-## Key Features
+## Core product experience
 
-* 🧠 **Daily Mood Tracking**
-  Log emotions, triggers, and physical symptoms to identify patterns over time.
+### User experience
+- onboarding and account setup with role-based authentication
+- PIN-protected access for privacy and session security
+- home dashboard with mood logging, affirmations, daily suggestions, and panic support
+- wellness modules for mindfulness, journaling, and calming activities
+- emotion insights and personalized wellness planning
+- counselor support and community resource navigation
 
-* 🤖 **AI Emotional Insights & Chat Companion (MindBuddy)**
-  Provides supportive conversations, coping strategies, and personalized wellness suggestions.
+### Counselor experience
+- counselor account login and dashboard access
+- counselor chat and support workflows
+- availability and appointment coordination
+- real-time communication features through Socket.IO
 
-* 📊 **Self-Assessment Tools**
-  Simplified depression, anxiety, stress, and burnout screenings with progress tracking.
+## Architecture overview
 
-* 🧘 **Mindfulness & Calm Tools**
-  Breathing exercises, grounding techniques, affirmations, and relaxation audio.
+The project is a full-stack mobile application with a React frontend, an Express API, and a Capacitor Android layer.
 
-* 🚨 **Panic Support Button**
-  Instant calming mode for anxiety or emotional overload with guided breathing and grounding.
+### Frontend
+- Vite + React + TypeScript
+- Tailwind CSS and shadcn-style UI components
+- Framer Motion for transitions and UI polish
+- Zustand for app state and React Query for data-driven flows
 
-* 👥 **Anonymous Community Support**
-  Safe, moderated counselor interaction without revealing personal identity.
+### Backend API
+- Express server in the api folder
+- REST routes for users, counselors, chat, appointments, and notifications
+- Socket.IO for real-time presence, messaging, and call signaling
+- MongoDB via Mongoose models in the api/models folder
 
-* 🎮 **Gamification & Engagement**
-  Streaks, badges, Calm Coins, and a virtual companion to encourage healthy habits.
+### Mobile packaging
+- Capacitor configuration for Android deployment
+- native permission and notification integration
+- Android build output generated under android/app/build/outputs
 
-* 🔐 **Privacy & Security First**
-  Anonymous mode, encrypted data storage, and user-controlled privacy settings.
+## Project structure
 
----
+- src/ – main frontend application code
+  - components/ – reusable UI and feature modules
+  - pages/ – auth, onboarding, and route-level screens
+  - hooks/ – custom React hooks for mobile permissions, encryption, calls, and notifications
+  - lib/ – API clients, chat logic, scheduling, and notification utilities
+  - stores/ – Zustand state stores for auth, wellness, chat, and settings
+- api/ – Express server and backend routes/models
+- android/ – Capacitor Android project
+- public/ – static assets
 
-## Target Users
+## Tech stack
 
-* University & college students
-* Working adults experiencing stress or burnout
-* Caregivers managing emotional strain
-* Individuals seeking early mental health support
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- shadcn/ui-inspired component system
+- Zustand
+- React Query
+- Express
+- Socket.IO
+- Mongoose
+- Capacitor
+- Android Gradle build
 
----
-
-## Project Objectives
-
-* Promote early detection of depression and anxiety risks
-* Encourage positive mental health behaviors
-* Reduce stigma through accessible digital support
-* Provide a scalable, sustainable mental wellness solution
-
----
-
-## Technology Stack
-
-This project is built using:
-
-* **Vite**
-* **TypeScript**
-* **React**
-* **Tailwind CSS**
-* **shadcn/ui**
-
----
-
-## Getting Started (Local Development)
+## Getting started
 
 ### Prerequisites
+- Node.js and npm
+- Android SDK tools if you want to build the mobile APK
 
-* Node.js
-* npm (or yarn)
+### Install dependencies
 
-### Installation & Setup
-
-```sh
-# Step 1: Clone the repository
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install dependencies
+```bash
 npm install
+```
 
-# Step 4: Start the development server
+### Run the app locally
+
+The project includes a combined development script that starts the frontend and API together:
+
+```bash
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173` (or the port shown in your terminal).
+This will launch:
+- the Vite frontend on http://localhost:5173
+- the backend API on http://localhost:5001
 
----
+If you want to run the API alone:
 
-## Project Structure
+```bash
+npm run api
+```
 
-* `/src` – Application source code
-* `/components` – Reusable UI components
-* `/pages` – Main application views
-* `/hooks` – Custom React hooks
-* `/assets` – Images and static resources
+### Environment variables
 
----
+The frontend can be pointed at a different API host with:
 
-## Ethical Disclaimer
+```bash
+$env:VITE_API_URL="https://your-api-url"
+```
 
-WellMind is intended for **mental health awareness, prevention, and emotional support**.
-It does **not** provide medical diagnosis or replace professional mental health care.
-Users experiencing severe distress are encouraged to seek professional help.
+The backend reads environment values such as PORT and CLIENT_ORIGIN through the api environment setup.
 
----
+## Build for Android
+
+### Debug APK
+
+```bash
+npm run build
+npx cap sync android
+cd android
+```
+
+On Windows:
+
+```powershell
+.\gradlew.bat assembleDebug
+```
+
+On macOS or Linux:
+
+```bash
+./gradlew assembleDebug
+```
+
+The debug APK will be generated at:
+- android/app/build/outputs/apk/debug/app-debug.apk
+
+### Release APK
+
+```powershell
+.\gradlew.bat assembleRelease
+```
+
+Release output is placed under:
+- android/app/build/outputs/apk/release/
+
+## Ethical and safety note
+
+WellMind is intended for emotional awareness, prevention, reflection, and supportive engagement. It is not a substitute for professional diagnosis or emergency mental health care. Users in crisis should seek immediate help from qualified professionals or emergency services.
+
+## Project context
+
+This project was developed as an academic mobile wellness platform and is intended for educational and prototype use.
 
 ## License
 
-This project is developed by Hazami, for **academic and educational purposes** under  
-**SSE3200 – Entrepreneurship in Computing (Semester I 2025/26)**.
-
-
-
-=======
-# WellMind
->>>>>>> 3298c7d185fbc53e69c95af82b8bbd3e6bbdb06b
+This project is intended for academic and educational purposes under the course context of the WellMind development work.
